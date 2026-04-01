@@ -3,7 +3,7 @@ use walkdir::WalkDir;
 use crate::git_handler::SourceRepository;
 use anyhow::Result;
 
-mod db;
+pub mod db;
 mod git_handler;
 
 pub fn analyze_git_repository(url: &str) -> Result<()> {
