@@ -24,6 +24,15 @@ impl SourceRepository {
         })
     }
 
+    pub fn from_path(path: PathBuf) -> Result<Self> {
+        let repo = Repository::open(&path)?;
+        Ok(SourceRepository {
+            url: path.display().to_string(),
+            repo,
+            dest_dir: path,
+        })
+    }
+
     fn get_dest_directory(url: &str) -> PathBuf {
         let name = url
             .trim_end_matches('/')

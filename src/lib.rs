@@ -4,7 +4,7 @@ use crate::git_handler::SourceRepository;
 use anyhow::Result;
 
 pub mod db;
-mod git_handler;
+pub mod git_handler;
 
 pub fn analyze_git_repository(url: &str) -> Result<()> {
     let sr = SourceRepository::new(url)?;
