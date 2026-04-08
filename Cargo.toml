@@ -17,3 +17,6 @@ uuid = { version = "1", features = ["serde"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["fmt", "env-filter"] }
 walkdir = "2.5.0"
+bytecount = "0.6.9"
+tree-sitter = "0.26.8"
+tree-sitter-python = "0.25.0"

@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 use git2::{Oid, Repository, Revwalk, Sort};
@@ -22,6 +22,10 @@ impl SourceRepository {
             repo,
             dest_dir,
         })
+    }
+
+    pub fn is_path_ignored(self: &Self, path: &Path) -> Result<bool> {
+        Ok(self.repo.is_path_ignored(path)?)
     }
 
     pub fn from_path(path: PathBuf) -> Result<Self> {
@@ -60,6 +64,23 @@ impl SourceRepository {
         repo.set_head_detached(oid)?;
         tracing::info!("Checked out commit {}", oid);
         Ok(())
+    }
+
+    pub fn is_ignored_file(self: &Self, path: &Path, extension: &str) -> Result<bool> {
+        if self.is_path_ignored(path)? {
+            return Ok(true);
+        }
+        // and some other options
+        match path.extension() {
+            Some(ex) => {
+                if ex == extension {
+                    Ok(false)
+                } else {
+                    Ok(true)
+                }
+            }
+            None => Ok(true),
+        }
     }
 }
 
