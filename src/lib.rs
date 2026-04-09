@@ -1,4 +1,8 @@
-use std::sync::Arc;
+use std::{
+    fs::File,
+    io::{BufReader, Seek, SeekFrom},
+    sync::Arc,
+};
 
 use tokio::{sync::Semaphore, task::JoinSet};
 use walkdir::WalkDir;
@@ -26,6 +30,8 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
     let sr = SourceRepository::new(url)?;
     for commit in sr.into_iter() {
         let repo_walker = WalkDir::new(&sr.dest_dir);
+        eprintln!("=== commit ===");
+        dbg!(&commit);
         sr.checkout_commit(commit.expect("this should be a commit"))?;
         for entry in repo_walker.into_iter().filter_map(|e| e.ok()) {
             let path = entry.path().to_path_buf();
@@ -35,8 +41,16 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     let path = path.clone();
                     join_set.spawn(async move {
                         let _permit = permit; // use the permit here
-                        let loc_file = LinesOfCodeProcessor::lines_of_code_file(&path)?;
-                        dbg!(&path, loc_file);
+                        let file = File::open(&path)?;
+                        let mut bufreader = BufReader::new(&file);
+                        let loc_file =
+                            LinesOfCodeProcessor::count_lines_from_reader(&mut bufreader)?;
+                        bufreader.seek(SeekFrom::Start(0))?;
+                        let loc_effect_file =
+                            LinesOfCodeProcessor::count_effective_lines_from_reader(
+                                &mut bufreader,
+                            )?;
+                        dbg!(&path, loc_file, loc_effect_file);
                         // TODO: return the right type
                         Ok(())
                     })
@@ -50,12 +64,24 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                         let (tree, source) = lc.get_tree(&path)?;
                         let functions = lc.get_functions(&tree, &source)?;
                         for func in functions {
-                            let name = func.name.get_content(&source)?;
+                            // it is common that because of some kind of
+                            // namespace the same funciton/method name could
+                            // occure multiple times in a file so we have to
+                            // encode the locations with the name
+                            let unique_name = func.name.with_location(&source);
                             let definition = func.definition.get_content(&source)?;
-                            let loc_function = LinesOfCodeProcessor::lines_of_code_content(&definition)?;
-                            dbg!(&path, &name, loc_function);
+                            let loc_function =
+                                LinesOfCodeProcessor::lines_of_code_content(&definition)?;
+                            dbg!(&path, &unique_name, loc_function);
                         }
-
+                        let comments = lc.get_comments(&tree, &source)?;
+                        for comment in comments {
+                            let content = comment.get_content(&source)?;
+                            dbg!(
+                                &content,
+                                LinesOfCodeProcessor::lines_of_code_content(&content)?
+                            );
+                        }
                         // TODO: return the right type
                         Ok(())
                     });
