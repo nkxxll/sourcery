@@ -123,3 +123,73 @@ impl CyclomaticComplexityProcessor {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::CyclomaticComplexityProcessor;
+    use crate::language::{LanguageConfig, ProgrammingLanguage};
+    use tree_sitter::Parser;
+
+    fn parse_python(source: &str) -> tree_sitter::Tree {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_python::LANGUAGE.into())
+            .expect("python language must load");
+        parser.parse(source, None).expect("python source must parse")
+    }
+
+    #[test]
+    fn cyclomatic_complexity_is_one_for_straight_line_python_function() {
+        let source = r#"
+def identity(value):
+    result = value + 1
+    return result
+"#;
+        let tree = parse_python(source);
+        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+
+        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic(
+            &tree.root_node(),
+            source.as_bytes(),
+            &profile,
+        );
+
+        assert_eq!(complexity, 1);
+    }
+
+    #[test]
+    fn cyclomatic_complexity_counts_python_decision_points() {
+        let source = r#"
+def analyze(x, values):
+    if x > 10 and x < 20:
+        return 1
+    elif x == 0:
+        return 2
+
+    for value in values:
+        if value % 2 == 0:
+            return 3
+
+    while x > 0:
+        x -= 1
+
+    match x:
+        case 1:
+            return 4
+        case _:
+            return 5
+
+    return 6 if x < 0 else 7
+"#;
+        let tree = parse_python(source);
+        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+
+        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic(
+            &tree.root_node(),
+            source.as_bytes(),
+            &profile,
+        );
+
+        assert_eq!(complexity, 10);
+    }
+}
