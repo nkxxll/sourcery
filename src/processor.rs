@@ -1,6 +1,6 @@
 use std::io::{BufRead, BufReader, Read};
 
-use crate::language::LanguageConfig;
+use crate::language::{CodeSpan, LanguageConfig};
 use tree_sitter::{Node, Query, QueryCursor, StreamingIterator};
 
 use anyhow::Result;
@@ -71,22 +71,61 @@ impl CyclomaticComplexityProcessor {
     /// catch/except, &&, ||, ternary operator.
     ///
     /// Note: `else` is NOT a decision point and does not increment cyclomatic complexity.
-    pub fn compute_cyclomatic(node: &Node, source: &[u8], profile: &LanguageConfig) -> u64 {
+    pub fn compute_cyclomatic(
+        node: &Node,
+        source: &[u8],
+        profile: &LanguageConfig,
+        match_range: Option<CodeSpan>,
+    ) -> u64 {
+        let control_flow = Self::control_flow_excluding_match_constructs(profile);
+
+        // Base path + all decision points.
+        1 + Self::count_keyword_matches(node, source, &control_flow, match_range.clone())
+            + Self::count_keyword_matches(
+                node,
+                source,
+                &profile.match_arm_nodes,
+                match_range.clone(),
+            )
+            + Self::count_keyword_matches(node, source, &profile.boolean_operators, match_range)
+    }
+
+    /// Variant of cyclomatic complexity where each match/switch construct counts as one branch,
+    /// independent from how many case arms it contains.
+    pub fn compute_cyclomatic_match_as_single_branch(
+        node: &Node,
+        source: &[u8],
+        profile: &LanguageConfig,
+        match_range: Option<CodeSpan>,
+    ) -> u64 {
+        let control_flow = Self::control_flow_excluding_match_constructs(profile);
+
+        1 + Self::count_keyword_matches(node, source, &control_flow, match_range.clone())
+            + Self::count_keyword_matches(
+                node,
+                source,
+                &profile.match_construct_nodes,
+                match_range.clone(),
+            )
+            + Self::count_keyword_matches(node, source, &profile.boolean_operators, match_range)
+    }
+
+    fn control_flow_excluding_match_constructs(profile: &LanguageConfig) -> Vec<String> {
         let match_constructs = &profile.match_construct_nodes;
-        let control_flow: Vec<String> = profile
+        profile
             .control_flow_nodes
             .iter()
             .filter(|kind| !match_constructs.contains(*kind))
             .cloned()
-            .collect();
-
-        // Base path + all decision points.
-        1 + Self::count_keyword_matches(node, source, &control_flow)
-            + Self::count_keyword_matches(node, source, &profile.match_arm_nodes)
-            + Self::count_keyword_matches(node, source, &profile.boolean_operators)
+            .collect()
     }
 
-    fn count_keyword_matches(node: &Node, source: &[u8], kinds: &[String]) -> u64 {
+    fn count_keyword_matches(
+        node: &Node,
+        source: &[u8],
+        kinds: &[String],
+        match_range: Option<CodeSpan>,
+    ) -> u64 {
         if kinds.is_empty() {
             return 0;
         }
@@ -99,11 +138,17 @@ impl CyclomaticComplexityProcessor {
 
         let query = match Query::new(&node.language(), &query_text) {
             Ok(query) => query,
-            Err(_) => return 0,
+            Err(_) => panic!("the query is wrong"),
         };
 
         let mut count: u64 = 0;
-        let mut cursor = QueryCursor::new();
+        let mut cursor = if match_range.is_some() {
+            let mut cursor = QueryCursor::new();
+            cursor.set_byte_range(match_range.unwrap().into());
+            cursor
+        } else {
+            QueryCursor::new()
+        };
         let mut matches = cursor.matches(&query, *node, source);
         while matches.next().is_some() {
             count += 1;
@@ -136,7 +181,9 @@ mod tests {
         parser
             .set_language(&tree_sitter_python::LANGUAGE.into())
             .expect("python language must load");
-        parser.parse(source, None).expect("python source must parse")
+        parser
+            .parse(source, None)
+            .expect("python source must parse")
     }
 
     #[test]
@@ -163,7 +210,8 @@ mod tests {
         let content = "first line\n\n   \nsecond line\n\t\nthird line\n";
         let mut reader = Cursor::new(content.as_bytes());
 
-        let effective = LinesOfCodeProcessor::count_effective_lines_from_reader(&mut reader).unwrap();
+        let effective =
+            LinesOfCodeProcessor::count_effective_lines_from_reader(&mut reader).unwrap();
 
         assert_eq!(effective, 3);
     }
@@ -182,6 +230,7 @@ def identity(value):
             &tree.root_node(),
             source.as_bytes(),
             &profile,
+            None,
         );
 
         assert_eq!(complexity, 1);
@@ -218,8 +267,46 @@ def analyze(x, values):
             &tree.root_node(),
             source.as_bytes(),
             &profile,
+            None,
         );
 
         assert_eq!(complexity, 10);
+    }
+
+    #[test]
+    fn cyclomatic_complexity_match_counts_construct_once() {
+        let source = r#"
+def analyze(x, values):
+    if x > 10 and x < 20:
+        return 1
+    elif x == 0:
+        return 2
+
+    for value in values:
+        if value % 2 == 0:
+            return 3
+
+    while x > 0:
+        x -= 1
+
+    match x:
+        case 1:
+            return 4
+        case _:
+            return 5
+
+    return 6 if x < 0 else 7
+"#;
+        let tree = parse_python(source);
+        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+
+        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic_match_as_single_branch(
+            &tree.root_node(),
+            source.as_bytes(),
+            &profile,
+            None,
+        );
+
+        assert_eq!(complexity, 9);
     }
 }

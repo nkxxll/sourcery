@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::ops::Range;
 
 use anyhow::{Result, anyhow};
 use tree_sitter::{Node, Parser, Query, QueryCursor, QueryMatch, StreamingIterator, Tree};
@@ -8,6 +9,7 @@ use tracing::warn;
 /// sets up structures for the languages with all the treesitter specific queries
 /// and other language specific stuff
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProgrammingLanguage {
     Python,
     Ocaml,
@@ -37,6 +39,78 @@ pub struct LanguageConfig {
 }
 
 impl ProgrammingLanguage {
+    pub fn detect_language(path: &Path, content: Option<&str>) -> Option<Self> {
+        if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
+            if let Some(language) = Self::from_extension(extension) {
+                return Some(language);
+            }
+        }
+
+        content.and_then(Self::from_content)
+    }
+
+    pub fn from_extension(extension: &str) -> Option<Self> {
+        match extension.to_ascii_lowercase().as_str() {
+            "py" | "pyw" | "pyi" => Some(ProgrammingLanguage::Python),
+            "ml" | "mli" => Some(ProgrammingLanguage::Ocaml),
+            "hs" | "lhs" => Some(ProgrammingLanguage::Haskell),
+            "go" => Some(ProgrammingLanguage::Golang),
+            _ => None,
+        }
+    }
+
+    fn from_content(content: &str) -> Option<Self> {
+        let first_non_empty_line = content.lines().find(|line| !line.trim().is_empty())?;
+        let lowered = first_non_empty_line.to_ascii_lowercase();
+
+        if lowered.starts_with("#!") {
+            if lowered.contains("python") {
+                return Some(ProgrammingLanguage::Python);
+            }
+            if lowered.contains("runhaskell") || lowered.contains("ghc") {
+                return Some(ProgrammingLanguage::Haskell);
+            }
+            if lowered.contains("ocaml") {
+                return Some(ProgrammingLanguage::Ocaml);
+            }
+            if lowered.contains("go") {
+                return Some(ProgrammingLanguage::Golang);
+            }
+        }
+
+        let source = content.trim_start();
+        if source.starts_with("package ")
+            && (source.contains("\nfunc ") || source.contains("\nimport ("))
+        {
+            return Some(ProgrammingLanguage::Golang);
+        }
+
+        if (source.starts_with("module ") && source.contains(" where"))
+            || source.contains("\nimport qualified ")
+        {
+            return Some(ProgrammingLanguage::Haskell);
+        }
+
+        if source.starts_with("let ") && source.contains(" =") && source.contains(";;") {
+            return Some(ProgrammingLanguage::Ocaml);
+        }
+        if source.contains("match ") && source.contains(" with") && source.contains("->") {
+            return Some(ProgrammingLanguage::Ocaml);
+        }
+
+        if source.starts_with("def ")
+            || source.starts_with("class ")
+            || source.contains("\ndef ")
+            || source.contains("\nclass ")
+            || source.contains("\nimport ")
+            || source.starts_with("import ")
+        {
+            return Some(ProgrammingLanguage::Python);
+        }
+
+        None
+    }
+
     fn ts_language(&self) -> tree_sitter::Language {
         match self {
             ProgrammingLanguage::Python => tree_sitter_python::LANGUAGE.into(),
@@ -45,6 +119,7 @@ impl ProgrammingLanguage {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
 pub struct CodeSpan {
     start: usize,
     end: usize,
@@ -68,6 +143,12 @@ impl CodeSpan {
             panic!("start must be less than end");
         }
         Self { start, end }
+    }
+}
+
+impl From<CodeSpan> for Range<usize> {
+    fn from(span: CodeSpan) -> Self {
+        span.start..span.end
     }
 }
 
@@ -224,5 +305,42 @@ impl LanguageConfig {
 
     fn get_node_pos(node: Node) -> CodeSpan {
         CodeSpan::new(node.start_byte(), node.end_byte())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ProgrammingLanguage;
+    use std::path::Path;
+
+    #[test]
+    fn detects_by_extension() {
+        let language = ProgrammingLanguage::detect_language(Path::new("script.py"), None);
+
+        assert_eq!(language, Some(ProgrammingLanguage::Python));
+    }
+
+    #[test]
+    fn detects_python_by_shebang_without_extension() {
+        let content = "#!/usr/bin/env python3\nprint('hello')\n";
+        let language = ProgrammingLanguage::detect_language(Path::new("tool"), Some(content));
+
+        assert_eq!(language, Some(ProgrammingLanguage::Python));
+    }
+
+    #[test]
+    fn detects_golang_by_content_without_extension() {
+        let content = "package main\n\nfunc main() {}\n";
+        let language = ProgrammingLanguage::detect_language(Path::new("main"), Some(content));
+
+        assert_eq!(language, Some(ProgrammingLanguage::Golang));
+    }
+
+    #[test]
+    fn returns_none_for_unknown_content_and_extension() {
+        let content = "just plain text";
+        let language = ProgrammingLanguage::detect_language(Path::new("notes.txt"), Some(content));
+
+        assert_eq!(language, None);
     }
 }

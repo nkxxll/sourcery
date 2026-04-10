@@ -8,7 +8,7 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use walkdir::WalkDir;
 
 use crate::{
-    git_handler::SourceRepository, language::LanguageConfig, processor::LinesOfCodeProcessor,
+    git_handler::SourceRepository, language::LanguageConfig, processor::{CyclomaticComplexityProcessor, LinesOfCodeProcessor},
 };
 use anyhow::Result;
 
@@ -50,6 +50,7 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                             LinesOfCodeProcessor::count_effective_lines_from_reader(
                                 &mut bufreader,
                             )?;
+                        let cyclomatic_function = CyclomaticComplexityProcessor::compute_cyclomatic(tree.root_node(), source, profile, match_range)
                         dbg!(&path, loc_file, loc_effect_file);
                         // TODO: return the right type
                         Ok(())
