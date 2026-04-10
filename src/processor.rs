@@ -126,8 +126,9 @@ impl CyclomaticComplexityProcessor {
 
 #[cfg(test)]
 mod tests {
-    use super::CyclomaticComplexityProcessor;
+    use super::{CyclomaticComplexityProcessor, LinesOfCodeProcessor};
     use crate::language::{LanguageConfig, ProgrammingLanguage};
+    use std::io::Cursor;
     use tree_sitter::Parser;
 
     fn parse_python(source: &str) -> tree_sitter::Tree {
@@ -136,6 +137,35 @@ mod tests {
             .set_language(&tree_sitter_python::LANGUAGE.into())
             .expect("python language must load");
         parser.parse(source, None).expect("python source must parse")
+    }
+
+    #[test]
+    fn count_lines_from_reader_counts_newlines() {
+        let content = "first line\nsecond line\nthird line\n";
+        let mut reader = Cursor::new(content.as_bytes());
+
+        let line_breaks = LinesOfCodeProcessor::count_lines_from_reader(&mut reader).unwrap();
+
+        assert_eq!(line_breaks, 3);
+    }
+
+    #[test]
+    fn lines_of_code_content_counts_lines_without_final_newline() {
+        let content = "first line\nsecond line\nthird line";
+
+        let lines = LinesOfCodeProcessor::lines_of_code_content(content).unwrap();
+
+        assert_eq!(lines, 3);
+    }
+
+    #[test]
+    fn count_effective_lines_ignores_blank_and_whitespace_only_lines() {
+        let content = "first line\n\n   \nsecond line\n\t\nthird line\n";
+        let mut reader = Cursor::new(content.as_bytes());
+
+        let effective = LinesOfCodeProcessor::count_effective_lines_from_reader(&mut reader).unwrap();
+
+        assert_eq!(effective, 3);
     }
 
     #[test]
