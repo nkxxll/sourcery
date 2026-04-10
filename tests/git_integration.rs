@@ -45,7 +45,8 @@ fn test_iterate_commits() {
 fn test_checkout_commit() {
     setup_test_repo();
     // Use the pre-made copy so checkout mutations don't interfere with other tests
-    let repo_path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_fixtures/test_repo_checkout");
+    let repo_path =
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_fixtures/test_repo_checkout");
     let repo = SourceRepository::from_path(repo_path.clone()).expect("failed to open test repo");
 
     let oids: Vec<_> = repo

@@ -84,7 +84,13 @@ impl FunctionPosition {
 
 impl LanguageConfig {
     pub fn new(language: ProgrammingLanguage) -> Self {
-        let queries = match language {
+        let (
+            queries,
+            control_flow_nodes,
+            boolean_operators,
+            match_construct_nodes,
+            match_arm_nodes,
+        ) = match language {
             ProgrammingLanguage::Python => {
                 let comment_query = Query::new(
                     &tree_sitter_python::LANGUAGE.into(),
@@ -122,17 +128,38 @@ impl LanguageConfig {
                     .capture_index_for_name("comment")
                     .expect("comment query must have @comment capture");
 
-                LanguageQueries {
-                    functions: function_query,
-                    function_name_index: name_idx,
-                    function_definition_index: definition_idx,
-                    comments: comment_query,
-                    comment_index: comment_idx,
-                }
+                (
+                    LanguageQueries {
+                        functions: function_query,
+                        function_name_index: name_idx,
+                        function_definition_index: definition_idx,
+                        comments: comment_query,
+                        comment_index: comment_idx,
+                    },
+                    vec![
+                        "if_statement".to_string(),
+                        "elif_clause".to_string(),
+                        "for_statement".to_string(),
+                        "while_statement".to_string(),
+                        "except_clause".to_string(),
+                        "conditional_expression".to_string(),
+                        "match_statement".to_string(),
+                    ],
+                    vec!["boolean_operator".to_string()],
+                    vec!["match_statement".to_string()],
+                    vec!["case_clause".to_string()],
+                )
             }
             _ => todo!("this language is not implemented yet!"),
         };
-        Self { language, queries }
+        Self {
+            language,
+            queries,
+            control_flow_nodes,
+            boolean_operators,
+            match_construct_nodes,
+            match_arm_nodes,
+        }
     }
 
     pub fn get_tree(&self, path: &Path) -> Result<(Tree, String)> {

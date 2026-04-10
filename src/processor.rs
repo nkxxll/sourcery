@@ -1,7 +1,7 @@
 use std::io::{BufRead, BufReader, Read};
 
-use crate::{language::LanguageConfig, languages::LanguageProfile};
-use tree_sitter::Node;
+use crate::language::LanguageConfig;
+use tree_sitter::{Node, Query, QueryCursor, StreamingIterator};
 
 use anyhow::Result;
 
@@ -71,42 +71,55 @@ impl CyclomaticComplexityProcessor {
     /// catch/except, &&, ||, ternary operator.
     ///
     /// Note: `else` is NOT a decision point and does not increment cyclomatic complexity.
-    pub fn compute_cyclomatic(node: &Node, source: &[u8], profile: &dyn LanguageProfile) -> u64 {
-        let mut complexity: u64 = 1; // base path
-        Self::walk_cyclomatic(node, source, profile, &mut complexity);
-        complexity
+    pub fn compute_cyclomatic(node: &Node, source: &[u8], profile: &LanguageConfig) -> u64 {
+        let match_constructs = &profile.match_construct_nodes;
+        let control_flow: Vec<String> = profile
+            .control_flow_nodes
+            .iter()
+            .filter(|kind| !match_constructs.contains(*kind))
+            .cloned()
+            .collect();
+
+        // Base path + all decision points.
+        1 + Self::count_keyword_matches(node, source, &control_flow)
+            + Self::count_keyword_matches(node, source, &profile.match_arm_nodes)
+            + Self::count_keyword_matches(node, source, &profile.boolean_operators)
     }
 
-    fn walk_cyclomatic(
-        node: &Node,
-        _source: &[u8],
-        profile: LanguageConfig,
-        complexity: &mut u64,
-    ) {
-        let kind = node.kind();
-        let control_flow = profile.control_flow_nodes;
-        let boolean_ops = profile.boolean_operators;
-        let match_constructs = profile.match_construct_nodes;
-        let match_arms = profile.match_arm_nodes;
-
-        // Count control flow nodes as decision points, but NOT any else clauses
-        // and NOT match/switch constructs (those are counted per-arm instead).
-        if control_flow.contains(&kind) && !match_constructs.contains(&kind) {
-            *complexity += 1;
+    fn count_keyword_matches(node: &Node, source: &[u8], kinds: &[String]) -> u64 {
+        if kinds.is_empty() {
+            return 0;
         }
 
-        // Each match/switch arm is a separate decision point (SonarSource/McCabe).
-        if match_arms.contains(&kind) {
-            *complexity += 1;
-        }
+        let query_text = kinds
+            .iter()
+            .map(|kind| format!("{} @decision", Self::query_pattern_for_kind(kind)))
+            .collect::<Vec<_>>()
+            .join("\n");
 
-        if boolean_ops.contains(&kind) {
-            *complexity += 1;
-        }
+        let query = match Query::new(&node.language(), &query_text) {
+            Ok(query) => query,
+            Err(_) => return 0,
+        };
 
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            Self::walk_cyclomatic(&child, _source, profile, complexity);
+        let mut count: u64 = 0;
+        let mut cursor = QueryCursor::new();
+        let mut matches = cursor.matches(&query, *node, source);
+        while matches.next().is_some() {
+            count += 1;
+        }
+        count
+    }
+
+    fn query_pattern_for_kind(kind: &str) -> String {
+        if kind
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+        {
+            format!("({kind})")
+        } else {
+            let escaped = kind.replace('\\', "\\\\").replace('"', "\\\"");
+            format!("\"{escaped}\"")
         }
     }
 }

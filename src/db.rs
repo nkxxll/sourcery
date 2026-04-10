@@ -280,11 +280,10 @@ pub async fn get_file_by_id(pool: &PgPool, id: Uuid) -> Result<Option<File>> {
 }
 
 pub async fn list_files_by_version(pool: &PgPool, version_id: Uuid) -> Result<Vec<File>> {
-    let rows =
-        sqlx::query_as::<_, File>("SELECT * FROM files WHERE version_id = $1 ORDER BY path")
-            .bind(version_id)
-            .fetch_all(pool)
-            .await?;
+    let rows = sqlx::query_as::<_, File>("SELECT * FROM files WHERE version_id = $1 ORDER BY path")
+        .bind(version_id)
+        .fetch_all(pool)
+        .await?;
     Ok(rows)
 }
 
