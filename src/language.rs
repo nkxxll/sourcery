@@ -1,5 +1,5 @@
-use std::path::Path;
 use std::ops::Range;
+use std::path::Path;
 
 use anyhow::{Result, anyhow};
 use tree_sitter::{Node, Parser, Query, QueryCursor, QueryMatch, StreamingIterator, Tree};
@@ -245,10 +245,15 @@ impl LanguageConfig {
 
     pub fn get_tree(&self, path: &Path) -> Result<(Tree, String)> {
         let source_code = std::fs::read_to_string(path)?;
+        let tree = self.parse_tree(&source_code)?;
+        Ok((tree, source_code))
+    }
+
+    pub fn parse_tree(&self, source_code: &str) -> Result<Tree> {
         let mut parser = Parser::new();
         parser.set_language(&self.language.ts_language())?;
-        let tree = parser.parse(&source_code, None);
-        Ok((tree.expect("has to be a tree"), source_code))
+        let tree = parser.parse(source_code, None);
+        Ok(tree.expect("has to be a tree"))
     }
 
     fn collect_matches<T>(

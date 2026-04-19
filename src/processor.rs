@@ -21,8 +21,19 @@ impl LinesOfCodeProcessor {
     /// counts the lines of content
     /// plus one because the content is without the last line break
     pub fn lines_of_code_content(content: &str) -> Result<u64> {
+        if content.is_empty() {
+            return Ok(0);
+        }
         let mut reader = BufReader::new(content.as_bytes());
         Ok(1 + Self::count_lines_from_reader(&mut reader)?)
+    }
+
+    pub fn effective_lines_of_code_content(content: &str) -> Result<u64> {
+        if content.is_empty() {
+            return Ok(0);
+        }
+        let mut reader = BufReader::new(content.as_bytes());
+        Ok(1 + Self::count_effective_lines_from_reader(&mut reader)?)
     }
 
     pub fn count_effective_lines_from_reader<R: BufRead>(reader: &mut R) -> Result<u64> {
