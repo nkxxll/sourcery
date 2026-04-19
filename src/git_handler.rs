@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use git2::{Oid, Repository, Revwalk, Sort};
+use git2::{Diff, Oid, Repository, Revwalk, Sort};
 
 pub struct SourceRepository {
     pub url: String,
@@ -22,6 +22,17 @@ impl SourceRepository {
             repo,
             dest_dir,
         })
+    }
+
+    pub fn get_diff(self: &Self, oid1: Oid, oid2: Oid) -> Result<Diff> {
+        let commit1 = self.repo.find_commit(oid1)?;
+        let commit2 = self.repo.find_commit(oid2)?;
+
+        let tree1 = commit1.tree()?;
+        let tree2 = commit2.tree()?;
+
+        let diff = self.repo.diff_tree_to_tree(Some(&tree1), Some(&tree2), None)?;
+        Ok(diff)
     }
 
     pub fn is_path_ignored(self: &Self, path: &Path) -> Result<bool> {
