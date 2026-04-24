@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use git2::{Diff, Oid, Repository, Revwalk, Sort};
+use git2::{Commit, Oid, Repository, Revwalk, Sort};
 
 pub struct SourceRepository {
     pub url: String,
@@ -24,15 +24,8 @@ impl SourceRepository {
         })
     }
 
-    pub fn get_diff(self: &Self, oid1: Oid, oid2: Oid) -> Result<Diff> {
-        let commit1 = self.repo.find_commit(oid1)?;
-        let commit2 = self.repo.find_commit(oid2)?;
-
-        let tree1 = commit1.tree()?;
-        let tree2 = commit2.tree()?;
-
-        let diff = self.repo.diff_tree_to_tree(Some(&tree1), Some(&tree2), None)?;
-        Ok(diff)
+    pub fn find_commit(&self, oid: &Oid) -> Result<Commit> {
+        Ok(self.repo.find_commit(*oid)?)
     }
 
     pub fn is_path_ignored(self: &Self, path: &Path) -> Result<bool> {
@@ -68,11 +61,11 @@ impl SourceRepository {
         Ok(revwalk)
     }
 
-    pub fn checkout_commit(self: &Self, oid: Oid) -> Result<()> {
+    pub fn checkout_commit(self: &Self, oid: &Oid) -> Result<()> {
         let repo = &self.repo;
-        let object = repo.find_object(oid, None)?;
+        let object = repo.find_object(*oid, None)?;
         repo.checkout_tree(&object, None)?;
-        repo.set_head_detached(oid)?;
+        repo.set_head_detached(*oid)?;
         tracing::info!("Checked out commit {}", oid);
         Ok(())
     }

@@ -55,7 +55,7 @@ fn test_checkout_commit() {
         .expect("revwalk failed");
 
     // Checkout the first commit — only hello.rs should exist, no src/ directory
-    repo.checkout_commit(oids[0]).expect("checkout failed");
+    repo.checkout_commit(&oids[0]).expect("checkout failed");
     assert!(repo_path.join("hello.rs").exists());
     assert!(
         !repo_path.join("src/lib.rs").exists(),
@@ -63,11 +63,11 @@ fn test_checkout_commit() {
     );
 
     // Checkout the second commit — src/lib.rs should now exist
-    repo.checkout_commit(oids[1]).expect("checkout failed");
+    repo.checkout_commit(&oids[1]).expect("checkout failed");
     assert!(repo_path.join("src/lib.rs").exists());
 
     // Checkout the third (latest) commit — hello.rs should contain "add"
-    repo.checkout_commit(oids[2]).expect("checkout failed");
+    repo.checkout_commit(&oids[2]).expect("checkout failed");
     let contents = std::fs::read_to_string(repo_path.join("hello.rs")).unwrap();
     assert!(
         contents.contains("add"),

@@ -23,6 +23,7 @@ pub struct Version {
     pub author_name: String,
     pub author_email: String,
     pub committed_at: Option<DateTime<Utc>>,
+    pub is_fix: Option<bool>,
     pub diff: Option<String>,
     pub metrics: serde_json::Value,
     pub created_at: DateTime<Utc>,
@@ -122,12 +123,13 @@ pub async fn insert_version(
     author_name: &str,
     author_email: &str,
     committed_at: Option<DateTime<Utc>>,
+    is_fix: Option<bool>,
     diff: Option<&str>,
     metrics: &serde_json::Value,
 ) -> Result<Version> {
     let row = sqlx::query_as::<_, Version>(
-        "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, diff, metrics)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, is_fix, diff, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *",
     )
     .bind(codebase_id)
@@ -136,6 +138,7 @@ pub async fn insert_version(
     .bind(author_name)
     .bind(author_email)
     .bind(committed_at)
+    .bind(is_fix)
     .bind(diff)
     .bind(metrics)
     .fetch_one(pool)

@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS versions (
     author_email    TEXT NOT NULL DEFAULT '',
     committed_at    TIMESTAMPTZ,
     diff            TEXT,
+    is_fix          BOOLEAN DEFAULT FALSE,
     metrics         JSONB NOT NULL DEFAULT '{}',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     UNIQUE (codebase_id, commit_hash)

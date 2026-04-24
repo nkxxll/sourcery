@@ -1392,6 +1392,7 @@ dependencies = [
  "clap",
  "dotenvy",
  "git2",
+ "regex",
  "serde",
  "serde_json",
  "sqlx",

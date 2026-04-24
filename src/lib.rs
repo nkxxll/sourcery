@@ -5,6 +5,7 @@ use std::{
 };
 
 use tokio::{sync::Semaphore, task::JoinSet};
+use tracing::warn;
 use walkdir::WalkDir;
 
 use crate::{
@@ -13,12 +14,16 @@ use crate::{
     processor::{CyclomaticComplexityProcessor, LinesOfCodeProcessor},
 };
 use anyhow::Result;
+use regex::Regex;
+use std::sync::OnceLock;
+
+static FIX_REGEX: OnceLock<Regex> = OnceLock::new();
 
 pub mod db;
+pub mod diff;
 pub mod git_handler;
 pub mod language;
 pub mod processor;
-pub mod diff;
 
 pub async fn analyze_git_repository(url: &str) -> Result<()> {
     // get a semaphore that tracks open files so that the fs is not overwhelmed
@@ -31,11 +36,25 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
     let lc = Arc::new(LanguageConfig::new(language::ProgrammingLanguage::Python));
 
     let sr = SourceRepository::new(url)?;
-    for commit in sr.into_iter() {
+    for commit_oid in sr.into_iter() {
         let repo_walker = WalkDir::new(&sr.dest_dir);
         eprintln!("=== commit ===");
-        dbg!(&commit);
-        sr.checkout_commit(commit.expect("this should be a commit"))?;
+        dbg!(&commit_oid);
+        let oid = commit_oid.expect("this should be a commit");
+        sr.checkout_commit(&oid)?;
+        if let Ok(commit) = &sr.find_commit(&oid) {
+            if let Some(message) = commit.message() {
+                if is_fix(message) {
+                    dbg!("this is a fix");
+                } else {
+                    dbg!("this is not a fix");
+                }
+            } else {
+                warn!("there is no message on this commit");
+            }
+        } else {
+            warn!("there is no commit found for the oid!");
+        }
         for entry in repo_walker.into_iter().filter_map(|e| e.ok()) {
             let path = entry.path().to_path_buf();
             if entry.file_type().is_file() && !sr.is_ignored_file(&path, "py")? {
@@ -92,4 +111,14 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
         while let Some(_) = join_set.join_next().await {}
     }
     Ok(())
+}
+
+fn is_fix(message: &str) -> bool {
+    let re = FIX_REGEX.get_or_init(|| {
+            Regex::new(
+                r"(?i)\b(fix(e[sd])?|bugfix(es)?|hotfix(es)?|patch(ed|es)?|resolve[sd]?|correct(ed)?|repair(ed|s)?)\b"
+            ).unwrap()
+        });
+
+    re.is_match(message)
 }
