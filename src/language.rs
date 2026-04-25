@@ -2,12 +2,11 @@ use std::ops::Range;
 use std::path::Path;
 
 use anyhow::{Result, anyhow};
-use tree_sitter::{Node, Parser, Query, QueryCursor, QueryMatch, StreamingIterator, Tree};
+use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_python;
 
 use tracing::warn;
-/// sets up structures for the languages with all the treesitter specific queries
-/// and other language specific stuff
+/// sets up structures for the languages and language specific analysis metadata
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ProgrammingLanguage {
@@ -17,21 +16,8 @@ pub enum ProgrammingLanguage {
     Golang,
 }
 
-pub enum QueryType {
-    Functions,
-}
-
-struct LanguageQueries {
-    functions: Query,
-    function_name_index: u32,
-    function_definition_index: u32,
-    comments: Query,
-    comment_index: u32,
-}
-
 pub struct LanguageConfig {
     language: ProgrammingLanguage,
-    queries: LanguageQueries,
     pub control_flow_nodes: Vec<String>,
     pub boolean_operators: Vec<String>,
     pub match_construct_nodes: Vec<String>,
@@ -157,6 +143,17 @@ pub struct FunctionPosition {
     pub definition: CodeSpan,
 }
 
+pub struct AstMetrics {
+    pub functions: Vec<FunctionPosition>,
+    pub comments: Vec<CodeSpan>,
+}
+
+#[derive(Default)]
+struct AstTraversalState {
+    functions: Vec<FunctionPosition>,
+    comments: Vec<CodeSpan>,
+}
+
 impl FunctionPosition {
     pub fn new(name: CodeSpan, definition: CodeSpan) -> Self {
         Self { name, definition }
@@ -165,58 +162,9 @@ impl FunctionPosition {
 
 impl LanguageConfig {
     pub fn new(language: ProgrammingLanguage) -> Self {
-        let (
-            queries,
-            control_flow_nodes,
-            boolean_operators,
-            match_construct_nodes,
-            match_arm_nodes,
-        ) = match language {
-            ProgrammingLanguage::Python => {
-                let comment_query = Query::new(
-                    &tree_sitter_python::LANGUAGE.into(),
-                    r#"(comment) @comment
-                    (module
-                      (expression_statement
-                        (string) @comment))
-                    (function_definition
-                      body: (block
-                        (expression_statement
-                          (string) @comment)))
-                    (class_definition
-                      body: (block
-                        (expression_statement
-                          (string) @comment)))
-                    "#,
-                )
-                .expect("query error python comments");
-                let function_query = Query::new(
-                    &tree_sitter_python::LANGUAGE.into(),
-                    r#"(
-                  (function_definition
-                    name: (identifier) @name
-                  ) @definition
-                )"#,
-                )
-                .expect("query error python function");
-                let name_idx = function_query
-                    .capture_index_for_name("name")
-                    .expect("query must have @name capture");
-                let definition_idx = function_query
-                    .capture_index_for_name("definition")
-                    .expect("query must have @definition capture");
-                let comment_idx = comment_query
-                    .capture_index_for_name("comment")
-                    .expect("comment query must have @comment capture");
-
-                (
-                    LanguageQueries {
-                        functions: function_query,
-                        function_name_index: name_idx,
-                        function_definition_index: definition_idx,
-                        comments: comment_query,
-                        comment_index: comment_idx,
-                    },
+        let (control_flow_nodes, boolean_operators, match_construct_nodes, match_arm_nodes) =
+            match language {
+                ProgrammingLanguage::Python => (
                     vec![
                         "if_statement".to_string(),
                         "elif_clause".to_string(),
@@ -229,13 +177,11 @@ impl LanguageConfig {
                     vec!["boolean_operator".to_string()],
                     vec!["match_statement".to_string()],
                     vec!["case_clause".to_string()],
-                )
-            }
-            _ => todo!("this language is not implemented yet!"),
-        };
+                ),
+                _ => todo!("this language is not implemented yet!"),
+            };
         Self {
             language,
-            queries,
             control_flow_nodes,
             boolean_operators,
             match_construct_nodes,
@@ -256,67 +202,89 @@ impl LanguageConfig {
         Ok(tree.expect("has to be a tree"))
     }
 
-    fn collect_matches<T>(
-        &self,
-        query: &Query,
-        tree: &Tree,
-        code: &str,
-        mut map: impl FnMut(&QueryMatch<'_, '_>) -> Option<T>,
-    ) -> Vec<T> {
-        let mut cursor = QueryCursor::new();
-        let mut matches = cursor.matches(query, tree.root_node(), code.as_bytes());
-        let mut out = Vec::new();
-
-        while let Some(m) = matches.next() {
-            if let Some(value) = map(&m) {
-                out.push(value);
-            }
-        }
-        out
-    }
-
-    pub fn get_comments(&self, tree: &Tree, code: &str) -> Result<Vec<CodeSpan>> {
-        let query = &self.queries.comments;
-        let comment_index = self.queries.comment_index;
-        let comments = self.collect_matches(query, tree, code, |m| {
-            let capture = m.captures.iter().find(|c| c.index == comment_index)?;
-            Some(Self::get_node_pos(capture.node))
-        });
-
-        Ok(comments)
-    }
-
-    pub fn get_functions(&self, tree: &Tree, code: &str) -> Result<Vec<FunctionPosition>> {
-        let query = &self.queries.functions;
-        let name_index = self.queries.function_name_index;
-        let definition_index = self.queries.function_definition_index;
-        let functions = self.collect_matches(query, tree, code, |m| {
-            let name_capture = m.captures.iter().find(|c| c.index == name_index);
-            let definition_capture = m.captures.iter().find(|c| c.index == definition_index);
-
-            let (Some(name_cap), Some(def_cap)) = (name_capture, definition_capture) else {
-                warn!("one of funciton name or definition could not be found");
-                return None;
-            };
-
-            let name_span = Self::get_node_pos(name_cap.node);
-            let definition_span = Self::get_node_pos(def_cap.node);
-
-            Some(FunctionPosition::new(name_span, definition_span))
-        });
-
-        Ok(functions)
+    pub fn analyze_tree(&self, tree: &Tree) -> Result<AstMetrics> {
+        let mut state = AstTraversalState::default();
+        self.traverse_node(tree.root_node(), &mut state);
+        Ok(AstMetrics {
+            functions: state.functions,
+            comments: state.comments,
+        })
     }
 
     fn get_node_pos(node: Node) -> CodeSpan {
         CodeSpan::new(node.start_byte(), node.end_byte())
     }
+
+    fn traverse_node(&self, node: Node, state: &mut AstTraversalState) {
+        if self.language == ProgrammingLanguage::Python {
+            self.collect_python_metrics(node, state);
+        }
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            self.traverse_node(child, state);
+        }
+    }
+
+    fn collect_python_metrics(&self, node: Node, state: &mut AstTraversalState) {
+        match node.kind() {
+            "function_definition" => {
+                let Some(name_node) = node.child_by_field_name("name") else {
+                    warn!("function_definition node without name child");
+                    return;
+                };
+                state.functions.push(FunctionPosition::new(
+                    Self::get_node_pos(name_node),
+                    Self::get_node_pos(node),
+                ));
+            }
+            "comment" => {
+                state.comments.push(Self::get_node_pos(node));
+            }
+            "string" if Self::is_python_docstring(node) => {
+                state.comments.push(Self::get_node_pos(node));
+            }
+            _ => {}
+        }
+    }
+
+    fn is_python_docstring(node: Node) -> bool {
+        let Some(parent) = node.parent() else {
+            return false;
+        };
+        if parent.kind() != "expression_statement" {
+            return false;
+        }
+
+        let Some(grandparent) = parent.parent() else {
+            return false;
+        };
+
+        match grandparent.kind() {
+            "module" => true,
+            "block" => grandparent.parent().is_some_and(|scope| {
+                matches!(scope.kind(), "function_definition" | "class_definition")
+            }),
+            _ => false,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::ProgrammingLanguage;
+    use super::{LanguageConfig, ProgrammingLanguage};
     use std::path::Path;
+    use tree_sitter::Parser;
+
+    fn parse_python(source: &str) -> tree_sitter::Tree {
+        let mut parser = Parser::new();
+        parser
+            .set_language(&tree_sitter_python::LANGUAGE.into())
+            .expect("python language must load");
+        parser
+            .parse(source, None)
+            .expect("python source must parse")
+    }
 
     #[test]
     fn detects_by_extension() {
@@ -347,5 +315,25 @@ mod tests {
         let language = ProgrammingLanguage::detect_language(Path::new("notes.txt"), Some(content));
 
         assert_eq!(language, None);
+    }
+
+    #[test]
+    fn analyze_tree_collects_functions_and_comments_in_single_pass() {
+        let source = r#"
+"""module docs"""
+# module comment
+def foo(value):
+    """function docs"""
+    if value > 0:
+        return value
+    return 0
+"#;
+        let tree = parse_python(source);
+        let config = LanguageConfig::new(ProgrammingLanguage::Python);
+
+        let metrics = config.analyze_tree(&tree).unwrap();
+
+        assert_eq!(metrics.functions.len(), 1);
+        assert_eq!(metrics.comments.len(), 3);
     }
 }

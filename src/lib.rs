@@ -75,8 +75,8 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     dbg!(&path, loc_file, loc_effect_file);
 
                     let tree = lc.parse_tree(&source)?;
-                    let functions = lc.get_functions(&tree, &source)?;
-                    for func in functions {
+                    let metrics = lc.analyze_tree(&tree)?;
+                    for func in metrics.functions {
                         // it is common that because of some kind of
                         // namespace the same funciton/method name could
                         // occure multiple times in a file so we have to
@@ -87,15 +87,13 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                             LinesOfCodeProcessor::lines_of_code_content(&definition)?;
                         let cyclomatic_function = CyclomaticComplexityProcessor::compute_cyclomatic(
                             &tree.root_node(),
-                            source.as_bytes(),
                             &lc,
                             Some(func.definition),
                         );
                         dbg!(&path, &unique_name, loc_function, cyclomatic_function);
                     }
 
-                    let comments = lc.get_comments(&tree, &source)?;
-                    for comment in comments {
+                    for comment in metrics.comments {
                         let content = comment.get_content(&source)?;
                         dbg!(
                             &content,

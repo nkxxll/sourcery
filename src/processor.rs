@@ -1,7 +1,11 @@
-use std::io::{BufRead, BufReader, Read};
+use std::{
+    collections::HashSet,
+    io::{BufRead, BufReader, Read},
+    ops::Range,
+};
 
 use crate::language::{CodeSpan, LanguageConfig};
-use tree_sitter::{Node, Query, QueryCursor, StreamingIterator};
+use tree_sitter::Node;
 
 use anyhow::Result;
 
@@ -73,6 +77,14 @@ impl LinesOfCodeProcessor {
 
 pub struct CyclomaticComplexityProcessor;
 
+#[derive(Default)]
+struct CyclomaticTraversalState {
+    control_flow: u64,
+    match_constructs: u64,
+    match_arms: u64,
+    boolean_operators: u64,
+}
+
 impl CyclomaticComplexityProcessor {
     /// inspired from https://github.com/StrangeDaysTech/arborist
     /// Compute cyclomatic complexity for a function body.
@@ -84,99 +96,120 @@ impl CyclomaticComplexityProcessor {
     /// Note: `else` is NOT a decision point and does not increment cyclomatic complexity.
     pub fn compute_cyclomatic(
         node: &Node,
-        source: &[u8],
         profile: &LanguageConfig,
         match_range: Option<CodeSpan>,
     ) -> u64 {
-        let control_flow = Self::control_flow_excluding_match_constructs(profile);
+        let counts = Self::collect_cyclomatic_counts(node, profile, match_range);
 
         // Base path + all decision points.
-        1 + Self::count_keyword_matches(node, source, &control_flow, match_range.clone())
-            + Self::count_keyword_matches(
-                node,
-                source,
-                &profile.match_arm_nodes,
-                match_range.clone(),
-            )
-            + Self::count_keyword_matches(node, source, &profile.boolean_operators, match_range)
+        1 + counts.control_flow + counts.match_arms + counts.boolean_operators
     }
 
     /// Variant of cyclomatic complexity where each match/switch construct counts as one branch,
     /// independent from how many case arms it contains.
     pub fn compute_cyclomatic_match_as_single_branch(
         node: &Node,
-        source: &[u8],
         profile: &LanguageConfig,
         match_range: Option<CodeSpan>,
     ) -> u64 {
-        let control_flow = Self::control_flow_excluding_match_constructs(profile);
+        let counts = Self::collect_cyclomatic_counts(node, profile, match_range);
 
-        1 + Self::count_keyword_matches(node, source, &control_flow, match_range.clone())
-            + Self::count_keyword_matches(
-                node,
-                source,
-                &profile.match_construct_nodes,
-                match_range.clone(),
-            )
-            + Self::count_keyword_matches(node, source, &profile.boolean_operators, match_range)
+        1 + counts.control_flow + counts.match_constructs + counts.boolean_operators
     }
 
-    fn control_flow_excluding_match_constructs(profile: &LanguageConfig) -> Vec<String> {
-        let match_constructs = &profile.match_construct_nodes;
-        profile
+    fn collect_cyclomatic_counts(
+        node: &Node,
+        profile: &LanguageConfig,
+        match_range: Option<CodeSpan>,
+    ) -> CyclomaticTraversalState {
+        let match_constructs: HashSet<&str> = profile
+            .match_construct_nodes
+            .iter()
+            .map(String::as_str)
+            .collect();
+
+        let control_flow: HashSet<&str> = profile
             .control_flow_nodes
             .iter()
-            .filter(|kind| !match_constructs.contains(*kind))
-            .cloned()
-            .collect()
-    }
+            .map(String::as_str)
+            .filter(|kind| !match_constructs.contains(kind))
+            .collect();
 
-    fn count_keyword_matches(
-        node: &Node,
-        source: &[u8],
-        kinds: &[String],
-        match_range: Option<CodeSpan>,
-    ) -> u64 {
-        if kinds.is_empty() {
-            return 0;
-        }
-
-        let query_text = kinds
+        let match_arms: HashSet<&str> =
+            profile.match_arm_nodes.iter().map(String::as_str).collect();
+        let boolean_operators: HashSet<&str> = profile
+            .boolean_operators
             .iter()
-            .map(|kind| format!("{} @decision", Self::query_pattern_for_kind(kind)))
-            .collect::<Vec<_>>()
-            .join("\n");
+            .map(String::as_str)
+            .collect();
 
-        let query = match Query::new(&node.language(), &query_text) {
-            Ok(query) => query,
-            Err(_) => panic!("the query is wrong"),
-        };
+        let mut state = CyclomaticTraversalState::default();
+        let range = match_range.map(Into::into);
+        Self::traverse_cyclomatic(
+            *node,
+            &control_flow,
+            &match_constructs,
+            &match_arms,
+            &boolean_operators,
+            range.as_ref(),
+            &mut state,
+        );
 
-        let mut count: u64 = 0;
-        let mut cursor = if match_range.is_some() {
-            let mut cursor = QueryCursor::new();
-            cursor.set_byte_range(match_range.unwrap().into());
-            cursor
-        } else {
-            QueryCursor::new()
-        };
-        let mut matches = cursor.matches(&query, *node, source);
-        while matches.next().is_some() {
-            count += 1;
-        }
-        count
+        state
     }
 
-    fn query_pattern_for_kind(kind: &str) -> String {
-        if kind
-            .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
-        {
-            format!("({kind})")
-        } else {
-            let escaped = kind.replace('\\', "\\\\").replace('"', "\\\"");
-            format!("\"{escaped}\"")
+    fn traverse_cyclomatic(
+        node: Node,
+        control_flow: &HashSet<&str>,
+        match_constructs: &HashSet<&str>,
+        match_arms: &HashSet<&str>,
+        boolean_operators: &HashSet<&str>,
+        range: Option<&Range<usize>>,
+        state: &mut CyclomaticTraversalState,
+    ) {
+        if let Some(range) = range {
+            if !Self::node_overlaps_range(node, range) {
+                return;
+            }
         }
+
+        let should_count = range.is_none_or(|range| Self::node_within_range(node, range));
+        if should_count {
+            let kind = node.kind();
+            if control_flow.contains(kind) {
+                state.control_flow += 1;
+            }
+            if match_constructs.contains(kind) {
+                state.match_constructs += 1;
+            }
+            if match_arms.contains(kind) {
+                state.match_arms += 1;
+            }
+            if boolean_operators.contains(kind) {
+                state.boolean_operators += 1;
+            }
+        }
+
+        let mut cursor = node.walk();
+        for child in node.children(&mut cursor) {
+            Self::traverse_cyclomatic(
+                child,
+                control_flow,
+                match_constructs,
+                match_arms,
+                boolean_operators,
+                range,
+                state,
+            );
+        }
+    }
+
+    fn node_within_range(node: Node, range: &Range<usize>) -> bool {
+        node.start_byte() >= range.start && node.end_byte() <= range.end
+    }
+
+    fn node_overlaps_range(node: Node, range: &Range<usize>) -> bool {
+        node.end_byte() > range.start && node.start_byte() < range.end
     }
 }
 
@@ -237,12 +270,8 @@ def identity(value):
         let tree = parse_python(source);
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
 
-        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic(
-            &tree.root_node(),
-            source.as_bytes(),
-            &profile,
-            None,
-        );
+        let complexity =
+            CyclomaticComplexityProcessor::compute_cyclomatic(&tree.root_node(), &profile, None);
 
         assert_eq!(complexity, 1);
     }
@@ -274,12 +303,8 @@ def analyze(x, values):
         let tree = parse_python(source);
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
 
-        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic(
-            &tree.root_node(),
-            source.as_bytes(),
-            &profile,
-            None,
-        );
+        let complexity =
+            CyclomaticComplexityProcessor::compute_cyclomatic(&tree.root_node(), &profile, None);
 
         assert_eq!(complexity, 10);
     }
@@ -313,7 +338,6 @@ def analyze(x, values):
 
         let complexity = CyclomaticComplexityProcessor::compute_cyclomatic_match_as_single_branch(
             &tree.root_node(),
-            source.as_bytes(),
             &profile,
             None,
         );
