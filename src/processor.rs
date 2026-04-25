@@ -1,11 +1,11 @@
 use std::{
     collections::HashSet,
     io::{BufRead, BufReader, Read},
-    ops::Range,
 };
 
 use crate::language::{CodeSpan, LanguageConfig};
-use tree_sitter::Node;
+use tracing::warn;
+use tree_sitter::{Node, Tree};
 
 use anyhow::Result;
 
@@ -17,6 +17,109 @@ pub struct FunctionLocResult {
     pub start_line: i32,
     pub end_line: i32,
     pub loc: usize,
+}
+
+#[derive(Debug)]
+pub struct FunctionAnalysis {
+    pub name: CodeSpan,
+    pub definition: CodeSpan,
+    pub cyclomatic: u64,
+    pub cyclomatic_match_as_single_branch: u64,
+}
+
+#[derive(Debug)]
+pub struct AstAnalysis {
+    pub functions: Vec<FunctionAnalysis>,
+    pub comments: Vec<CodeSpan>,
+}
+
+pub struct AstProcessor;
+
+#[derive(Default, Clone, Copy)]
+struct CyclomaticCounts {
+    control_flow: u64,
+    match_constructs: u64,
+    match_arms: u64,
+    boolean_operators: u64,
+}
+
+impl CyclomaticCounts {
+    fn add_from_kind(&mut self, kind: &str, classifier: &NodeKindClassifier<'_>) {
+        if classifier.control_flow.contains(kind) {
+            self.control_flow += 1;
+        }
+        if classifier.match_constructs.contains(kind) {
+            self.match_constructs += 1;
+        }
+        if classifier.match_arms.contains(kind) {
+            self.match_arms += 1;
+        }
+        if classifier.boolean_operators.contains(kind) {
+            self.boolean_operators += 1;
+        }
+    }
+
+    fn cyclomatic(self) -> u64 {
+        1 + self.control_flow + self.match_arms + self.boolean_operators
+    }
+
+    fn cyclomatic_match_as_single_branch(self) -> u64 {
+        1 + self.control_flow + self.match_constructs + self.boolean_operators
+    }
+}
+
+#[derive(Default)]
+struct AstTraversalState {
+    functions: Vec<FunctionAnalysis>,
+    comments: Vec<CodeSpan>,
+    function_stack: Vec<FunctionFrame>,
+}
+
+struct FunctionFrame {
+    function_index: usize,
+    cyclomatic_counts: CyclomaticCounts,
+}
+
+struct NodeKindClassifier<'a> {
+    function_nodes: HashSet<&'a str>,
+    comment_nodes: HashSet<&'a str>,
+    control_flow: HashSet<&'a str>,
+    match_constructs: HashSet<&'a str>,
+    match_arms: HashSet<&'a str>,
+    boolean_operators: HashSet<&'a str>,
+}
+
+impl<'a> NodeKindClassifier<'a> {
+    fn from_language(profile: &'a LanguageConfig) -> Self {
+        let function_nodes = profile.function_nodes.iter().map(String::as_str).collect();
+        let comment_nodes = profile.comment_nodes.iter().map(String::as_str).collect();
+        let match_constructs: HashSet<&str> = profile
+            .match_construct_nodes
+            .iter()
+            .map(String::as_str)
+            .collect();
+        let control_flow = profile
+            .control_flow_nodes
+            .iter()
+            .map(String::as_str)
+            .filter(|kind| !match_constructs.contains(kind))
+            .collect();
+        let match_arms = profile.match_arm_nodes.iter().map(String::as_str).collect();
+        let boolean_operators = profile
+            .boolean_operators
+            .iter()
+            .map(String::as_str)
+            .collect();
+
+        Self {
+            function_nodes,
+            comment_nodes,
+            control_flow,
+            match_constructs,
+            match_arms,
+            boolean_operators,
+        }
+    }
 }
 
 const CHUNK_SIZE: usize = 1 << 16; // 64KB
@@ -75,147 +178,78 @@ impl LinesOfCodeProcessor {
     }
 }
 
-pub struct CyclomaticComplexityProcessor;
+impl AstProcessor {
+    pub fn analyze_tree(tree: &Tree, profile: &LanguageConfig) -> AstAnalysis {
+        let classifier = NodeKindClassifier::from_language(profile);
+        let mut state = AstTraversalState::default();
+        Self::traverse(tree.root_node(), profile, &classifier, &mut state);
 
-#[derive(Default)]
-struct CyclomaticTraversalState {
-    control_flow: u64,
-    match_constructs: u64,
-    match_arms: u64,
-    boolean_operators: u64,
-}
-
-impl CyclomaticComplexityProcessor {
-    /// inspired from https://github.com/StrangeDaysTech/arborist
-    /// Compute cyclomatic complexity for a function body.
-    ///
-    /// Starts at 1 (base path). Each decision point adds +1:
-    /// if, else if, for, while, do-while, match/switch arm,
-    /// catch/except, &&, ||, ternary operator.
-    ///
-    /// Note: `else` is NOT a decision point and does not increment cyclomatic complexity.
-    pub fn compute_cyclomatic(
-        node: &Node,
-        profile: &LanguageConfig,
-        match_range: Option<CodeSpan>,
-    ) -> u64 {
-        let counts = Self::collect_cyclomatic_counts(node, profile, match_range);
-
-        // Base path + all decision points.
-        1 + counts.control_flow + counts.match_arms + counts.boolean_operators
+        AstAnalysis {
+            functions: state.functions,
+            comments: state.comments,
+        }
     }
 
-    /// Variant of cyclomatic complexity where each match/switch construct counts as one branch,
-    /// independent from how many case arms it contains.
-    pub fn compute_cyclomatic_match_as_single_branch(
-        node: &Node,
-        profile: &LanguageConfig,
-        match_range: Option<CodeSpan>,
-    ) -> u64 {
-        let counts = Self::collect_cyclomatic_counts(node, profile, match_range);
-
-        1 + counts.control_flow + counts.match_constructs + counts.boolean_operators
-    }
-
-    fn collect_cyclomatic_counts(
-        node: &Node,
-        profile: &LanguageConfig,
-        match_range: Option<CodeSpan>,
-    ) -> CyclomaticTraversalState {
-        let match_constructs: HashSet<&str> = profile
-            .match_construct_nodes
-            .iter()
-            .map(String::as_str)
-            .collect();
-
-        let control_flow: HashSet<&str> = profile
-            .control_flow_nodes
-            .iter()
-            .map(String::as_str)
-            .filter(|kind| !match_constructs.contains(kind))
-            .collect();
-
-        let match_arms: HashSet<&str> =
-            profile.match_arm_nodes.iter().map(String::as_str).collect();
-        let boolean_operators: HashSet<&str> = profile
-            .boolean_operators
-            .iter()
-            .map(String::as_str)
-            .collect();
-
-        let mut state = CyclomaticTraversalState::default();
-        let range = match_range.map(Into::into);
-        Self::traverse_cyclomatic(
-            *node,
-            &control_flow,
-            &match_constructs,
-            &match_arms,
-            &boolean_operators,
-            range.as_ref(),
-            &mut state,
-        );
-
-        state
-    }
-
-    fn traverse_cyclomatic(
+    fn traverse(
         node: Node,
-        control_flow: &HashSet<&str>,
-        match_constructs: &HashSet<&str>,
-        match_arms: &HashSet<&str>,
-        boolean_operators: &HashSet<&str>,
-        range: Option<&Range<usize>>,
-        state: &mut CyclomaticTraversalState,
+        profile: &LanguageConfig,
+        classifier: &NodeKindClassifier<'_>,
+        state: &mut AstTraversalState,
     ) {
-        if let Some(range) = range {
-            if !Self::node_overlaps_range(node, range) {
+        let kind = node.kind();
+        let mut entered_function = false;
+
+        if classifier.function_nodes.contains(kind) {
+            let Some(name_span) = profile.function_name_span(node) else {
+                warn!("function node without expected name field: {}", kind);
+                let mut cursor = node.walk();
+                for child in node.children(&mut cursor) {
+                    Self::traverse(child, profile, classifier, state);
+                }
                 return;
-            }
+            };
+            let function_index = state.functions.len();
+            state.functions.push(FunctionAnalysis {
+                name: name_span,
+                definition: LanguageConfig::node_span(node),
+                cyclomatic: 1,
+                cyclomatic_match_as_single_branch: 1,
+            });
+            state.function_stack.push(FunctionFrame {
+                function_index,
+                cyclomatic_counts: CyclomaticCounts::default(),
+            });
+            entered_function = true;
         }
 
-        let should_count = range.is_none_or(|range| Self::node_within_range(node, range));
-        if should_count {
-            let kind = node.kind();
-            if control_flow.contains(kind) {
-                state.control_flow += 1;
-            }
-            if match_constructs.contains(kind) {
-                state.match_constructs += 1;
-            }
-            if match_arms.contains(kind) {
-                state.match_arms += 1;
-            }
-            if boolean_operators.contains(kind) {
-                state.boolean_operators += 1;
-            }
+        if classifier.comment_nodes.contains(kind) || profile.is_doc_string_node(node) {
+            state.comments.push(LanguageConfig::node_span(node));
+        }
+
+        for frame in &mut state.function_stack {
+            frame.cyclomatic_counts.add_from_kind(kind, classifier);
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse_cyclomatic(
-                child,
-                control_flow,
-                match_constructs,
-                match_arms,
-                boolean_operators,
-                range,
-                state,
-            );
+            Self::traverse(child, profile, classifier, state);
         }
-    }
 
-    fn node_within_range(node: Node, range: &Range<usize>) -> bool {
-        node.start_byte() >= range.start && node.end_byte() <= range.end
-    }
-
-    fn node_overlaps_range(node: Node, range: &Range<usize>) -> bool {
-        node.end_byte() > range.start && node.start_byte() < range.end
+        if entered_function {
+            let Some(frame) = state.function_stack.pop() else {
+                return;
+            };
+            let function = &mut state.functions[frame.function_index];
+            function.cyclomatic = frame.cyclomatic_counts.cyclomatic();
+            function.cyclomatic_match_as_single_branch =
+                frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{CyclomaticComplexityProcessor, LinesOfCodeProcessor};
+    use super::{AstProcessor, LinesOfCodeProcessor};
     use crate::language::{LanguageConfig, ProgrammingLanguage};
     use std::io::Cursor;
     use tree_sitter::Parser;
@@ -261,7 +295,45 @@ mod tests {
     }
 
     #[test]
-    fn cyclomatic_complexity_is_one_for_straight_line_python_function() {
+    fn one_pass_analysis_collects_functions_comments_and_cyclomatic() {
+        let source = r#"
+"""module docs"""
+# module comment
+def analyze(x, values):
+    """function docs"""
+    if x > 10 and x < 20:
+        return 1
+    elif x == 0:
+        return 2
+
+    for value in values:
+        if value % 2 == 0:
+            return 3
+
+    while x > 0:
+        x -= 1
+
+    match x:
+        case 1:
+            return 4
+        case _:
+            return 5
+
+    return 6 if x < 0 else 7
+"#;
+        let tree = parse_python(source);
+        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+
+        let metrics = AstProcessor::analyze_tree(&tree, &profile);
+
+        assert_eq!(metrics.functions.len(), 1);
+        assert_eq!(metrics.comments.len(), 3);
+        assert_eq!(metrics.functions[0].cyclomatic, 10);
+        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 9);
+    }
+
+    #[test]
+    fn one_pass_analysis_keeps_straight_line_function_at_one() {
         let source = r#"
 def identity(value):
     result = value + 1
@@ -270,78 +342,10 @@ def identity(value):
         let tree = parse_python(source);
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
 
-        let complexity =
-            CyclomaticComplexityProcessor::compute_cyclomatic(&tree.root_node(), &profile, None);
+        let metrics = AstProcessor::analyze_tree(&tree, &profile);
 
-        assert_eq!(complexity, 1);
-    }
-
-    #[test]
-    fn cyclomatic_complexity_counts_python_decision_points() {
-        let source = r#"
-def analyze(x, values):
-    if x > 10 and x < 20:
-        return 1
-    elif x == 0:
-        return 2
-
-    for value in values:
-        if value % 2 == 0:
-            return 3
-
-    while x > 0:
-        x -= 1
-
-    match x:
-        case 1:
-            return 4
-        case _:
-            return 5
-
-    return 6 if x < 0 else 7
-"#;
-        let tree = parse_python(source);
-        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-
-        let complexity =
-            CyclomaticComplexityProcessor::compute_cyclomatic(&tree.root_node(), &profile, None);
-
-        assert_eq!(complexity, 10);
-    }
-
-    #[test]
-    fn cyclomatic_complexity_match_counts_construct_once() {
-        let source = r#"
-def analyze(x, values):
-    if x > 10 and x < 20:
-        return 1
-    elif x == 0:
-        return 2
-
-    for value in values:
-        if value % 2 == 0:
-            return 3
-
-    while x > 0:
-        x -= 1
-
-    match x:
-        case 1:
-            return 4
-        case _:
-            return 5
-
-    return 6 if x < 0 else 7
-"#;
-        let tree = parse_python(source);
-        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-
-        let complexity = CyclomaticComplexityProcessor::compute_cyclomatic_match_as_single_branch(
-            &tree.root_node(),
-            &profile,
-            None,
-        );
-
-        assert_eq!(complexity, 9);
+        assert_eq!(metrics.functions.len(), 1);
+        assert_eq!(metrics.functions[0].cyclomatic, 1);
+        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 1);
     }
 }

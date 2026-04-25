@@ -5,7 +5,6 @@ use anyhow::{Result, anyhow};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_python;
 
-use tracing::warn;
 /// sets up structures for the languages and language specific analysis metadata
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,6 +17,9 @@ pub enum ProgrammingLanguage {
 
 pub struct LanguageConfig {
     language: ProgrammingLanguage,
+    pub function_nodes: Vec<String>,
+    pub function_name_field: String,
+    pub comment_nodes: Vec<String>,
     pub control_flow_nodes: Vec<String>,
     pub boolean_operators: Vec<String>,
     pub match_construct_nodes: Vec<String>,
@@ -138,50 +140,42 @@ impl From<CodeSpan> for Range<usize> {
     }
 }
 
-pub struct FunctionPosition {
-    pub name: CodeSpan,
-    pub definition: CodeSpan,
-}
-
-pub struct AstMetrics {
-    pub functions: Vec<FunctionPosition>,
-    pub comments: Vec<CodeSpan>,
-}
-
-#[derive(Default)]
-struct AstTraversalState {
-    functions: Vec<FunctionPosition>,
-    comments: Vec<CodeSpan>,
-}
-
-impl FunctionPosition {
-    pub fn new(name: CodeSpan, definition: CodeSpan) -> Self {
-        Self { name, definition }
-    }
-}
-
 impl LanguageConfig {
     pub fn new(language: ProgrammingLanguage) -> Self {
-        let (control_flow_nodes, boolean_operators, match_construct_nodes, match_arm_nodes) =
-            match language {
-                ProgrammingLanguage::Python => (
-                    vec![
-                        "if_statement".to_string(),
-                        "elif_clause".to_string(),
-                        "for_statement".to_string(),
-                        "while_statement".to_string(),
-                        "except_clause".to_string(),
-                        "conditional_expression".to_string(),
-                        "match_statement".to_string(),
-                    ],
-                    vec!["boolean_operator".to_string()],
-                    vec!["match_statement".to_string()],
-                    vec!["case_clause".to_string()],
-                ),
-                _ => todo!("this language is not implemented yet!"),
-            };
+        let (
+            function_nodes,
+            function_name_field,
+            comment_nodes,
+            control_flow_nodes,
+            boolean_operators,
+            match_construct_nodes,
+            match_arm_nodes,
+        ) = match language {
+            ProgrammingLanguage::Python => (
+                vec!["function_definition".to_string()],
+                "name".to_string(),
+                vec!["comment".to_string()],
+                vec![
+                    "if_statement".to_string(),
+                    "elif_clause".to_string(),
+                    "for_statement".to_string(),
+                    "while_statement".to_string(),
+                    "except_clause".to_string(),
+                    "conditional_expression".to_string(),
+                    "match_statement".to_string(),
+                ],
+                vec!["boolean_operator".to_string()],
+                vec!["match_statement".to_string()],
+                vec!["case_clause".to_string()],
+            ),
+            _ => todo!("this language is not implemented yet!"),
+        };
+
         Self {
             language,
+            function_nodes,
+            function_name_field,
+            comment_nodes,
             control_flow_nodes,
             boolean_operators,
             match_construct_nodes,
@@ -202,49 +196,19 @@ impl LanguageConfig {
         Ok(tree.expect("has to be a tree"))
     }
 
-    pub fn analyze_tree(&self, tree: &Tree) -> Result<AstMetrics> {
-        let mut state = AstTraversalState::default();
-        self.traverse_node(tree.root_node(), &mut state);
-        Ok(AstMetrics {
-            functions: state.functions,
-            comments: state.comments,
-        })
+    pub fn function_name_span(&self, function_node: Node) -> Option<CodeSpan> {
+        let name_node = function_node.child_by_field_name(&self.function_name_field)?;
+        Some(Self::node_span(name_node))
     }
 
-    fn get_node_pos(node: Node) -> CodeSpan {
+    pub fn node_span(node: Node) -> CodeSpan {
         CodeSpan::new(node.start_byte(), node.end_byte())
     }
 
-    fn traverse_node(&self, node: Node, state: &mut AstTraversalState) {
-        if self.language == ProgrammingLanguage::Python {
-            self.collect_python_metrics(node, state);
-        }
-
-        let mut cursor = node.walk();
-        for child in node.children(&mut cursor) {
-            self.traverse_node(child, state);
-        }
-    }
-
-    fn collect_python_metrics(&self, node: Node, state: &mut AstTraversalState) {
-        match node.kind() {
-            "function_definition" => {
-                let Some(name_node) = node.child_by_field_name("name") else {
-                    warn!("function_definition node without name child");
-                    return;
-                };
-                state.functions.push(FunctionPosition::new(
-                    Self::get_node_pos(name_node),
-                    Self::get_node_pos(node),
-                ));
-            }
-            "comment" => {
-                state.comments.push(Self::get_node_pos(node));
-            }
-            "string" if Self::is_python_docstring(node) => {
-                state.comments.push(Self::get_node_pos(node));
-            }
-            _ => {}
+    pub fn is_doc_string_node(&self, node: Node) -> bool {
+        match self.language {
+            ProgrammingLanguage::Python => Self::is_python_docstring(node),
+            _ => false,
         }
     }
 
@@ -272,19 +236,8 @@ impl LanguageConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::{LanguageConfig, ProgrammingLanguage};
+    use super::ProgrammingLanguage;
     use std::path::Path;
-    use tree_sitter::Parser;
-
-    fn parse_python(source: &str) -> tree_sitter::Tree {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_python::LANGUAGE.into())
-            .expect("python language must load");
-        parser
-            .parse(source, None)
-            .expect("python source must parse")
-    }
 
     #[test]
     fn detects_by_extension() {
@@ -315,25 +268,5 @@ mod tests {
         let language = ProgrammingLanguage::detect_language(Path::new("notes.txt"), Some(content));
 
         assert_eq!(language, None);
-    }
-
-    #[test]
-    fn analyze_tree_collects_functions_and_comments_in_single_pass() {
-        let source = r#"
-"""module docs"""
-# module comment
-def foo(value):
-    """function docs"""
-    if value > 0:
-        return value
-    return 0
-"#;
-        let tree = parse_python(source);
-        let config = LanguageConfig::new(ProgrammingLanguage::Python);
-
-        let metrics = config.analyze_tree(&tree).unwrap();
-
-        assert_eq!(metrics.functions.len(), 1);
-        assert_eq!(metrics.comments.len(), 3);
     }
 }

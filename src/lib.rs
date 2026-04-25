@@ -11,7 +11,7 @@ use walkdir::WalkDir;
 use crate::{
     git_handler::SourceRepository,
     language::LanguageConfig,
-    processor::{CyclomaticComplexityProcessor, LinesOfCodeProcessor},
+    processor::{AstProcessor, LinesOfCodeProcessor},
 };
 use anyhow::Result;
 use regex::Regex;
@@ -75,7 +75,7 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     dbg!(&path, loc_file, loc_effect_file);
 
                     let tree = lc.parse_tree(&source)?;
-                    let metrics = lc.analyze_tree(&tree)?;
+                    let metrics = AstProcessor::analyze_tree(&tree, &lc);
                     for func in metrics.functions {
                         // it is common that because of some kind of
                         // namespace the same funciton/method name could
@@ -85,11 +85,7 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                         let definition = func.definition.get_content(&source)?;
                         let loc_function =
                             LinesOfCodeProcessor::lines_of_code_content(&definition)?;
-                        let cyclomatic_function = CyclomaticComplexityProcessor::compute_cyclomatic(
-                            &tree.root_node(),
-                            &lc,
-                            Some(func.definition),
-                        );
+                        let cyclomatic_function = func.cyclomatic;
                         dbg!(&path, &unique_name, loc_function, cyclomatic_function);
                     }
 
