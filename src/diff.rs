@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::path::PathBuf;
+use std::{collections::BTreeSet, path::PathBuf};
 
 use git2::{Oid, Repository};
 
@@ -37,6 +37,7 @@ impl Change {
 }
 
 pub struct CommitDiff {
+    files: Vec<PathBuf>,
     changes: Vec<Change>,
     files_changed: usize,
     number_of_changes: usize,
@@ -45,61 +46,103 @@ pub struct CommitDiff {
 }
 
 impl CommitDiff {
-    pub fn new(repo: &Repository, old_commit_oid: &Oid, new_commit_oid: &Oid) -> Result<Self> {
-        let old_commit = repo.find_commit(*old_commit_oid)?;
+    pub fn new(
+        repo: &Repository,
+        old_commit_oid: Option<&Oid>,
+        new_commit_oid: &Oid,
+    ) -> Result<Self> {
         let new_commit = repo.find_commit(*new_commit_oid)?;
-
-        let tree1 = old_commit.tree()?;
-        let tree2 = new_commit.tree()?;
-
-        let diff = repo.diff_tree_to_tree(Some(&tree1), Some(&tree2), None)?;
+        let new_tree = new_commit.tree()?;
+        let old_tree = if let Some(oid) = old_commit_oid {
+            Some(repo.find_commit(*oid)?.tree()?)
+        } else {
+            None
+        };
+        let diff = repo.diff_tree_to_tree(old_tree.as_ref(), Some(&new_tree), None)?;
 
         let stats = diff.stats()?;
         let insertions = stats.insertions();
         let deletions = stats.deletions();
         let files_changed = stats.files_changed();
+        let mut files = BTreeSet::new();
+        for delta in diff.deltas() {
+            if let Some(path) = delta.new_file().path().or_else(|| delta.old_file().path()) {
+                files.insert(path.to_path_buf());
+            }
+        }
         let mut changes = Vec::new();
         diff.foreach(
             &mut |_delta, _progress| true,
             None,
             Some(&mut |delta, hunk| {
-                // todo fill up the changes hashmap
                 let new_file = delta.new_file();
                 let old_file = delta.old_file();
 
                 let new_file_buf = new_file.path().map(|p| PathBuf::from(p));
                 let old_file_buf = old_file.path().map(|p| PathBuf::from(p));
 
-                println!("file: {:?}", delta.new_file().path());
                 let change = Change::new(
-                    new_file_buf,
                     old_file_buf,
+                    new_file_buf,
                     hunk.old_start() as usize,
-                    hunk.old_lines() as usize,
+                    hunk.old_start() as usize + hunk.old_lines() as usize,
                     hunk.new_start() as usize,
-                    hunk.new_lines() as usize,
+                    hunk.new_start() as usize + hunk.new_lines() as usize,
                 );
                 changes.push(change);
-                println!(
-                    "hunk: old {}+{}, new {}+{}",
-                    hunk.old_start(),
-                    hunk.old_lines(),
-                    hunk.new_start(),
-                    hunk.new_lines()
-                );
                 true
             }),
             Some(&mut |_delta, _hunk, _line| {
                 // optional: lines inside the hunk
                 true
             }),
-        );
+        )?;
         Ok(CommitDiff {
+            files: files.into_iter().collect(),
             changes,
             files_changed,
             number_of_changes: insertions + deletions,
             insertions,
             deletions,
         })
+    }
+
+    pub fn files(&self) -> &[PathBuf] {
+        &self.files
+    }
+
+    pub fn pretty_print(&self) -> String {
+        let mut lines = Vec::new();
+        lines.push(format!("files changed: {}", self.files_changed));
+        lines.push(format!("insertions: {}", self.insertions));
+        lines.push(format!("deletions: {}", self.deletions));
+        lines.push(format!("total line changes: {}", self.number_of_changes));
+        lines.push("files:".to_string());
+        for file in &self.files {
+            lines.push(format!("  - {}", file.display()));
+        }
+        lines.push("hunks:".to_string());
+        for change in &self.changes {
+            let old_file = change
+                .old_file
+                .as_ref()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| "-".to_string());
+            let new_file = change
+                .new_file
+                .as_ref()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| "-".to_string());
+            lines.push(format!(
+                "  - {}:{}..{} -> {}:{}..{}",
+                old_file,
+                change.old_line_span.0,
+                change.old_line_span.1,
+                new_file,
+                change.new_line_span.0,
+                change.new_line_span.1
+            ));
+        }
+        lines.join("\n")
     }
 }

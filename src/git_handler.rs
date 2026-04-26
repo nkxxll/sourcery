@@ -24,8 +24,16 @@ impl SourceRepository {
         })
     }
 
-    pub fn find_commit(&self, oid: &Oid) -> Result<Commit> {
+    pub fn find_commit(&self, oid: &Oid) -> Result<Commit<'_>> {
         Ok(self.repo.find_commit(*oid)?)
+    }
+
+    pub fn commit_diff(
+        &self,
+        old_commit_oid: Option<&Oid>,
+        new_commit_oid: &Oid,
+    ) -> Result<crate::diff::CommitDiff> {
+        crate::diff::CommitDiff::new(&self.repo, old_commit_oid, new_commit_oid)
     }
 
     pub fn is_path_ignored(self: &Self, path: &Path) -> Result<bool> {

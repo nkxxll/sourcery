@@ -74,3 +74,81 @@ fn test_checkout_commit() {
         "hello.rs at third commit should contain 'add'"
     );
 }
+
+#[test]
+fn test_changed_files_between_commits() {
+    setup_test_repo();
+    let repo = SourceRepository::from_path(test_repo_path()).expect("failed to open test repo");
+
+    let oids: Vec<_> = repo
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()
+        .expect("revwalk failed");
+
+    let second_commit_changes = repo
+        .commit_diff(Some(&oids[0]), &oids[1])
+        .expect("failed to diff first and second commit")
+        .files()
+        .to_vec();
+    assert_eq!(second_commit_changes, vec![PathBuf::from("src/lib.rs")]);
+
+    let third_commit_changes = repo
+        .commit_diff(Some(&oids[1]), &oids[2])
+        .expect("failed to diff second and third commit")
+        .files()
+        .to_vec();
+    assert_eq!(third_commit_changes, vec![PathBuf::from("hello.rs")]);
+}
+
+#[test]
+fn test_files_in_commit() {
+    setup_test_repo();
+    let repo = SourceRepository::from_path(test_repo_path()).expect("failed to open test repo");
+
+    let oids: Vec<_> = repo
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()
+        .expect("revwalk failed");
+
+    let first_commit_files = repo
+        .commit_diff(None, &oids[0])
+        .expect("failed to list files in first commit")
+        .files()
+        .to_vec();
+    assert_eq!(first_commit_files, vec![PathBuf::from("hello.rs")]);
+
+    let second_commit_files = repo
+        .commit_diff(None, &oids[1])
+        .expect("failed to list files in second commit")
+        .files()
+        .to_vec();
+    assert_eq!(
+        second_commit_files,
+        vec![PathBuf::from("hello.rs"), PathBuf::from("src/lib.rs")]
+    );
+}
+
+#[test]
+fn test_commit_diff_files_and_pretty_print() {
+    setup_test_repo();
+    let repo = SourceRepository::from_path(test_repo_path()).expect("failed to open test repo");
+
+    let oids: Vec<_> = repo
+        .into_iter()
+        .collect::<Result<Vec<_>, _>>()
+        .expect("revwalk failed");
+
+    let first_commit_diff = repo
+        .commit_diff(None, &oids[0])
+        .expect("failed to diff root and first commit");
+    assert_eq!(first_commit_diff.files(), &[PathBuf::from("hello.rs")]);
+
+    let third_commit_diff = repo
+        .commit_diff(Some(&oids[1]), &oids[2])
+        .expect("failed to diff second and third commit");
+    assert_eq!(third_commit_diff.files(), &[PathBuf::from("hello.rs")]);
+
+    let pretty = third_commit_diff.pretty_print();
+    assert!(pretty.contains("files changed: 1"));
+    assert!(pretty.contains("hello.rs"));
+}
