@@ -3,6 +3,8 @@ use std::path::Path;
 
 use anyhow::{Result, anyhow};
 use tree_sitter::{Node, Parser, Tree};
+use tree_sitter_go;
+use tree_sitter_ocaml;
 use tree_sitter_python;
 
 /// sets up structures for the languages and language specific analysis metadata
@@ -102,7 +104,9 @@ impl ProgrammingLanguage {
     fn ts_language(&self) -> tree_sitter::Language {
         match self {
             ProgrammingLanguage::Python => tree_sitter_python::LANGUAGE.into(),
-            _ => todo!("this language is not implemented yet!"),
+            ProgrammingLanguage::Ocaml => tree_sitter_ocaml::LANGUAGE_OCAML.into(),
+            ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
+            ProgrammingLanguage::Golang => tree_sitter_go::LANGUAGE.into(),
         }
     }
 }
@@ -168,7 +172,49 @@ impl LanguageConfig {
                 vec!["match_statement".to_string()],
                 vec!["case_clause".to_string()],
             ),
-            _ => todo!("this language is not implemented yet!"),
+            ProgrammingLanguage::Ocaml => (
+                vec!["let_binding".to_string()],
+                "pattern".to_string(),
+                vec!["comment".to_string()],
+                vec![
+                    "if_expression".to_string(),
+                    "for_expression".to_string(),
+                    "while_expression".to_string(),
+                    "try_expression".to_string(),
+                    "match_expression".to_string(),
+                ],
+                vec!["and_operator".to_string(), "or_operator".to_string()],
+                vec!["match_expression".to_string()],
+                vec!["match_case".to_string()],
+            ),
+            ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
+            ProgrammingLanguage::Golang => (
+                vec![
+                    "function_declaration".to_string(),
+                    "method_declaration".to_string(),
+                ],
+                "name".to_string(),
+                vec!["comment".to_string()],
+                vec![
+                    "if_statement".to_string(),
+                    "for_statement".to_string(),
+                    "expression_switch_statement".to_string(),
+                    "type_switch_statement".to_string(),
+                    "select_statement".to_string(),
+                ],
+                vec!["&&".to_string(), "||".to_string()],
+                vec![
+                    "expression_switch_statement".to_string(),
+                    "type_switch_statement".to_string(),
+                    "select_statement".to_string(),
+                ],
+                vec![
+                    "expression_case".to_string(),
+                    "type_case".to_string(),
+                    "communication_case".to_string(),
+                    "default_case".to_string(),
+                ],
+            ),
         };
 
         Self {
@@ -236,7 +282,7 @@ impl LanguageConfig {
 
 #[cfg(test)]
 mod tests {
-    use super::ProgrammingLanguage;
+    use super::{LanguageConfig, ProgrammingLanguage};
     use std::path::Path;
 
     #[test]
@@ -260,6 +306,39 @@ mod tests {
         let language = ProgrammingLanguage::detect_language(Path::new("main"), Some(content));
 
         assert_eq!(language, Some(ProgrammingLanguage::Golang));
+    }
+
+    #[test]
+    fn parses_golang_source_with_language_config() {
+        let source = r#"
+package main
+
+func add(a int, b int) int {
+    if a > b && b > 0 {
+        return a
+    }
+    return b
+}
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let tree = profile.parse_tree(source).unwrap();
+
+        assert!(!tree.root_node().has_error());
+    }
+
+    #[test]
+    fn parses_ocaml_source_with_language_config() {
+        let source = r#"
+let add a b =
+  if a > b && b > 0 then
+    a
+  else
+    b
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
+        let tree = profile.parse_tree(source).unwrap();
+
+        assert!(!tree.root_node().has_error());
     }
 
     #[test]
