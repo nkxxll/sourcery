@@ -87,6 +87,14 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
             let Some(language) = ProgrammingLanguage::detect_language(&path, None) else {
                 continue;
             };
+            if matches!(language, ProgrammingLanguage::Haskell) {
+                debug!(
+                    ?path,
+                    ?language,
+                    "skipping file because no language configuration is available"
+                );
+                continue;
+            }
 
             let permit = semaphore.clone().acquire_owned().await?;
             join_set.spawn(async move {
