@@ -26,6 +26,7 @@ pub struct LanguageConfig {
     pub boolean_operators: Vec<String>,
     pub match_construct_nodes: Vec<String>,
     pub match_arm_nodes: Vec<String>,
+    pub extensions: Vec<String>,
 }
 
 impl ProgrammingLanguage {
@@ -112,12 +113,12 @@ impl ProgrammingLanguage {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct CodeSpan {
+pub struct CodeByteSpan {
     start: usize,
     end: usize,
 }
 
-impl CodeSpan {
+impl CodeByteSpan {
     pub fn with_location(&self, content: &str) -> Result<String> {
         let name = self.get_content(content)?;
         Ok(format!("{}:{}", name, self.start))
@@ -138,8 +139,8 @@ impl CodeSpan {
     }
 }
 
-impl From<CodeSpan> for Range<usize> {
-    fn from(span: CodeSpan) -> Self {
+impl From<CodeByteSpan> for Range<usize> {
+    fn from(span: CodeByteSpan) -> Self {
         span.start..span.end
     }
 }
@@ -154,6 +155,7 @@ impl LanguageConfig {
             boolean_operators,
             match_construct_nodes,
             match_arm_nodes,
+            extensions,
         ) = match language {
             ProgrammingLanguage::Python => (
                 vec!["function_definition".to_string()],
@@ -171,6 +173,7 @@ impl LanguageConfig {
                 vec!["boolean_operator".to_string()],
                 vec!["match_statement".to_string()],
                 vec!["case_clause".to_string()],
+                vec!["py".to_string()],
             ),
             ProgrammingLanguage::Ocaml => (
                 vec!["let_binding".to_string()],
@@ -186,6 +189,7 @@ impl LanguageConfig {
                 vec!["and_operator".to_string(), "or_operator".to_string()],
                 vec!["match_expression".to_string()],
                 vec!["match_case".to_string()],
+                vec!["ml".to_string(), "mli".to_string()],
             ),
             ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
             ProgrammingLanguage::Golang => (
@@ -214,6 +218,7 @@ impl LanguageConfig {
                     "communication_case".to_string(),
                     "default_case".to_string(),
                 ],
+                vec!["go".to_string()],
             ),
         };
 
@@ -226,6 +231,7 @@ impl LanguageConfig {
             boolean_operators,
             match_construct_nodes,
             match_arm_nodes,
+            extensions,
         }
     }
 
@@ -242,13 +248,13 @@ impl LanguageConfig {
         Ok(tree.expect("has to be a tree"))
     }
 
-    pub fn function_name_span(&self, function_node: Node) -> Option<CodeSpan> {
+    pub fn function_name_span(&self, function_node: Node) -> Option<CodeByteSpan> {
         let name_node = function_node.child_by_field_name(&self.function_name_field)?;
         Some(Self::node_span(name_node))
     }
 
-    pub fn node_span(node: Node) -> CodeSpan {
-        CodeSpan::new(node.start_byte(), node.end_byte())
+    pub fn node_span(node: Node) -> CodeByteSpan {
+        CodeByteSpan::new(node.start_byte(), node.end_byte())
     }
 
     pub fn is_doc_string_node(&self, node: Node) -> bool {

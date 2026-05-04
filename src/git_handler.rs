@@ -96,14 +96,17 @@ impl SourceRepository {
         Ok(())
     }
 
-    pub fn is_ignored_file(self: &Self, path: &Path, extension: &str) -> Result<bool> {
+    pub fn is_ignored_file(self: &Self, path: &Path, extension: &Vec<String>) -> Result<bool> {
         if self.is_path_ignored(path)? {
             return Ok(true);
         }
         // and some other options
         match path.extension() {
             Some(ex) => {
-                if ex == extension {
+                if extension.iter().any(|x| {
+                    let ext = ex.to_str().expect("conversion failed");
+                    x.as_str() == ext
+                }) {
                     Ok(false)
                 } else {
                     Ok(true)

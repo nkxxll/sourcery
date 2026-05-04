@@ -14,7 +14,7 @@ use tracing::{debug, warn};
 use crate::{
     git_handler::SourceRepository,
     language::{LanguageConfig, ProgrammingLanguage},
-    processor::{AstProcessor, LinesOfCodeProcessor},
+    processor::Processor,
 };
 use anyhow::Result;
 use regex::Regex;
@@ -89,13 +89,14 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
             if !path.is_file() {
                 continue;
             }
-            if sr.is_ignored_file(&path, "py")? {
-                continue;
-            }
-
             let Some(language) = ProgrammingLanguage::detect_language(&path, None) else {
                 continue;
             };
+            let lc = LanguageConfig::new(language);
+            if sr.is_ignored_file(&path, &lc.extensions)? {
+                continue;
+            }
+
             if matches!(language, ProgrammingLanguage::Haskell) {
                 debug!(
                     ?path,
@@ -110,26 +111,25 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
             let cyclomatic_output = Arc::clone(&cyclomatic_output);
             join_set.spawn(async move {
                 let _permit = permit;
-                let source = std::fs::read_to_string(&path)?;
-                let lc = LanguageConfig::new(language);
-
-                let loc_file = LinesOfCodeProcessor::lines_of_code_content(&source)?;
-                let loc_effect_file =
-                    LinesOfCodeProcessor::effective_lines_of_code_content(&source)?;
                 let file_display = path.display();
+                let processor = Processor::new(&lc, &path)?;
+                let analysis = processor.analyze()?;
+                let source = processor.source();
+                let metrics = &analysis.ast_analysis;
+                let loc_file = analysis.lines_of_code;
+                let loc_effect_file = analysis.effective_lines_of_code;
+
+                // this is just for debug remove later
                 let mut loc_entries = format!(
                     "file: {file_display}\n  loc: {loc_file}\n  effective_loc: {loc_effect_file}\n\n"
                 );
                 let mut cyclomatic_entries = String::new();
 
-                let tree = lc.parse_tree(&source)?;
-                let metrics = AstProcessor::analyze_tree(&tree, &lc);
-                for func in metrics.functions {
+                for func in &metrics.functions {
                     // It is common that function/method names are repeated because of namespaces,
                     // so include location to make function names unique within a file.
                     let unique_name = func.name.with_location(&source)?;
-                    let definition = func.definition.get_content(&source)?;
-                    let loc_function = LinesOfCodeProcessor::lines_of_code_content(&definition)?;
+                    let loc_function = func.function_length;
                     let cyclomatic_function = func.cyclomatic;
                     loc_entries.push_str(&format!(
                         "function: {unique_name}\n  file: {file_display}\n  loc: {loc_function}\n\n"
@@ -137,6 +137,13 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     cyclomatic_entries.push_str(&format!(
                         "function: {unique_name}\n  file: {file_display}\n  cyclomatic: {cyclomatic_function}\n\n"
                     ));
+
+                }
+
+                // also add the lines of comments ot the lines of code per function and lines of code per file
+                for comment in &metrics.comments {
+                    let loc_comment = comment.length;
+                    debug!("Comment lines: {loc_comment}");
                 }
 
                 {
@@ -146,14 +153,6 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                 if !cyclomatic_entries.is_empty() {
                     let mut cyclomatic_writer = cyclomatic_output.lock().await;
                     cyclomatic_writer.write_all(cyclomatic_entries.as_bytes())?;
-                }
-
-                for comment in metrics.comments {
-                    let content = comment.get_content(&source)?;
-                    debug!(
-                        ?content,
-                        comment_loc = LinesOfCodeProcessor::lines_of_code_content(&content)?
-                    );
                 }
 
                 Ok(())

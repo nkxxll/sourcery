@@ -1,36 +1,177 @@
-use std::{
-    collections::HashSet,
-    io::{BufRead, BufReader, Read},
-};
+use std::{collections::HashSet, ops::Range, path::Path};
 
-use crate::language::{CodeSpan, LanguageConfig};
+use anyhow::{Result, anyhow};
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
-use anyhow::Result;
+use crate::language::{CodeByteSpan, LanguageConfig};
 
-pub struct LinesOfCodeProcessor;
+pub struct Processor<'processor> {
+    lc: &'processor LanguageConfig,
+    source: String,
+    new_line_map: NewLineMap,
+}
+
+impl<'processor> Processor<'processor> {
+    pub fn new(lc: &'processor LanguageConfig, path: &Path) -> Result<Self> {
+        let source = std::fs::read_to_string(path)?;
+        Ok(Self::from_source(lc, source))
+    }
+
+    pub fn from_source(lc: &'processor LanguageConfig, source: impl Into<String>) -> Self {
+        let source = source.into();
+        let new_line_map = NewLineMap::new(&source);
+        Self {
+            lc,
+            source,
+            new_line_map,
+        }
+    }
+
+    pub fn source(&self) -> &str {
+        &self.source
+    }
+
+    pub fn new_line_map(&self) -> &NewLineMap {
+        &self.new_line_map
+    }
+
+    /// analyze is where all analysis happens for a single file.
+    pub fn analyze(&self) -> Result<Analysis> {
+        let tree = self.lc.parse_tree(&self.source)?;
+        let ast_analysis = AstProcessor::analyze_tree(&tree, self.lc, &self.new_line_map)?;
+        let lines_of_code = self.new_line_map.line_count() as u64;
+        let comment_lines_of_code = ast_analysis
+            .comments
+            .iter()
+            .map(|comment| comment.length)
+            .sum::<usize>() as u64;
+        let effective_lines_of_code = lines_of_code.saturating_sub(comment_lines_of_code);
+
+        Ok(Analysis {
+            ast_analysis,
+            lines_of_code,
+            effective_lines_of_code,
+            comment_lines_of_code,
+        })
+    }
+}
 
 #[derive(Debug)]
-pub struct FunctionLocResult {
-    pub name: String,
-    pub start_line: i32,
-    pub end_line: i32,
-    pub loc: usize,
+pub struct CommentAnalysis {
+    pub comment_span: CodeByteSpan,
+    pub comment_line_span: CodeLineSpan,
+    /// Length in lines gathered by the newline map.
+    pub length: usize,
 }
 
 #[derive(Debug)]
 pub struct FunctionAnalysis {
-    pub name: CodeSpan,
-    pub definition: CodeSpan,
+    pub name: CodeByteSpan,
+    pub definition: CodeByteSpan,
+    pub definition_line_span: CodeLineSpan,
+    pub function_length: usize,
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
 }
 
 #[derive(Debug)]
+pub struct Analysis {
+    pub ast_analysis: AstAnalysis,
+    pub lines_of_code: u64,
+    pub effective_lines_of_code: u64,
+    pub comment_lines_of_code: u64,
+}
+
+#[derive(Debug)]
 pub struct AstAnalysis {
     pub functions: Vec<FunctionAnalysis>,
-    pub comments: Vec<CodeSpan>,
+    pub comments: Vec<CommentAnalysis>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CodeLineSpan {
+    pub start_line: usize,
+    pub end_line: usize,
+}
+
+impl CodeLineSpan {
+    pub fn line_length(&self) -> usize {
+        return self.end_line - self.start_line;
+    }
+}
+
+#[derive(Debug)]
+pub struct NewLineMap {
+    newline_offsets: Vec<usize>,
+    source_len: usize,
+    ends_with_newline: bool,
+}
+
+impl NewLineMap {
+    pub fn new(source: &str) -> Self {
+        let newline_offsets = source
+            .as_bytes()
+            .iter()
+            .enumerate()
+            .filter_map(|(index, byte)| (*byte == b'\n').then_some(index))
+            .collect();
+
+        Self {
+            newline_offsets,
+            source_len: source.len(),
+            ends_with_newline: source.ends_with('\n'),
+        }
+    }
+
+    pub fn line_count(&self) -> usize {
+        if self.source_len == 0 {
+            return 0;
+        }
+        if self.ends_with_newline {
+            self.newline_offsets.len()
+        } else {
+            self.newline_offsets.len() + 1
+        }
+    }
+
+    pub fn get_line(&self, byte: usize) -> Option<usize> {
+        if self.source_len == 0 || byte >= self.source_len {
+            return None;
+        }
+
+        match self.newline_offsets.binary_search(&byte) {
+            Ok(i) | Err(i) => Some(i),
+        }
+    }
+
+    pub fn get_code_line_span(&self, code_byte_span: &CodeByteSpan) -> Result<CodeLineSpan> {
+        let span: Range<usize> = (*code_byte_span).into();
+        if span.end > self.source_len {
+            return Err(anyhow!(
+                "span end {} exceeds source length {}",
+                span.end,
+                self.source_len
+            ));
+        }
+        let start_line = self
+            .get_line(span.start)
+            .ok_or_else(|| anyhow!("span start {} is out of bounds", span.start))?;
+        let end_inclusive = span.end - 1;
+        let end_line = self
+            .get_line(end_inclusive)
+            .ok_or_else(|| anyhow!("span end {} is out of bounds", end_inclusive))?;
+
+        Ok(CodeLineSpan {
+            start_line,
+            end_line,
+        })
+    }
+
+    pub fn count_lines(&self, code_byte_span: &CodeByteSpan) -> Result<usize> {
+        let code_line_span = self.get_code_line_span(code_byte_span)?;
+        Ok((code_line_span.end_line - code_line_span.start_line) + 1)
+    }
 }
 
 pub struct AstProcessor;
@@ -71,7 +212,7 @@ impl CyclomaticCounts {
 #[derive(Default)]
 struct AstTraversalState {
     functions: Vec<FunctionAnalysis>,
-    comments: Vec<CodeSpan>,
+    comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
 }
 
@@ -122,80 +263,35 @@ impl<'a> NodeKindClassifier<'a> {
     }
 }
 
-const CHUNK_SIZE: usize = 1 << 16; // 64KB
-
-impl LinesOfCodeProcessor {
-    /// counts the lines of content
-    /// plus one because the content is without the last line break
-    pub fn lines_of_code_content(content: &str) -> Result<u64> {
-        if content.is_empty() {
-            return Ok(0);
-        }
-        let mut reader = BufReader::new(content.as_bytes());
-        Ok(1 + Self::count_lines_from_reader(&mut reader)?)
-    }
-
-    pub fn effective_lines_of_code_content(content: &str) -> Result<u64> {
-        if content.is_empty() {
-            return Ok(0);
-        }
-        let mut reader = BufReader::new(content.as_bytes());
-        Ok(1 + Self::count_effective_lines_from_reader(&mut reader)?)
-    }
-
-    pub fn count_effective_lines_from_reader<R: BufRead>(reader: &mut R) -> Result<u64> {
-        let mut count = 0;
-        let mut line = String::new();
-        loop {
-            let bytes_read = reader.read_line(&mut line)?;
-            if bytes_read == 0 {
-                break;
-            }
-            let trimmed = line.trim();
-            if trimmed.is_empty() {
-                line.clear();
-                continue;
-            }
-            line.clear();
-            count += 1;
-        }
-        Ok(count)
-    }
-
-    pub fn count_lines_from_reader<R: Read>(reader: &mut R) -> Result<u64> {
-        let mut buffer = [0u8; CHUNK_SIZE];
-        let mut count = 0;
-
-        loop {
-            let bytes_read = reader.read(&mut buffer)?;
-            if bytes_read == 0 {
-                break;
-            }
-            count += bytecount::count(&buffer[..bytes_read], b'\n') as u64;
-        }
-
-        Ok(count)
-    }
-}
-
 impl AstProcessor {
-    pub fn analyze_tree(tree: &Tree, profile: &LanguageConfig) -> AstAnalysis {
+    pub fn analyze_tree(
+        tree: &Tree,
+        profile: &LanguageConfig,
+        new_line_map: &NewLineMap,
+    ) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(profile);
         let mut state = AstTraversalState::default();
-        Self::traverse(tree.root_node(), profile, &classifier, &mut state);
+        Self::traverse(
+            tree.root_node(),
+            profile,
+            &classifier,
+            new_line_map,
+            &mut state,
+        )?;
 
-        AstAnalysis {
+        Ok(AstAnalysis {
             functions: state.functions,
             comments: state.comments,
-        }
+        })
     }
 
     fn traverse(
         node: Node,
         profile: &LanguageConfig,
         classifier: &NodeKindClassifier<'_>,
+        new_line_map: &NewLineMap,
         state: &mut AstTraversalState,
-    ) {
+    ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
 
@@ -204,14 +300,18 @@ impl AstProcessor {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    Self::traverse(child, profile, classifier, state);
+                    Self::traverse(child, profile, classifier, new_line_map, state)?;
                 }
-                return;
+                return Ok(());
             };
             let function_index = state.functions.len();
+            let definition_span = LanguageConfig::node_span(node);
+            let definition_line_span = new_line_map.get_code_line_span(&definition_span)?;
             state.functions.push(FunctionAnalysis {
                 name: name_span,
-                definition: LanguageConfig::node_span(node),
+                definition: definition_span,
+                definition_line_span: definition_line_span,
+                function_length: definition_line_span.line_length(),
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
             });
@@ -223,7 +323,13 @@ impl AstProcessor {
         }
 
         if classifier.comment_nodes.contains(kind) || profile.is_doc_string_node(node) {
-            state.comments.push(LanguageConfig::node_span(node));
+            let comment_span = LanguageConfig::node_span(node);
+            let length = new_line_map.count_lines(&comment_span)?;
+            state.comments.push(CommentAnalysis {
+                comment_span,
+                comment_line_span: new_line_map.get_code_line_span(&comment_span)?,
+                length,
+            });
         }
 
         for frame in &mut state.function_stack {
@@ -232,66 +338,68 @@ impl AstProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse(child, profile, classifier, state);
+            Self::traverse(child, profile, classifier, new_line_map, state)?;
         }
 
         if entered_function {
             let Some(frame) = state.function_stack.pop() else {
-                return;
+                return Ok(());
             };
             let function = &mut state.functions[frame.function_index];
             function.cyclomatic = frame.cyclomatic_counts.cyclomatic();
             function.cyclomatic_match_as_single_branch =
                 frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
         }
+
+        Ok(())
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{AstProcessor, LinesOfCodeProcessor};
-    use crate::language::{LanguageConfig, ProgrammingLanguage};
-    use std::io::Cursor;
-    use tree_sitter::Parser;
-
-    fn parse_python(source: &str) -> tree_sitter::Tree {
-        let mut parser = Parser::new();
-        parser
-            .set_language(&tree_sitter_python::LANGUAGE.into())
-            .expect("python language must load");
-        parser
-            .parse(source, None)
-            .expect("python source must parse")
-    }
+    use super::{NewLineMap, Processor};
+    use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 
     #[test]
-    fn count_lines_from_reader_counts_newlines() {
-        let content = "first line\nsecond line\nthird line\n";
-        let mut reader = Cursor::new(content.as_bytes());
-
-        let line_breaks = LinesOfCodeProcessor::count_lines_from_reader(&mut reader).unwrap();
-
-        assert_eq!(line_breaks, 3);
-    }
-
-    #[test]
-    fn lines_of_code_content_counts_lines_without_final_newline() {
+    fn newline_map_counts_lines_without_trailing_newline() {
         let content = "first line\nsecond line\nthird line";
+        let map = NewLineMap::new(content);
 
-        let lines = LinesOfCodeProcessor::lines_of_code_content(content).unwrap();
-
-        assert_eq!(lines, 3);
+        assert_eq!(map.line_count(), 3);
     }
 
     #[test]
-    fn count_effective_lines_ignores_blank_and_whitespace_only_lines() {
-        let content = "first line\n\n   \nsecond line\n\t\nthird line\n";
-        let mut reader = Cursor::new(content.as_bytes());
+    fn newline_map_counts_lines_with_trailing_newline() {
+        let content = "first line\nsecond line\nthird line\n";
+        let map = NewLineMap::new(content);
 
-        let effective =
-            LinesOfCodeProcessor::count_effective_lines_from_reader(&mut reader).unwrap();
+        assert_eq!(map.line_count(), 3);
+    }
 
-        assert_eq!(effective, 3);
+    #[test]
+    fn newline_map_counts_lines_for_code_span() {
+        let content = "first line\nsecond line\nthird line";
+        let map = NewLineMap::new(content);
+        let start = content.find("second").unwrap();
+        let end = content.find("third").unwrap() + "third line".len();
+        let span = CodeByteSpan::new(start, end);
+
+        let lines = map.count_lines(&span).unwrap();
+
+        assert_eq!(lines, 2);
+    }
+
+    #[test]
+    fn processor_uses_newline_map_for_file_and_comment_lines() {
+        let source = "# module comment";
+        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+        let processor = Processor::from_source(&profile, source);
+
+        let analysis = processor.analyze().unwrap();
+
+        assert_eq!(analysis.lines_of_code, 1);
+        assert_eq!(analysis.comment_lines_of_code, 1);
+        assert_eq!(analysis.effective_lines_of_code, 0);
     }
 
     #[test]
@@ -321,10 +429,10 @@ def analyze(x, values):
 
     return 6 if x < 0 else 7
 "#;
-        let tree = parse_python(source);
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+        let processor = Processor::from_source(&profile, source);
 
-        let metrics = AstProcessor::analyze_tree(&tree, &profile);
+        let metrics = processor.analyze().unwrap().ast_analysis;
 
         assert_eq!(metrics.functions.len(), 1);
         assert_eq!(metrics.comments.len(), 3);
@@ -339,10 +447,10 @@ def identity(value):
     result = value + 1
     return result
 "#;
-        let tree = parse_python(source);
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
+        let processor = Processor::from_source(&profile, source);
 
-        let metrics = AstProcessor::analyze_tree(&tree, &profile);
+        let metrics = processor.analyze().unwrap().ast_analysis;
 
         assert_eq!(metrics.functions.len(), 1);
         assert_eq!(metrics.functions[0].cyclomatic, 1);
