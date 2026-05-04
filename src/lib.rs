@@ -5,7 +5,10 @@ use std::{
     sync::Arc,
 };
 
-use tokio::{sync::Semaphore, task::JoinSet};
+use tokio::{
+    sync::{Mutex, Semaphore},
+    task::JoinSet,
+};
 use tracing::{debug, warn};
 
 use crate::{
@@ -35,8 +38,14 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
     // the old commit
 
     let sr = SourceRepository::new(url)?;
-    let diff_output_path = sr.dest_dir.join("commit_diffs.txt");
+    let diff_output_path = sr.analytics_dir.join("commit_diffs.txt");
+    let loc_output_path = sr.analytics_dir.join("locs.txt");
+    let cyclomatic_output_path = sr.analytics_dir.join("cyclomatics.txt");
     let mut diff_output = BufWriter::new(File::create(&diff_output_path)?);
+    let loc_output = Arc::new(Mutex::new(BufWriter::new(File::create(&loc_output_path)?)));
+    let cyclomatic_output = Arc::new(Mutex::new(BufWriter::new(File::create(
+        &cyclomatic_output_path,
+    )?)));
     let mut commit_oids = Vec::new();
     for commit_oid in sr.into_iter() {
         let oid = match commit_oid {
@@ -97,6 +106,8 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
             }
 
             let permit = semaphore.clone().acquire_owned().await?;
+            let loc_output = Arc::clone(&loc_output);
+            let cyclomatic_output = Arc::clone(&cyclomatic_output);
             join_set.spawn(async move {
                 let _permit = permit;
                 let source = std::fs::read_to_string(&path)?;
@@ -105,7 +116,11 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                 let loc_file = LinesOfCodeProcessor::lines_of_code_content(&source)?;
                 let loc_effect_file =
                     LinesOfCodeProcessor::effective_lines_of_code_content(&source)?;
-                debug!(?path, loc_file, loc_effect_file);
+                let file_display = path.display();
+                let mut loc_entries = format!(
+                    "file: {file_display}\n  loc: {loc_file}\n  effective_loc: {loc_effect_file}\n\n"
+                );
+                let mut cyclomatic_entries = String::new();
 
                 let tree = lc.parse_tree(&source)?;
                 let metrics = AstProcessor::analyze_tree(&tree, &lc);
@@ -116,7 +131,21 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     let definition = func.definition.get_content(&source)?;
                     let loc_function = LinesOfCodeProcessor::lines_of_code_content(&definition)?;
                     let cyclomatic_function = func.cyclomatic;
-                    debug!(?path, ?unique_name, loc_function, cyclomatic_function);
+                    loc_entries.push_str(&format!(
+                        "function: {unique_name}\n  file: {file_display}\n  loc: {loc_function}\n\n"
+                    ));
+                    cyclomatic_entries.push_str(&format!(
+                        "function: {unique_name}\n  file: {file_display}\n  cyclomatic: {cyclomatic_function}\n\n"
+                    ));
+                }
+
+                {
+                    let mut loc_writer = loc_output.lock().await;
+                    loc_writer.write_all(loc_entries.as_bytes())?;
+                }
+                if !cyclomatic_entries.is_empty() {
+                    let mut cyclomatic_writer = cyclomatic_output.lock().await;
+                    cyclomatic_writer.write_all(cyclomatic_entries.as_bytes())?;
                 }
 
                 for comment in metrics.comments {
@@ -136,6 +165,14 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
         previous_oid = Some(oid);
     }
     diff_output.flush()?;
+    {
+        let mut loc_writer = loc_output.lock().await;
+        loc_writer.flush()?;
+    }
+    {
+        let mut cyclomatic_writer = cyclomatic_output.lock().await;
+        cyclomatic_writer.flush()?;
+    }
     Ok(())
 }
 
