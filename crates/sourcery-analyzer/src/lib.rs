@@ -10,7 +10,8 @@ use tracing::{debug, warn};
 use crate::{
     git_handler::SourceRepository,
     language::{LanguageConfig, ProgrammingLanguage},
-    processor::Processor,
+    processor::{Processor, ProjectAggregator},
+    progress::Progress,
 };
 
 static FIX_REGEX: OnceLock<Regex> = OnceLock::new();
@@ -20,6 +21,7 @@ pub mod diff;
 pub mod git_handler;
 pub mod language;
 pub mod processor;
+pub mod progress;
 pub use sourcery_db as db;
 
 pub async fn analyze_git_repository(url: &str) -> Result<()> {
@@ -36,10 +38,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
     let sr = SourceRepository::new(url)?;
     let pool = db::connect(database_url).await?;
     let codebase_name = SourceRepository::get_repo_base_name(url);
-    let codebase = match db::get_codebase_by_name(&pool, &codebase_name).await? {
-        Some(codebase) => codebase,
-        None => db::insert_codebase(&pool, &codebase_name, url).await?,
-    };
+    let codebase = db::insert_codebase(&pool, &codebase_name, url).await?;
 
     let mut commit_oids = Vec::new();
     for commit_oid in sr.into_iter() {
@@ -53,8 +52,16 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         commit_oids.push(oid);
     }
 
+    let mut progress = Progress::new(commit_oids.len() as u64, None);
+    let mut aggreator = Arc::new(ProjectAggregator::default());
+    progress.start_print();
+
     let mut previous_oid = None;
+    let commit_len = commit_oids.len();
+    println!("found {commit_len} commits");
     for oid in commit_oids {
+        progress.next();
+        progress.print_status();
         sr.checkout_commit(&oid)?;
         let commit = sr
             .find_commit(&oid)
@@ -73,7 +80,8 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         let commit_hash = oid.to_string();
 
         let commit_diff = sr.commit_diff(previous_oid.as_ref(), &oid)?;
-        let old_commit_hash = previous_oid.as_ref().map(ToString::to_string);
+        let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
+        let new_commit_hash = commit_diff.new_oid.to_string();
         let pretty_diff = commit_diff.pretty_print();
 
         let version_metrics = json!({});
@@ -110,7 +118,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
             &pool,
             version.id,
             old_commit_hash.as_deref(),
-            &commit_hash,
+            &new_commit_hash,
             files_changed,
             insertions,
             deletions,
@@ -237,12 +245,15 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
                     )
                     .await?;
                 }
+                let old_metrics = aggregator.gather_old_metrics(&db, previous_oid);
+                aggreator.aggregate(&analysis);
                 Ok(())
             });
         }
         while let Some(task_result) = join_set.join_next().await {
             task_result??;
         }
+
         previous_oid = Some(oid);
     }
     Ok(())

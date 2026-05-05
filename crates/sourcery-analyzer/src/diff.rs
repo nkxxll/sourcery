@@ -53,8 +53,8 @@ impl Change {
 }
 
 pub struct CommitDiff {
-    new_oid: Oid,
-    old_oid: Option<Oid>,
+    pub new_oid: Oid,
+    pub old_oid: Option<Oid>,
     files: Vec<PathBuf>,
     changes: Vec<Change>,
     files_changed: usize,

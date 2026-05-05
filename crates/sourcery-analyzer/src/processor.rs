@@ -1,4 +1,9 @@
-use std::{collections::HashSet, ops::Range, path::Path};
+use std::{
+    collections::HashSet,
+    ops::Range,
+    path::Path,
+    sync::atomic::{AtomicU64, Ordering},
+};
 
 use anyhow::{Result, anyhow};
 use tracing::warn;
@@ -267,6 +272,51 @@ impl<'a> NodeKindClassifier<'a> {
             match_arms,
             boolean_operators,
         }
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct ProjectAggregator {
+    pub total_lines_of_code: AtomicU64,
+    pub total_effective_lines_of_code: AtomicU64,
+    pub total_comment_lines_of_code: AtomicU64,
+    pub total_cyclomatic: AtomicU64,
+    pub files: AtomicU64,
+}
+
+impl ProjectAggregator {
+    fn mean(total: &AtomicU64, files: &AtomicU64) -> f64 {
+        let file_count = files.load(Ordering::Relaxed);
+        if file_count == 0 {
+            0.0
+        } else {
+            total.load(Ordering::Relaxed) as f64 / file_count as f64
+        }
+    }
+
+    pub fn aggregate(&mut self, analysis: &Analysis) {
+        self.files.fetch_add(1, Ordering::Relaxed);
+        self.total_lines_of_code
+            .fetch_add(analysis.lines_of_code, Ordering::Relaxed);
+        self.total_effective_lines_of_code
+            .fetch_add(analysis.effective_lines_of_code, Ordering::Relaxed);
+        self.total_comment_lines_of_code
+            .fetch_add(analysis.comment_lines_of_code, Ordering::Relaxed);
+        self.total_cyclomatic
+            .fetch_add(analysis.total_cyclomatic, Ordering::Relaxed);
+    }
+
+    pub fn mean_lines_of_code_per_file(&self) -> f64 {
+        Self::mean(&self.total_lines_of_code, &self.files)
+    }
+    pub fn mean_effective_lines_of_code_per_file(&self) -> f64 {
+        Self::mean(&self.total_effective_lines_of_code, &self.files)
+    }
+    pub fn mean_comment_lines_of_code_per_file(&self) -> f64 {
+        Self::mean(&self.total_comment_lines_of_code, &self.files)
+    }
+    pub fn mean_cyclomatic_complexity_per_file(&self) -> f64 {
+        Self::mean(&self.total_cyclomatic, &self.files)
     }
 }
 
