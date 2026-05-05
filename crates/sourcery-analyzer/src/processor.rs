@@ -1,9 +1,4 @@
-use std::{
-    collections::HashSet,
-    ops::Range,
-    path::Path,
-    sync::atomic::{AtomicU64, Ordering},
-};
+use std::{collections::HashMap, collections::HashSet, ops::Range, path::Path};
 
 use anyhow::{Result, anyhow};
 use tracing::warn;
@@ -93,6 +88,140 @@ pub struct Analysis {
     pub effective_lines_of_code: u64,
     pub comment_lines_of_code: u64,
     pub total_cyclomatic: u64,
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct FileMetrics {
+    pub lines_of_code: u64,
+    pub effective_lines_of_code: u64,
+    pub comment_lines_of_code: u64,
+    pub total_cyclomatic: u64,
+}
+
+impl FileMetrics {
+    pub fn from_json(metrics: &serde_json::Value) -> Self {
+        Self {
+            lines_of_code: metrics
+                .get("lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            effective_lines_of_code: metrics
+                .get("effective_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            comment_lines_of_code: metrics
+                .get("comment_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_cyclomatic: metrics
+                .get("total_cyclomatic")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AggregatedFileMetrics {
+    pub files: u64,
+    pub total_lines_of_code: u64,
+    pub total_effective_lines_of_code: u64,
+    pub total_comment_lines_of_code: u64,
+    pub total_cyclomatic: u64,
+}
+
+impl AggregatedFileMetrics {
+    pub fn add_file_metrics(&mut self, metrics: &FileMetrics) {
+        self.files += 1;
+        self.total_lines_of_code += metrics.lines_of_code;
+        self.total_effective_lines_of_code += metrics.effective_lines_of_code;
+        self.total_comment_lines_of_code += metrics.comment_lines_of_code;
+        self.total_cyclomatic += metrics.total_cyclomatic;
+    }
+
+    fn mean(total: u64, files: u64) -> f64 {
+        if files == 0 {
+            0.0
+        } else {
+            total as f64 / files as f64
+        }
+    }
+
+    pub fn from_json(metrics: &serde_json::Value) -> Self {
+        Self {
+            files: metrics
+                .get("files")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_lines_of_code: metrics
+                .get("total_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_effective_lines_of_code: metrics
+                .get("total_effective_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_comment_lines_of_code: metrics
+                .get("total_comment_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_cyclomatic: metrics
+                .get("total_cyclomatic")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+        }
+    }
+
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "files": self.files,
+            "total_lines_of_code": self.total_lines_of_code,
+            "total_effective_lines_of_code": self.total_effective_lines_of_code,
+            "total_comment_lines_of_code": self.total_comment_lines_of_code,
+            "total_cyclomatic": self.total_cyclomatic,
+            "mean_lines_of_code_per_file": Self::mean(self.total_lines_of_code, self.files),
+            "mean_effective_lines_of_code_per_file": Self::mean(self.total_effective_lines_of_code, self.files),
+            "mean_comment_lines_of_code_per_file": Self::mean(self.total_comment_lines_of_code, self.files),
+            "mean_cyclomatic_complexity_per_file": Self::mean(self.total_cyclomatic, self.files),
+        })
+    }
+
+    pub fn from_file_metrics_map(file_metrics_by_path: &HashMap<String, FileMetrics>) -> Self {
+        let mut aggregated = Self::default();
+        for metrics in file_metrics_by_path.values() {
+            aggregated.add_file_metrics(metrics);
+        }
+        aggregated
+    }
+
+    pub fn reconcile(
+        previous: AggregatedFileMetrics,
+        old_metrics: AggregatedFileMetrics,
+        new_metrics: AggregatedFileMetrics,
+    ) -> AggregatedFileMetrics {
+        AggregatedFileMetrics {
+            files: previous
+                .files
+                .saturating_sub(old_metrics.files)
+                .saturating_add(new_metrics.files),
+            total_lines_of_code: previous
+                .total_lines_of_code
+                .saturating_sub(old_metrics.total_lines_of_code)
+                .saturating_add(new_metrics.total_lines_of_code),
+            total_effective_lines_of_code: previous
+                .total_effective_lines_of_code
+                .saturating_sub(old_metrics.total_effective_lines_of_code)
+                .saturating_add(new_metrics.total_effective_lines_of_code),
+            total_comment_lines_of_code: previous
+                .total_comment_lines_of_code
+                .saturating_sub(old_metrics.total_comment_lines_of_code)
+                .saturating_add(new_metrics.total_comment_lines_of_code),
+            total_cyclomatic: previous
+                .total_cyclomatic
+                .saturating_sub(old_metrics.total_cyclomatic)
+                .saturating_add(new_metrics.total_cyclomatic),
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -275,51 +404,6 @@ impl<'a> NodeKindClassifier<'a> {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct ProjectAggregator {
-    pub total_lines_of_code: AtomicU64,
-    pub total_effective_lines_of_code: AtomicU64,
-    pub total_comment_lines_of_code: AtomicU64,
-    pub total_cyclomatic: AtomicU64,
-    pub files: AtomicU64,
-}
-
-impl ProjectAggregator {
-    fn mean(total: &AtomicU64, files: &AtomicU64) -> f64 {
-        let file_count = files.load(Ordering::Relaxed);
-        if file_count == 0 {
-            0.0
-        } else {
-            total.load(Ordering::Relaxed) as f64 / file_count as f64
-        }
-    }
-
-    pub fn aggregate(&mut self, analysis: &Analysis) {
-        self.files.fetch_add(1, Ordering::Relaxed);
-        self.total_lines_of_code
-            .fetch_add(analysis.lines_of_code, Ordering::Relaxed);
-        self.total_effective_lines_of_code
-            .fetch_add(analysis.effective_lines_of_code, Ordering::Relaxed);
-        self.total_comment_lines_of_code
-            .fetch_add(analysis.comment_lines_of_code, Ordering::Relaxed);
-        self.total_cyclomatic
-            .fetch_add(analysis.total_cyclomatic, Ordering::Relaxed);
-    }
-
-    pub fn mean_lines_of_code_per_file(&self) -> f64 {
-        Self::mean(&self.total_lines_of_code, &self.files)
-    }
-    pub fn mean_effective_lines_of_code_per_file(&self) -> f64 {
-        Self::mean(&self.total_effective_lines_of_code, &self.files)
-    }
-    pub fn mean_comment_lines_of_code_per_file(&self) -> f64 {
-        Self::mean(&self.total_comment_lines_of_code, &self.files)
-    }
-    pub fn mean_cyclomatic_complexity_per_file(&self) -> f64 {
-        Self::mean(&self.total_cyclomatic, &self.files)
-    }
-}
-
 impl AstProcessor {
     pub fn analyze_tree(
         tree: &Tree,
@@ -414,8 +498,9 @@ impl AstProcessor {
 
 #[cfg(test)]
 mod tests {
-    use super::{NewLineMap, Processor};
+    use super::{AggregatedFileMetrics, FileMetrics, NewLineMap, Processor};
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
+    use std::collections::HashMap;
 
     #[test]
     fn newline_map_counts_lines_without_trailing_newline() {
@@ -512,5 +597,70 @@ def identity(value):
         assert_eq!(metrics.functions.len(), 1);
         assert_eq!(metrics.functions[0].cyclomatic, 1);
         assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 1);
+    }
+
+    #[test]
+    fn aggregated_file_metrics_sums_file_metrics_map() {
+        let old_metrics = HashMap::from([
+            (
+                "src/a.rs".to_string(),
+                FileMetrics {
+                    lines_of_code: 10,
+                    effective_lines_of_code: 8,
+                    comment_lines_of_code: 2,
+                    total_cyclomatic: 3,
+                },
+            ),
+            (
+                "src/b.rs".to_string(),
+                FileMetrics {
+                    lines_of_code: 20,
+                    effective_lines_of_code: 15,
+                    comment_lines_of_code: 5,
+                    total_cyclomatic: 7,
+                },
+            ),
+        ]);
+
+        let aggregated = AggregatedFileMetrics::from_file_metrics_map(&old_metrics);
+
+        assert_eq!(aggregated.files, 2);
+        assert_eq!(aggregated.total_lines_of_code, 30);
+        assert_eq!(aggregated.total_effective_lines_of_code, 23);
+        assert_eq!(aggregated.total_comment_lines_of_code, 7);
+        assert_eq!(aggregated.total_cyclomatic, 10);
+    }
+
+    #[test]
+    fn aggregated_file_metrics_reconciles_previous_with_old_and_new_metrics() {
+        let previous = AggregatedFileMetrics {
+            files: 3,
+            total_lines_of_code: 60,
+            total_effective_lines_of_code: 48,
+            total_comment_lines_of_code: 12,
+            total_cyclomatic: 18,
+        };
+        let old_metrics = AggregatedFileMetrics {
+            files: 2,
+            total_lines_of_code: 35,
+            total_effective_lines_of_code: 28,
+            total_comment_lines_of_code: 7,
+            total_cyclomatic: 10,
+        };
+        let new_metrics = AggregatedFileMetrics {
+            files: 2,
+            total_lines_of_code: 30,
+            total_effective_lines_of_code: 26,
+            total_comment_lines_of_code: 4,
+            total_cyclomatic: 9,
+        };
+
+        let reconciled = AggregatedFileMetrics::reconcile(previous, old_metrics, new_metrics);
+
+        assert_eq!(reconciled.files, 3);
+        assert_eq!(reconciled.total_lines_of_code, 55);
+        assert_eq!(reconciled.total_effective_lines_of_code, 46);
+        assert_eq!(reconciled.total_comment_lines_of_code, 9);
+        assert_eq!(reconciled.total_cyclomatic, 17);
     }
 }

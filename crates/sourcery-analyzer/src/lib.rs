@@ -1,4 +1,8 @@
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use anyhow::{Context, Result};
 use regex::Regex;
@@ -10,7 +14,7 @@ use tracing::{debug, warn};
 use crate::{
     git_handler::SourceRepository,
     language::{LanguageConfig, ProgrammingLanguage},
-    processor::{Processor, ProjectAggregator},
+    processor::{AggregatedFileMetrics, FileMetrics, Processor},
     progress::Progress,
 };
 
@@ -33,7 +37,7 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
 pub async fn analyze_git_repository_with_database(url: &str, database_url: &str) -> Result<()> {
     // Track open files so the filesystem is not overwhelmed.
     let semaphore = Arc::new(Semaphore::new(100));
-    let mut join_set: JoinSet<Result<()>> = tokio::task::JoinSet::new();
+    let mut join_set: JoinSet<Result<(String, FileMetrics)>> = tokio::task::JoinSet::new();
 
     let sr = SourceRepository::new(url)?;
     let pool = db::connect(database_url).await?;
@@ -53,10 +57,11 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
     }
 
     let mut progress = Progress::new(commit_oids.len() as u64, None);
-    let mut aggreator = Arc::new(ProjectAggregator::default());
     progress.start_print();
 
     let mut previous_oid = None;
+    let mut current_aggregate = AggregatedFileMetrics::default();
+    let mut current_file_metrics_by_path = HashMap::new();
     let commit_len = commit_oids.len();
     println!("found {commit_len} commits");
     for oid in commit_oids {
@@ -128,6 +133,19 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         )
         .await?;
 
+        let old_metrics_by_path =
+            gather_old_metrics(commit_diff.files(), &current_file_metrics_by_path);
+        let old_metrics = AggregatedFileMetrics::from_file_metrics_map(&old_metrics_by_path);
+        debug!(
+            previous_files = current_aggregate.files,
+            files = old_metrics.files,
+            total_lines_of_code = old_metrics.total_lines_of_code,
+            total_effective_lines_of_code = old_metrics.total_effective_lines_of_code,
+            total_comment_lines_of_code = old_metrics.total_comment_lines_of_code,
+            total_cyclomatic = old_metrics.total_cyclomatic,
+            "aggregated old metrics for changed files"
+        );
+
         for change in commit_diff.changes() {
             let old_span = change.old_line_span();
             let new_span = change.new_line_span();
@@ -164,6 +182,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
             .iter()
             .map(|path| (path.clone(), sr.dest_dir.join(path)))
             .collect();
+        let mut new_metrics_by_path = HashMap::new();
 
         for (relative_path, absolute_path) in paths_to_analyze {
             if !absolute_path.is_file() {
@@ -208,18 +227,24 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
                 let file_path = relative_path.display().to_string();
                 let language_name = format!("{language:?}").to_ascii_lowercase();
 
-                let file_metrics = json!({
-                    "lines_of_code": analysis.lines_of_code,
-                    "effective_lines_of_code": analysis.effective_lines_of_code,
-                    "comment_lines_of_code": analysis.comment_lines_of_code,
-                    "total_cyclomatic": analysis.total_cyclomatic,
+                let file_metrics = FileMetrics {
+                    lines_of_code: analysis.lines_of_code,
+                    effective_lines_of_code: analysis.effective_lines_of_code,
+                    comment_lines_of_code: analysis.comment_lines_of_code,
+                    total_cyclomatic: analysis.total_cyclomatic,
+                };
+                let file_metrics_json = json!({
+                    "lines_of_code": file_metrics.lines_of_code,
+                    "effective_lines_of_code": file_metrics.effective_lines_of_code,
+                    "comment_lines_of_code": file_metrics.comment_lines_of_code,
+                    "total_cyclomatic": file_metrics.total_cyclomatic,
                 });
                 let file = db::insert_file(
                     &pool,
                     version_id,
                     &file_path,
                     Some(&language_name),
-                    &file_metrics,
+                    &file_metrics_json,
                 )
                 .await?;
 
@@ -245,18 +270,51 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
                     )
                     .await?;
                 }
-                let old_metrics = aggregator.gather_old_metrics(&db, previous_oid);
-                aggreator.aggregate(&analysis);
-                Ok(())
+                Ok((file_path, file_metrics))
             });
         }
         while let Some(task_result) = join_set.join_next().await {
-            task_result??;
+            let (path, metrics) = task_result??;
+            new_metrics_by_path.insert(path, metrics);
         }
+
+        let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
+        let version_metrics =
+            AggregatedFileMetrics::reconcile(current_aggregate, old_metrics, new_metrics);
+        db::update_version_metrics(&pool, version.id, &version_metrics.to_json()).await?;
+        for changed_path in commit_diff.files() {
+            current_file_metrics_by_path.remove(&changed_path.display().to_string());
+        }
+        current_file_metrics_by_path.extend(new_metrics_by_path);
+        current_aggregate = version_metrics;
 
         previous_oid = Some(oid);
     }
     Ok(())
+}
+
+fn gather_old_metrics(
+    changed_paths: &[PathBuf],
+    current_file_metrics_by_path: &HashMap<String, FileMetrics>,
+) -> HashMap<String, FileMetrics> {
+    if changed_paths.is_empty() {
+        return HashMap::new();
+    }
+
+    let mut seen = HashSet::new();
+    changed_paths
+        .into_iter()
+        .filter_map(|path| {
+            let path = path.display().to_string();
+            if !seen.insert(path.clone()) {
+                return None;
+            }
+            current_file_metrics_by_path
+                .get(&path)
+                .copied()
+                .map(|metrics| (path, metrics))
+        })
+        .collect()
 }
 
 fn is_fix(message: &str) -> bool {

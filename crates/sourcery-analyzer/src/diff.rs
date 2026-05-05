@@ -84,7 +84,10 @@ impl CommitDiff {
         let files_changed = stats.files_changed();
         let mut files = BTreeSet::new();
         for delta in diff.deltas() {
-            if let Some(path) = delta.new_file().path().or_else(|| delta.old_file().path()) {
+            if let Some(path) = delta.old_file().path() {
+                files.insert(path.to_path_buf());
+            }
+            if let Some(path) = delta.new_file().path() {
                 files.insert(path.to_path_buf());
             }
         }

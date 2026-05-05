@@ -217,6 +217,24 @@ pub async fn delete_version(pool: &PgPool, id: Uuid) -> Result<bool> {
     Ok(result.rows_affected() > 0)
 }
 
+pub async fn update_version_metrics(
+    pool: &PgPool,
+    version_id: Uuid,
+    metrics: &serde_json::Value,
+) -> Result<Version> {
+    let row = sqlx::query_as::<_, Version>(
+        "UPDATE versions
+         SET metrics = $2
+         WHERE id = $1
+         RETURNING *",
+    )
+    .bind(version_id)
+    .bind(metrics)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
 // Diffs
 
 #[allow(clippy::too_many_arguments)]
