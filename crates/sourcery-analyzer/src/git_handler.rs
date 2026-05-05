@@ -7,13 +7,11 @@ use anyhow::{Result, anyhow};
 use git2::{Commit, Oid, Repository, Revwalk, Sort};
 
 const REPOSITORIES_DIRECTORY: &str = "toanalyze";
-const ANALYTICS_DIRECTORY: &str = "analytics";
 
 pub struct SourceRepository {
     pub url: String,
     repo: Repository,
     pub dest_dir: PathBuf,
-    pub analytics_dir: PathBuf,
     pub cwd: PathBuf,
 }
 
@@ -24,7 +22,7 @@ fn ensure_present(dir: &Path) -> Result<()> {
 
 impl SourceRepository {
     pub fn new(url: &str) -> Result<Self> {
-        let (cwd, dest_dir, analytics_dir) = Self::setup_directories(url)?;
+        let (cwd, dest_dir) = Self::setup_directories(url)?;
         let clone_repo = || {
             Repository::clone(url, &dest_dir).map_err(|e| {
                 anyhow!(
@@ -65,17 +63,14 @@ impl SourceRepository {
             url: url.to_string(),
             repo,
             dest_dir,
-            analytics_dir,
             cwd,
         })
     }
 
-    fn setup_directories(url: &str) -> Result<(PathBuf, PathBuf, PathBuf)> {
+    fn setup_directories(url: &str) -> Result<(PathBuf, PathBuf)> {
         let cwd = std::env::current_dir()?;
         let dest_dir = Self::get_dest_directory(url, &cwd);
-        let analytics_dir = Self::get_analytics_directory(url, &cwd);
-        ensure_present(&analytics_dir)?;
-        Ok((cwd, dest_dir, analytics_dir))
+        Ok((cwd, dest_dir))
     }
 
     pub fn find_commit(&self, oid: &Oid) -> Result<Commit<'_>> {
@@ -102,12 +97,11 @@ impl SourceRepository {
             repo,
             // this works as long as this is a test
             dest_dir: path.clone(),
-            analytics_dir: path,
             cwd,
         })
     }
 
-    fn get_repo_base_name(url: &str) -> String {
+    pub(crate) fn get_repo_base_name(url: &str) -> String {
         url.trim_end_matches('/')
             .trim_end_matches(".git")
             .rsplit('/')
@@ -119,11 +113,6 @@ impl SourceRepository {
     fn get_dest_directory(url: &str, cwd: &Path) -> PathBuf {
         let name = Self::get_repo_base_name(url);
         cwd.join(REPOSITORIES_DIRECTORY).join(name)
-    }
-
-    fn get_analytics_directory(url: &str, cwd: &Path) -> PathBuf {
-        let name = Self::get_repo_base_name(url);
-        cwd.join(ANALYTICS_DIRECTORY).join(name)
     }
 
     /// Returns a preconfigured `Revwalk` iterator over first-parent commits.

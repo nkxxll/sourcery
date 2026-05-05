@@ -34,9 +34,27 @@ impl Change {
             new_line_span: (new_file_hunk_start, new_file_hunk_end),
         }
     }
+
+    pub fn old_file(&self) -> Option<&std::path::Path> {
+        self.old_file.as_deref()
+    }
+
+    pub fn new_file(&self) -> Option<&std::path::Path> {
+        self.new_file.as_deref()
+    }
+
+    pub fn old_line_span(&self) -> (usize, usize) {
+        self.old_line_span
+    }
+
+    pub fn new_line_span(&self) -> (usize, usize) {
+        self.new_line_span
+    }
 }
 
 pub struct CommitDiff {
+    new_oid: Oid,
+    old_oid: Option<Oid>,
     files: Vec<PathBuf>,
     changes: Vec<Change>,
     files_changed: usize,
@@ -98,6 +116,8 @@ impl CommitDiff {
             }),
         )?;
         Ok(CommitDiff {
+            new_oid: *new_commit_oid,
+            old_oid: old_commit_oid.copied(),
             files: files.into_iter().collect(),
             changes,
             files_changed,
@@ -109,6 +129,26 @@ impl CommitDiff {
 
     pub fn files(&self) -> &[PathBuf] {
         &self.files
+    }
+
+    pub fn changes(&self) -> &[Change] {
+        &self.changes
+    }
+
+    pub fn files_changed(&self) -> usize {
+        self.files_changed
+    }
+
+    pub fn number_of_changes(&self) -> usize {
+        self.number_of_changes
+    }
+
+    pub fn insertions(&self) -> usize {
+        self.insertions
+    }
+
+    pub fn deletions(&self) -> usize {
+        self.deletions
     }
 
     pub fn pretty_print(&self) -> String {

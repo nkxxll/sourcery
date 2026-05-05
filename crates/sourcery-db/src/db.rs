@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub use sqlx::PgPool;
 use uuid::Uuid;
 
-// ── Models ──────────────────────────────────────────────────────────
+// Models
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Codebase {
@@ -30,11 +30,16 @@ pub struct Version {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
-pub struct Directory {
+pub struct Diff {
     pub id: Uuid,
     pub version_id: Uuid,
-    pub parent_id: Option<Uuid>,
-    pub path: String,
+    pub new_commit_hash: String,
+    pub old_commit_hash: Option<String>,
+    pub files_changed: i32,
+    pub insertions: i32,
+    pub deletions: i32,
+    pub changed_lines: i32,
+    pub summary: Option<String>,
     pub metrics: serde_json::Value,
     pub created_at: DateTime<Utc>,
 }
@@ -43,7 +48,6 @@ pub struct Directory {
 pub struct File {
     pub id: Uuid,
     pub version_id: Uuid,
-    pub directory_id: Uuid,
     pub path: String,
     pub language: Option<String>,
     pub metrics: serde_json::Value,
@@ -61,7 +65,21 @@ pub struct Function {
     pub created_at: DateTime<Utc>,
 }
 
-// ── Connection ──────────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Change {
+    pub id: Uuid,
+    pub diff_id: Uuid,
+    pub old_path: Option<String>,
+    pub new_path: Option<String>,
+    pub old_start_line: i32,
+    pub old_end_line: i32,
+    pub new_start_line: i32,
+    pub new_end_line: i32,
+    pub metrics: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
+// Connection
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
     let pool = PgPool::connect(database_url).await?;
@@ -69,7 +87,7 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
     Ok(pool)
 }
 
-// ── Codebases ───────────────────────────────────────────────────────
+// Codebases
 
 pub async fn insert_codebase(pool: &PgPool, name: &str, url: &str) -> Result<Codebase> {
     let row = sqlx::query_as::<_, Codebase>(
@@ -113,8 +131,9 @@ pub async fn delete_codebase(pool: &PgPool, id: Uuid) -> Result<bool> {
     Ok(result.rows_affected() > 0)
 }
 
-// ── Versions ────────────────────────────────────────────────────────
+// Versions
 
+#[allow(clippy::too_many_arguments)]
 pub async fn insert_version(
     pool: &PgPool,
     codebase_id: Uuid,
@@ -187,85 +206,93 @@ pub async fn delete_version(pool: &PgPool, id: Uuid) -> Result<bool> {
     Ok(result.rows_affected() > 0)
 }
 
-// ── Directories ─────────────────────────────────────────────────────
+// Diffs
 
-pub async fn insert_directory(
+#[allow(clippy::too_many_arguments)]
+pub async fn insert_diff(
     pool: &PgPool,
     version_id: Uuid,
-    parent_id: Option<Uuid>,
-    path: &str,
+    old_commit_hash: Option<&str>,
+    new_commit_hash: &str,
+    files_changed: i32,
+    insertions: i32,
+    deletions: i32,
+    changed_lines: i32,
+    summary: Option<&str>,
     metrics: &serde_json::Value,
-) -> Result<Directory> {
-    let row = sqlx::query_as::<_, Directory>(
-        "INSERT INTO directories (version_id, parent_id, path, metrics)
-         VALUES ($1, $2, $3, $4)
+) -> Result<Diff> {
+    let row = sqlx::query_as::<_, Diff>(
+        "INSERT INTO diffs (version_id, old_commit_hash, new_commit_hash, files_changed, insertions, deletions, changed_lines, summary, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *",
     )
     .bind(version_id)
-    .bind(parent_id)
-    .bind(path)
+    .bind(old_commit_hash)
+    .bind(new_commit_hash)
+    .bind(files_changed)
+    .bind(insertions)
+    .bind(deletions)
+    .bind(changed_lines)
+    .bind(summary)
     .bind(metrics)
     .fetch_one(pool)
     .await?;
     Ok(row)
 }
 
-pub async fn get_directory_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Directory>> {
-    let row = sqlx::query_as::<_, Directory>("SELECT * FROM directories WHERE id = $1")
+pub async fn get_diff_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Diff>> {
+    let row = sqlx::query_as::<_, Diff>("SELECT * FROM diffs WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
         .await?;
     Ok(row)
 }
 
-pub async fn list_directories_by_version(
-    pool: &PgPool,
-    version_id: Uuid,
-) -> Result<Vec<Directory>> {
-    let rows = sqlx::query_as::<_, Directory>(
-        "SELECT * FROM directories WHERE version_id = $1 ORDER BY path",
+pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Option<Diff>> {
+    let row = sqlx::query_as::<_, Diff>("SELECT * FROM diffs WHERE version_id = $1")
+        .bind(version_id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row)
+}
+
+pub async fn list_diffs_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Result<Vec<Diff>> {
+    let rows = sqlx::query_as::<_, Diff>(
+        "SELECT d.*
+         FROM diffs d
+         JOIN versions v ON v.id = d.version_id
+         WHERE v.codebase_id = $1
+         ORDER BY d.created_at",
     )
-    .bind(version_id)
+    .bind(codebase_id)
     .fetch_all(pool)
     .await?;
     Ok(rows)
 }
 
-pub async fn list_subdirectories(pool: &PgPool, parent_id: Uuid) -> Result<Vec<Directory>> {
-    let rows = sqlx::query_as::<_, Directory>(
-        "SELECT * FROM directories WHERE parent_id = $1 ORDER BY path",
-    )
-    .bind(parent_id)
-    .fetch_all(pool)
-    .await?;
-    Ok(rows)
-}
-
-pub async fn delete_directory(pool: &PgPool, id: Uuid) -> Result<bool> {
-    let result = sqlx::query("DELETE FROM directories WHERE id = $1")
+pub async fn delete_diff(pool: &PgPool, id: Uuid) -> Result<bool> {
+    let result = sqlx::query("DELETE FROM diffs WHERE id = $1")
         .bind(id)
         .execute(pool)
         .await?;
     Ok(result.rows_affected() > 0)
 }
 
-// ── Files ───────────────────────────────────────────────────────────
+// Files
 
 pub async fn insert_file(
     pool: &PgPool,
     version_id: Uuid,
-    directory_id: Uuid,
     path: &str,
     language: Option<&str>,
     metrics: &serde_json::Value,
 ) -> Result<File> {
     let row = sqlx::query_as::<_, File>(
-        "INSERT INTO files (version_id, directory_id, path, language, metrics)
-         VALUES ($1, $2, $3, $4, $5)
+        "INSERT INTO files (version_id, path, language, metrics)
+         VALUES ($1, $2, $3, $4)
          RETURNING *",
     )
     .bind(version_id)
-    .bind(directory_id)
     .bind(path)
     .bind(language)
     .bind(metrics)
@@ -290,15 +317,6 @@ pub async fn list_files_by_version(pool: &PgPool, version_id: Uuid) -> Result<Ve
     Ok(rows)
 }
 
-pub async fn list_files_by_directory(pool: &PgPool, directory_id: Uuid) -> Result<Vec<File>> {
-    let rows =
-        sqlx::query_as::<_, File>("SELECT * FROM files WHERE directory_id = $1 ORDER BY path")
-            .bind(directory_id)
-            .fetch_all(pool)
-            .await?;
-    Ok(rows)
-}
-
 pub async fn delete_file(pool: &PgPool, id: Uuid) -> Result<bool> {
     let result = sqlx::query("DELETE FROM files WHERE id = $1")
         .bind(id)
@@ -307,7 +325,7 @@ pub async fn delete_file(pool: &PgPool, id: Uuid) -> Result<bool> {
     Ok(result.rows_affected() > 0)
 }
 
-// ── Functions ───────────────────────────────────────────────────────
+// Functions
 
 pub async fn insert_function(
     pool: &PgPool,
@@ -352,6 +370,66 @@ pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<
 
 pub async fn delete_function(pool: &PgPool, id: Uuid) -> Result<bool> {
     let result = sqlx::query("DELETE FROM functions WHERE id = $1")
+        .bind(id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected() > 0)
+}
+
+// Changes
+
+#[allow(clippy::too_many_arguments)]
+pub async fn insert_change(
+    pool: &PgPool,
+    diff_id: Uuid,
+    old_path: Option<&str>,
+    new_path: Option<&str>,
+    old_start_line: i32,
+    old_end_line: i32,
+    new_start_line: i32,
+    new_end_line: i32,
+    metrics: &serde_json::Value,
+) -> Result<Change> {
+    let row = sqlx::query_as::<_, Change>(
+        "INSERT INTO changes (diff_id, old_path, new_path, old_start_line, old_end_line, new_start_line, new_end_line, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *",
+    )
+    .bind(diff_id)
+    .bind(old_path)
+    .bind(new_path)
+    .bind(old_start_line)
+    .bind(old_end_line)
+    .bind(new_start_line)
+    .bind(new_end_line)
+    .bind(metrics)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
+pub async fn get_change_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Change>> {
+    let row = sqlx::query_as::<_, Change>("SELECT * FROM changes WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row)
+}
+
+pub async fn list_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<Vec<Change>> {
+    let rows = sqlx::query_as::<_, Change>(
+        "SELECT * FROM changes
+         WHERE diff_id = $1
+         ORDER BY created_at, old_start_line, new_start_line",
+    )
+    .bind(diff_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn delete_change(pool: &PgPool, id: Uuid) -> Result<bool> {
+    let result = sqlx::query("DELETE FROM changes WHERE id = $1")
         .bind(id)
         .execute(pool)
         .await?;
