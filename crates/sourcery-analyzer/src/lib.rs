@@ -22,11 +22,11 @@ use std::sync::OnceLock;
 
 static FIX_REGEX: OnceLock<Regex> = OnceLock::new();
 
-pub mod db;
 pub mod diff;
 pub mod git_handler;
 pub mod language;
 pub mod processor;
+pub use sourcery_db as db;
 
 pub async fn analyze_git_repository(url: &str) -> Result<()> {
     // get a semaphore that tracks open files so that the fs is not overwhelmed
@@ -87,13 +87,20 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
 
         for path in paths_to_analyze {
             if !path.is_file() {
+                debug!(?path, "ignored file because is not a file");
                 continue;
             }
             let Some(language) = ProgrammingLanguage::detect_language(&path, None) else {
+                debug!(?path, "ignored file because could not detect language");
                 continue;
             };
             let lc = LanguageConfig::new(language);
             if sr.is_ignored_file(&path, &lc.extensions)? {
+                debug!(
+                    ?path,
+                    ?language,
+                    "ignored file because extension does not match"
+                );
                 continue;
             }
 
@@ -154,6 +161,7 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
                     let mut cyclomatic_writer = cyclomatic_output.lock().await;
                     cyclomatic_writer.write_all(cyclomatic_entries.as_bytes())?;
                 }
+
 
                 Ok(())
             });

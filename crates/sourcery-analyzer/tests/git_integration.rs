@@ -2,17 +2,18 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::sync::Once;
 
-use sourcery::git_handler::SourceRepository;
+use sourcery_analyzer::git_handler::SourceRepository;
 
 static SETUP: Once = Once::new();
 
 fn test_repo_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_fixtures/test_repo")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test_fixtures/test_repo")
 }
 
 fn setup_test_repo() {
     SETUP.call_once(|| {
-        let script = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/setup_test_repo.sh");
+        let script =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../tests/setup_test_repo.sh");
         let status = Command::new("bash")
             .arg(&script)
             .status()
@@ -46,7 +47,7 @@ fn test_checkout_commit() {
     setup_test_repo();
     // Use the pre-made copy so checkout mutations don't interfere with other tests
     let repo_path =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test_fixtures/test_repo_checkout");
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../test_fixtures/test_repo_checkout");
     let repo = SourceRepository::from_path(repo_path.clone()).expect("failed to open test repo");
 
     let oids: Vec<_> = repo

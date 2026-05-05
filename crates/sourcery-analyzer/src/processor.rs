@@ -47,12 +47,18 @@ impl<'processor> Processor<'processor> {
             .map(|comment| comment.length)
             .sum::<usize>() as u64;
         let effective_lines_of_code = lines_of_code.saturating_sub(comment_lines_of_code);
+        let total_cyclomatic = ast_analysis
+            .functions
+            .iter()
+            .map(|func| func.cyclomatic)
+            .sum::<u64>();
 
         Ok(Analysis {
             ast_analysis,
             lines_of_code,
             effective_lines_of_code,
             comment_lines_of_code,
+            total_cyclomatic,
         })
     }
 }
@@ -81,6 +87,7 @@ pub struct Analysis {
     pub lines_of_code: u64,
     pub effective_lines_of_code: u64,
     pub comment_lines_of_code: u64,
+    pub total_cyclomatic: u64,
 }
 
 #[derive(Debug)]

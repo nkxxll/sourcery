@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+pub use sqlx::PgPool;
 use uuid::Uuid;
 
 // ── Models ──────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ pub struct Function {
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
     let pool = PgPool::connect(database_url).await?;
-    sqlx::migrate!().run(&pool).await?;
+    sqlx::migrate!("../../migrations").run(&pool).await?;
     Ok(pool)
 }
 

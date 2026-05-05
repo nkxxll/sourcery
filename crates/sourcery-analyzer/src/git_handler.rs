@@ -1,6 +1,9 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use git2::{Commit, Oid, Repository, Revwalk, Sort};
 
 const REPOSITORIES_DIRECTORY: &str = "toanalyze";
@@ -11,23 +14,68 @@ pub struct SourceRepository {
     repo: Repository,
     pub dest_dir: PathBuf,
     pub analytics_dir: PathBuf,
+    pub cwd: PathBuf,
+}
+
+fn ensure_present(dir: &Path) -> Result<()> {
+    fs::create_dir_all(dir)?;
+    Ok(())
 }
 
 impl SourceRepository {
     pub fn new(url: &str) -> Result<Self> {
-        let dest_dir = Self::get_dest_directory(url);
-        let analytics_dir = Self::get_analytics_directory(url);
-        let repo = if dest_dir.is_dir() {
-            Repository::open(&dest_dir)?
+        let (cwd, dest_dir, analytics_dir) = Self::setup_directories(url)?;
+        let clone_repo = || {
+            Repository::clone(url, &dest_dir).map_err(|e| {
+                anyhow!(
+                    "failed to clone repository {url} into {} (cwd: {}): {e}",
+                    dest_dir.display(),
+                    cwd.display(),
+                )
+            })
+        };
+
+        let repo = if dest_dir.exists() {
+            match Repository::open(&dest_dir) {
+                Ok(repo) => repo,
+                Err(_open_err)
+                    if dest_dir.is_dir() && fs::read_dir(&dest_dir)?.next().is_none() =>
+                {
+                    clone_repo()?
+                }
+                Err(open_err) => {
+                    return Err(anyhow!(
+                        "failed to open repository at {} (cwd: {}): {open_err}",
+                        dest_dir.display(),
+                        cwd.display()
+                    ));
+                }
+            }
         } else {
-            Repository::clone(url, &dest_dir)?
+            let repo_parent = dest_dir.parent().ok_or_else(|| {
+                anyhow!(
+                    "failed to resolve parent directory for repository path {}",
+                    dest_dir.display()
+                )
+            })?;
+            ensure_present(repo_parent)?;
+            clone_repo()?
         };
         Ok(SourceRepository {
             url: url.to_string(),
             repo,
             dest_dir,
             analytics_dir,
+            cwd,
         })
+    }
+
+    fn setup_directories(url: &str) -> Result<(PathBuf, PathBuf, PathBuf)> {
+        let cwd = std::env::current_dir()?;
+        let dest_dir = Self::get_dest_directory(url, &cwd);
+        let analytics_dir = Self::get_analytics_directory(url, &cwd);
+        ensure_present(&analytics_dir)?;
+        Ok((cwd, dest_dir, analytics_dir))
     }
 
     pub fn find_commit(&self, oid: &Oid) -> Result<Commit<'_>> {
@@ -47,6 +95,7 @@ impl SourceRepository {
     }
 
     pub fn from_path(path: PathBuf) -> Result<Self> {
+        let cwd = std::env::current_dir()?;
         let repo = Repository::open(&path)?;
         Ok(SourceRepository {
             url: path.display().to_string(),
@@ -54,6 +103,7 @@ impl SourceRepository {
             // this works as long as this is a test
             dest_dir: path.clone(),
             analytics_dir: path,
+            cwd,
         })
     }
 
@@ -66,15 +116,13 @@ impl SourceRepository {
             .into()
     }
 
-    fn get_dest_directory(url: &str) -> PathBuf {
+    fn get_dest_directory(url: &str, cwd: &Path) -> PathBuf {
         let name = Self::get_repo_base_name(url);
-        let cwd = std::env::current_dir().expect("failed to get current directory");
         cwd.join(REPOSITORIES_DIRECTORY).join(name)
     }
 
-    fn get_analytics_directory(url: &str) -> PathBuf {
+    fn get_analytics_directory(url: &str, cwd: &Path) -> PathBuf {
         let name = Self::get_repo_base_name(url);
-        let cwd = std::env::current_dir().expect("failed to get current directory");
         cwd.join(ANALYTICS_DIRECTORY).join(name)
     }
 

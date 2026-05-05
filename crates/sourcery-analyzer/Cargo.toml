@@ -1,0 +1,17 @@
+[package]
+name = "sourcery-analyzer"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+clap.workspace = true
+git2.workspace = true
+regex.workspace = true
+sourcery-db = { path = "../sourcery-db" }
+tokio.workspace = true
+tracing.workspace = true
+tree-sitter.workspace = true
+tree-sitter-go.workspace = true
+tree-sitter-ocaml.workspace = true
+tree-sitter-python.workspace = true

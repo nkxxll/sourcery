@@ -1,5 +1,5 @@
 use clap::Parser;
-use sourcery::analyze_git_repository;
+use sourcery_analyzer::analyze_git_repository;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]

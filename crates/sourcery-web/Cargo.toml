@@ -1,0 +1,16 @@
+[package]
+name = "sourcery-web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow.workspace = true
+axum.workspace = true
+clap.workspace = true
+dotenvy.workspace = true
+serde.workspace = true
+sourcery-db = { path = "../sourcery-db" }
+tokio.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+uuid.workspace = true
