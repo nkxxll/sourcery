@@ -91,7 +91,10 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
 
 pub async fn insert_codebase(pool: &PgPool, name: &str, url: &str) -> Result<Codebase> {
     let row = sqlx::query_as::<_, Codebase>(
-        "INSERT INTO codebases (name, url) VALUES ($1, $2) RETURNING *",
+        "INSERT INTO codebases (name, url) VALUES ($1, $2)
+         ON CONFLICT (name) DO UPDATE SET
+             url = EXCLUDED.url
+         RETURNING *",
     )
     .bind(name)
     .bind(url)
@@ -149,6 +152,14 @@ pub async fn insert_version(
     let row = sqlx::query_as::<_, Version>(
         "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, is_fix, diff, metrics)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (codebase_id, commit_hash) DO UPDATE SET
+             message = EXCLUDED.message,
+             author_name = EXCLUDED.author_name,
+             author_email = EXCLUDED.author_email,
+             committed_at = EXCLUDED.committed_at,
+             is_fix = EXCLUDED.is_fix,
+             diff = EXCLUDED.diff,
+             metrics = EXCLUDED.metrics
          RETURNING *",
     )
     .bind(codebase_id)
@@ -224,6 +235,15 @@ pub async fn insert_diff(
     let row = sqlx::query_as::<_, Diff>(
         "INSERT INTO diffs (version_id, old_commit_hash, new_commit_hash, files_changed, insertions, deletions, changed_lines, summary, metrics)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         ON CONFLICT (version_id) DO UPDATE SET
+             old_commit_hash = EXCLUDED.old_commit_hash,
+             new_commit_hash = EXCLUDED.new_commit_hash,
+             files_changed = EXCLUDED.files_changed,
+             insertions = EXCLUDED.insertions,
+             deletions = EXCLUDED.deletions,
+             changed_lines = EXCLUDED.changed_lines,
+             summary = EXCLUDED.summary,
+             metrics = EXCLUDED.metrics
          RETURNING *",
     )
     .bind(version_id)
@@ -290,6 +310,9 @@ pub async fn insert_file(
     let row = sqlx::query_as::<_, File>(
         "INSERT INTO files (version_id, path, language, metrics)
          VALUES ($1, $2, $3, $4)
+         ON CONFLICT (version_id, path) DO UPDATE SET
+             language = EXCLUDED.language,
+             metrics = EXCLUDED.metrics
          RETURNING *",
     )
     .bind(version_id)
