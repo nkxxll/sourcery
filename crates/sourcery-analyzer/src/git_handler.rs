@@ -4,7 +4,7 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
-use git2::{Commit, Oid, Repository, Revwalk, Sort};
+use git2::{BranchType, Commit, Oid, Repository, Revwalk, Sort};
 
 const REPOSITORIES_DIRECTORY: &str = "toanalyze";
 
@@ -21,6 +21,45 @@ fn ensure_present(dir: &Path) -> Result<()> {
 }
 
 impl SourceRepository {
+    fn try_push_ref_tip(repo: &Repository, revwalk: &mut Revwalk<'_>, refname: &str) -> bool {
+        let Ok(reference) = repo.find_reference(refname) else {
+            return false;
+        };
+
+        let oid = if let Ok(resolved) = reference.resolve() {
+            resolved.target()
+        } else {
+            reference.target()
+        };
+
+        match oid {
+            Some(oid) => revwalk.push(oid).is_ok(),
+            None => false,
+        }
+    }
+
+    fn push_detached_fallback(repo: &Repository, revwalk: &mut Revwalk<'_>) -> Result<()> {
+        if Self::try_push_ref_tip(repo, revwalk, "refs/remotes/origin/HEAD")
+            || Self::try_push_ref_tip(repo, revwalk, "refs/heads/main")
+            || Self::try_push_ref_tip(repo, revwalk, "refs/heads/master")
+        {
+            return Ok(());
+        }
+
+        for branch in repo.branches(Some(BranchType::Local))? {
+            let (branch, _) = branch?;
+            let Some(name) = branch.get().name() else {
+                continue;
+            };
+            if Self::try_push_ref_tip(repo, revwalk, name) {
+                return Ok(());
+            }
+        }
+
+        revwalk.push_head()?;
+        Ok(())
+    }
+
     pub fn new(url: &str) -> Result<Self> {
         let (cwd, dest_dir) = Self::setup_directories(url)?;
         let clone_repo = || {
@@ -119,7 +158,11 @@ impl SourceRepository {
     pub fn iter(&self) -> Result<Revwalk<'_>> {
         let mut revwalk = self.repo.revwalk()?;
         revwalk.simplify_first_parent()?;
-        revwalk.push_head()?;
+        if self.repo.head_detached()? {
+            Self::push_detached_fallback(&self.repo, &mut revwalk)?;
+        } else {
+            revwalk.push_head()?;
+        }
         revwalk.set_sorting(Sort::REVERSE | Sort::TOPOLOGICAL)?; // root to head
         Ok(revwalk)
     }
