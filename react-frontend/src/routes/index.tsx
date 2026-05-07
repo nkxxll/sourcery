@@ -1,16 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { LanguageTable } from '#/components/language-table'
+import { useQuery } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/')({ component: Home })
 
-const rows = {
-  golang: ['go-yaml', 'echo', 'bubbletea'],
-  ocaml: ['ocaml-yaml', 'dream'],
-  elixir: ['phoenix', 'jason'],
-  c: ['cjson', 'raylib'],
-} satisfies Record<string, string[]>
-
 function Home() {
-  return <LanguageTable rows={rows} />
+  const { isPending, error, data } = useQuery({
+    queryKey: ['repoData'],
+    queryFn: () =>
+      fetch('/api/codebases').then((res) => {
+        res.json()
+      }),
+  })
+
+  if (isPending) return <>Loading...</>
+  if (error) return <>Error...{error}</>
+  return (
+    <>
+      {JSON.stringify(data)}
+      <LanguageTable rows={data} />
+    </>
+  )
 }

@@ -5,8 +5,6 @@ import { cn } from '#/lib/utils'
 
 const navLinks = [
   { path: '/', label: 'Home' },
-  { path: '/codebase', label: 'Codebase' },
-  { path: '/diff-graph', label: 'Diff graph' },
 ] as const
 
 const normalizePath = (path: string) =>

@@ -9,72 +9,75 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DiffGraphRouteImport } from './routes/diff-graph'
-import { Route as CodebaseRouteImport } from './routes/codebase'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CodebaseIdRouteImport } from './routes/codebase.$id'
+import { Route as CodebaseIdStatsRouteImport } from './routes/codebase.$id.stats'
+import { Route as CodebaseIdDiffRouteImport } from './routes/codebase.$id.diff'
 
-const DiffGraphRoute = DiffGraphRouteImport.update({
-  id: '/diff-graph',
-  path: '/diff-graph',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CodebaseRoute = CodebaseRouteImport.update({
-  id: '/codebase',
-  path: '/codebase',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CodebaseIdRoute = CodebaseIdRouteImport.update({
+  id: '/codebase/$id',
+  path: '/codebase/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodebaseIdStatsRoute = CodebaseIdStatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
+  getParentRoute: () => CodebaseIdRoute,
+} as any)
+const CodebaseIdDiffRoute = CodebaseIdDiffRouteImport.update({
+  id: '/diff',
+  path: '/diff',
+  getParentRoute: () => CodebaseIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/codebase': typeof CodebaseRoute
-  '/diff-graph': typeof DiffGraphRoute
+  '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/codebase/$id/diff': typeof CodebaseIdDiffRoute
+  '/codebase/$id/stats': typeof CodebaseIdStatsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/codebase': typeof CodebaseRoute
-  '/diff-graph': typeof DiffGraphRoute
+  '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/codebase/$id/diff': typeof CodebaseIdDiffRoute
+  '/codebase/$id/stats': typeof CodebaseIdStatsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/codebase': typeof CodebaseRoute
-  '/diff-graph': typeof DiffGraphRoute
+  '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/codebase/$id/diff': typeof CodebaseIdDiffRoute
+  '/codebase/$id/stats': typeof CodebaseIdStatsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/codebase' | '/diff-graph'
+  fullPaths:
+    | '/'
+    | '/codebase/$id'
+    | '/codebase/$id/diff'
+    | '/codebase/$id/stats'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/codebase' | '/diff-graph'
-  id: '__root__' | '/' | '/codebase' | '/diff-graph'
+  to: '/' | '/codebase/$id' | '/codebase/$id/diff' | '/codebase/$id/stats'
+  id:
+    | '__root__'
+    | '/'
+    | '/codebase/$id'
+    | '/codebase/$id/diff'
+    | '/codebase/$id/stats'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  CodebaseRoute: typeof CodebaseRoute
-  DiffGraphRoute: typeof DiffGraphRoute
+  CodebaseIdRoute: typeof CodebaseIdRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/diff-graph': {
-      id: '/diff-graph'
-      path: '/diff-graph'
-      fullPath: '/diff-graph'
-      preLoaderRoute: typeof DiffGraphRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/codebase': {
-      id: '/codebase'
-      path: '/codebase'
-      fullPath: '/codebase'
-      preLoaderRoute: typeof CodebaseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -82,13 +85,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/codebase/$id': {
+      id: '/codebase/$id'
+      path: '/codebase/$id'
+      fullPath: '/codebase/$id'
+      preLoaderRoute: typeof CodebaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/codebase/$id/stats': {
+      id: '/codebase/$id/stats'
+      path: '/stats'
+      fullPath: '/codebase/$id/stats'
+      preLoaderRoute: typeof CodebaseIdStatsRouteImport
+      parentRoute: typeof CodebaseIdRoute
+    }
+    '/codebase/$id/diff': {
+      id: '/codebase/$id/diff'
+      path: '/diff'
+      fullPath: '/codebase/$id/diff'
+      preLoaderRoute: typeof CodebaseIdDiffRouteImport
+      parentRoute: typeof CodebaseIdRoute
+    }
   }
 }
 
+interface CodebaseIdRouteChildren {
+  CodebaseIdDiffRoute: typeof CodebaseIdDiffRoute
+  CodebaseIdStatsRoute: typeof CodebaseIdStatsRoute
+}
+
+const CodebaseIdRouteChildren: CodebaseIdRouteChildren = {
+  CodebaseIdDiffRoute: CodebaseIdDiffRoute,
+  CodebaseIdStatsRoute: CodebaseIdStatsRoute,
+}
+
+const CodebaseIdRouteWithChildren = CodebaseIdRoute._addFileChildren(
+  CodebaseIdRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  CodebaseRoute: CodebaseRoute,
-  DiffGraphRoute: DiffGraphRoute,
+  CodebaseIdRoute: CodebaseIdRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
