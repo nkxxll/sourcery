@@ -5,11 +5,13 @@ use std::{
 };
 
 use anyhow::{Context, Result};
+use git2::Oid;
 use regex::Regex;
 use serde_json::json;
+use sourcery_db::{Codebase, PgPool};
 use std::sync::OnceLock;
 use tokio::{sync::Semaphore, task::JoinSet};
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 
 use crate::{
     git_handler::SourceRepository,
@@ -34,41 +36,66 @@ pub async fn analyze_git_repository(url: &str) -> Result<()> {
     analyze_git_repository_with_database(url, &database_url).await
 }
 
-pub async fn analyze_git_repository_with_database(url: &str, database_url: &str) -> Result<()> {
-    // Track open files so the filesystem is not overwhelmed.
-    let semaphore = Arc::new(Semaphore::new(100));
-    let mut join_set: JoinSet<Result<(String, FileMetrics)>> = tokio::task::JoinSet::new();
+struct State {
+    pub sr: SourceRepository,
+    pub codebase: Codebase,
+    pub progress: Progress,
+    pub commits: Vec<Oid>,
+    pub current_aggregate: AggregatedFileMetrics,
+    pub current_file_metrics_by_path: HashMap<String, FileMetrics>,
+}
 
-    let sr = SourceRepository::new(url)?;
-    let pool = db::connect(database_url).await?;
-    let codebase_name = SourceRepository::get_repo_base_name(url);
-    let codebase = db::insert_codebase(&pool, &codebase_name, url).await?;
-
-    let mut commit_oids = Vec::new();
-    for commit_oid in sr.into_iter() {
-        let oid = match commit_oid {
-            Ok(oid) => oid,
-            Err(err) => {
-                warn!(error = %err, "failed to read commit oid");
-                continue;
-            }
-        };
-        commit_oids.push(oid);
+impl State {
+    async fn new(url: &str, pool: &PgPool) -> Result<Self> {
+        let sr = SourceRepository::new(url)?;
+        let codebase_name = SourceRepository::get_repo_base_name(url);
+        let codebase = db::insert_codebase(&pool, &codebase_name, url).await?;
+        let commits = Self::gather_commits(&sr);
+        let number_of_commits = commits.len();
+        info!("Found {number_of_commits} commits.");
+        let progress = Progress::new(number_of_commits as u64, None);
+        progress.start_print();
+        let current_aggregate = AggregatedFileMetrics::default();
+        let current_file_metrics_by_path = HashMap::new();
+        Ok(Self {
+            sr,
+            codebase,
+            progress,
+            commits,
+            current_aggregate,
+            current_file_metrics_by_path,
+        })
     }
 
-    let mut progress = Progress::new(commit_oids.len() as u64, None);
-    progress.start_print();
+    fn gather_commits(sr: &SourceRepository) -> Vec<Oid> {
+        let mut res = Vec::new();
+        for commit_oid in sr.into_iter() {
+            let oid = match commit_oid {
+                Ok(oid) => oid,
+                Err(err) => {
+                    warn!(error = %err, "failed to read commit oid");
+                    continue;
+                }
+            };
+            res.push(oid);
+        }
+        res
+    }
+}
+
+pub async fn analyze_git_repository_with_database(url: &str, database_url: &str) -> Result<()> {
+    let semaphore = Arc::new(Semaphore::new(100));
+    let mut join_set: JoinSet<Result<(String, FileMetrics)>> = tokio::task::JoinSet::new();
+    let pool = db::connect(database_url).await?;
+
+    let mut state = State::new(url, &pool).await?;
 
     let mut previous_oid = None;
-    let mut current_aggregate = AggregatedFileMetrics::default();
-    let mut current_file_metrics_by_path = HashMap::new();
-    let commit_len = commit_oids.len();
-    println!("found {commit_len} commits");
-    for oid in commit_oids {
-        progress.next();
-        progress.print_status();
-        sr.checkout_commit(&oid)?;
-        let commit = sr
+    for oid in state.commits {
+        state.progress.next();
+        state.sr.checkout_commit(&oid)?;
+        let commit = state
+            .sr
             .find_commit(&oid)
             .with_context(|| format!("failed to find commit {oid}"))?;
         let message = commit.message().unwrap_or("").to_string();
@@ -84,7 +111,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         let author_email = author.email().unwrap_or("").to_string();
         let commit_hash = oid.to_string();
 
-        let commit_diff = sr.commit_diff(previous_oid.as_ref(), &oid)?;
+        let commit_diff = state.sr.commit_diff(previous_oid.as_ref(), &oid)?;
         let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
         let new_commit_hash = commit_diff.new_oid.to_string();
         let pretty_diff = commit_diff.pretty_print();
@@ -92,7 +119,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         let version_metrics = json!({});
         let version = db::insert_version(
             &pool,
-            codebase.id,
+            state.codebase.id,
             &commit_hash,
             &message,
             &author_name,
@@ -134,10 +161,10 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         .await?;
 
         let old_metrics_by_path =
-            gather_old_metrics(commit_diff.files(), &current_file_metrics_by_path);
+            gather_old_metrics(commit_diff.files(), &state.current_file_metrics_by_path);
         let old_metrics = AggregatedFileMetrics::from_file_metrics_map(&old_metrics_by_path);
         debug!(
-            previous_files = current_aggregate.files,
+            previous_files = state.current_aggregate.files,
             files = old_metrics.files,
             total_lines_of_code = old_metrics.total_lines_of_code,
             total_effective_lines_of_code = old_metrics.total_effective_lines_of_code,
@@ -180,7 +207,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
         let paths_to_analyze: Vec<(PathBuf, PathBuf)> = commit_diff
             .files()
             .iter()
-            .map(|path| (path.clone(), sr.dest_dir.join(path)))
+            .map(|path| (path.clone(), state.sr.dest_dir.join(path)))
             .collect();
         let mut new_metrics_by_path = HashMap::new();
 
@@ -197,7 +224,7 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
                 continue;
             };
             let lc = LanguageConfig::new(language);
-            if sr.is_ignored_file(&absolute_path, &lc.extensions)? {
+            if state.sr.is_ignored_file(&absolute_path, &lc.extensions)? {
                 debug!(
                     ?absolute_path,
                     ?language,
@@ -280,13 +307,17 @@ pub async fn analyze_git_repository_with_database(url: &str, database_url: &str)
 
         let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
         let version_metrics =
-            AggregatedFileMetrics::reconcile(current_aggregate, old_metrics, new_metrics);
+            AggregatedFileMetrics::reconcile(state.current_aggregate, old_metrics, new_metrics);
         db::update_version_metrics(&pool, version.id, &version_metrics.to_json()).await?;
         for changed_path in commit_diff.files() {
-            current_file_metrics_by_path.remove(&changed_path.display().to_string());
+            state
+                .current_file_metrics_by_path
+                .remove(&changed_path.display().to_string());
         }
-        current_file_metrics_by_path.extend(new_metrics_by_path);
-        current_aggregate = version_metrics;
+        state
+            .current_file_metrics_by_path
+            .extend(new_metrics_by_path);
+        state.current_aggregate = version_metrics;
 
         previous_oid = Some(oid);
     }

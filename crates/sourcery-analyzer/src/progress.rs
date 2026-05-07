@@ -13,6 +13,7 @@ impl Progress {
 
     pub fn next(&mut self) {
         self.state += 1;
+        self.print_status();
     }
 
     fn bar(&self) -> String {
