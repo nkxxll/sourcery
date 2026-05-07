@@ -6,7 +6,8 @@ use axum::{
     routing::get,
 };
 use clap::Parser;
-use sourcery_db::{Codebase, PgPool, Version};
+use sourcery_db::{Codebase, Diff, PgPool};
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -14,7 +15,7 @@ use uuid::Uuid;
 struct WebArgs {
     #[arg(long, env = "DATABASE_URL")]
     database_url: String,
-    #[arg(long, default_value = "127.0.0.1:3000")]
+    #[arg(long, default_value = "localhost:8000")]
     bind: String,
 }
 
@@ -46,13 +47,13 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health))
         .route("/codebases", get(list_codebases))
         .route("/codebases/{id}", get(get_codebase))
-        .route("/codebases/{id}/versions", get(list_versions_by_codebase))
+        .route("/codebases/{id}/diff", get(list_diffs_by_codebase))
         .with_state(AppState { pool });
 
     let listener = tokio::net::TcpListener::bind(&args.bind)
         .await
         .with_context(|| format!("failed to bind on {}", args.bind))?;
-    tracing::info!("web server listening on {}", listener.local_addr()?);
+    tracing::debug!("web server listening on {}", listener.local_addr()?);
 
     axum::serve(listener, app).await?;
     Ok(())
@@ -64,8 +65,8 @@ async fn health() -> Json<HealthResponse> {
 
 async fn list_codebases(
     State(state): State<AppState>,
-) -> Result<Json<Vec<Codebase>>, (StatusCode, String)> {
-    let codebases = sourcery_db::list_codebases(&state.pool)
+) -> Result<Json<BTreeMap<String, Vec<Codebase>>>, (StatusCode, String)> {
+    let codebases = sourcery_db::list_codebases_grouped_by_language(&state.pool)
         .await
         .map_err(internal_error)?;
     Ok(Json(codebases))
@@ -84,14 +85,14 @@ async fn get_codebase(
     }
 }
 
-async fn list_versions_by_codebase(
+async fn list_diffs_by_codebase(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<Vec<Version>>, (StatusCode, String)> {
-    let versions = sourcery_db::list_versions_by_codebase(&state.pool, id)
+) -> Result<Json<Vec<Diff>>, (StatusCode, String)> {
+    let diffs = sourcery_db::list_diffs_by_codebase(&state.pool, id)
         .await
         .map_err(internal_error)?;
-    Ok(Json(versions))
+    Ok(Json(diffs))
 }
 
 fn internal_error(error: anyhow::Error) -> (StatusCode, String) {

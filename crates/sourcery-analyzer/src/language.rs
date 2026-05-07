@@ -2,6 +2,7 @@ use std::ops::Range;
 use std::path::Path;
 
 use anyhow::{Result, anyhow};
+use clap::ValueEnum;
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_go;
 use tree_sitter_ocaml;
@@ -9,12 +10,23 @@ use tree_sitter_python;
 
 /// sets up structures for the languages and language specific analysis metadata
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
 pub enum ProgrammingLanguage {
     Python,
     Ocaml,
     Haskell,
     Golang,
+}
+
+impl ToString for ProgrammingLanguage {
+    fn to_string(&self) -> String {
+        match self {
+            ProgrammingLanguage::Python => "Python".to_string(),
+            ProgrammingLanguage::Ocaml => "Ocaml".to_string(),
+            ProgrammingLanguage::Haskell => "Haskell".to_string(),
+            ProgrammingLanguage::Golang => "Golang".to_string(),
+        }
+    }
 }
 
 pub struct LanguageConfig {

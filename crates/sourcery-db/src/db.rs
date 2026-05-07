@@ -2,6 +2,7 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 pub use sqlx::PgPool;
+use std::collections::BTreeMap;
 use uuid::Uuid;
 
 // Models
@@ -11,6 +12,7 @@ pub struct Codebase {
     pub id: Uuid,
     pub name: String,
     pub url: String,
+    pub programming_language: String,
     pub created_at: DateTime<Utc>,
 }
 
@@ -89,15 +91,22 @@ pub async fn connect(database_url: &str) -> Result<PgPool> {
 
 // Codebases
 
-pub async fn insert_codebase(pool: &PgPool, name: &str, url: &str) -> Result<Codebase> {
+pub async fn insert_codebase(
+    pool: &PgPool,
+    name: &str,
+    url: &str,
+    programming_language: &str,
+) -> Result<Codebase> {
     let row = sqlx::query_as::<_, Codebase>(
-        "INSERT INTO codebases (name, url) VALUES ($1, $2)
+        "INSERT INTO codebases (name, url, programming_language) VALUES ($1, $2, $3)
          ON CONFLICT (name) DO UPDATE SET
-             url = EXCLUDED.url
+             url = EXCLUDED.url,
+             programming_language = EXCLUDED.programming_language
          RETURNING *",
     )
     .bind(name)
     .bind(url)
+    .bind(programming_language)
     .fetch_one(pool)
     .await?;
     Ok(row)
@@ -124,6 +133,32 @@ pub async fn list_codebases(pool: &PgPool) -> Result<Vec<Codebase>> {
         .fetch_all(pool)
         .await?;
     Ok(rows)
+}
+
+pub async fn list_codebases_grouped_by_language(
+    pool: &PgPool,
+) -> Result<BTreeMap<String, Vec<Codebase>>> {
+    let rows = sqlx::query_as::<_, (String, serde_json::Value)>(
+        "SELECT
+            programming_language,
+            json_agg(to_jsonb(c) ORDER BY created_at) AS codebases
+         FROM codebases c
+         GROUP BY programming_language
+         ORDER BY programming_language",
+    )
+    .fetch_all(pool)
+    .await?;
+
+    let grouped = rows
+        .into_iter()
+        .map(|(language, codebases)| {
+            serde_json::from_value::<Vec<Codebase>>(codebases)
+                .map(|codebases| (language, codebases))
+                .map_err(anyhow::Error::from)
+        })
+        .collect::<Result<BTreeMap<_, _>>>()?;
+
+    Ok(grouped)
 }
 
 pub async fn delete_codebase(pool: &PgPool, id: Uuid) -> Result<bool> {

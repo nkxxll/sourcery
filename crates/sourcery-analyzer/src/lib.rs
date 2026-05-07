@@ -4,7 +4,7 @@ use std::{
     sync::Arc,
 };
 
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use git2::Oid;
 use regex::Regex;
 use serde_json::json;
@@ -30,10 +30,29 @@ pub mod processor;
 pub mod progress;
 pub use sourcery_db as db;
 
-pub async fn analyze_git_repository(url: &str) -> Result<()> {
+pub async fn analyze_git_repository(
+    url: &str,
+    programming_language: Option<ProgrammingLanguage>,
+) -> Result<()> {
     let database_url =
         std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_string());
-    analyze_git_repository_with_database(url, &database_url).await
+    analyze_git_repository_with_database(url, programming_language, &database_url).await
+}
+
+fn guess_repo_language(url: &str) -> Result<ProgrammingLanguage> {
+    if url.to_lowercase().contains("go") {
+        Ok(ProgrammingLanguage::Golang)
+    } else if url.to_lowercase().contains("ocaml") {
+        Ok(ProgrammingLanguage::Ocaml)
+    } else if url.to_lowercase().contains("haskell") {
+        Ok(ProgrammingLanguage::Haskell)
+    } else if url.to_lowercase().contains("python") {
+        Ok(ProgrammingLanguage::Python)
+    } else {
+        Err(anyhow!(
+            "the programming language could not be detected by the url you have to provide it manually"
+        ))
+    }
 }
 
 struct State {
@@ -46,10 +65,20 @@ struct State {
 }
 
 impl State {
-    async fn new(url: &str, pool: &PgPool) -> Result<Self> {
+    async fn new(
+        url: &str,
+        pool: &PgPool,
+        programming_language: Option<ProgrammingLanguage>,
+    ) -> Result<Self> {
         let sr = SourceRepository::new(url)?;
         let codebase_name = SourceRepository::get_repo_base_name(url);
-        let codebase = db::insert_codebase(&pool, &codebase_name, url).await?;
+        let codebase = if let Some(pl) = programming_language {
+            let programming_language_str = pl.to_string();
+            db::insert_codebase(&pool, &codebase_name, url, &programming_language_str).await?
+        } else {
+            let language = guess_repo_language(url)?.to_string();
+            db::insert_codebase(&pool, &codebase_name, url, &language).await?
+        };
         let commits = Self::gather_commits(&sr);
         let number_of_commits = commits.len();
         info!("Found {number_of_commits} commits.");
@@ -83,12 +112,16 @@ impl State {
     }
 }
 
-pub async fn analyze_git_repository_with_database(url: &str, database_url: &str) -> Result<()> {
+pub async fn analyze_git_repository_with_database(
+    url: &str,
+    programming_language: Option<ProgrammingLanguage>,
+    database_url: &str,
+) -> Result<()> {
     let semaphore = Arc::new(Semaphore::new(100));
     let mut join_set: JoinSet<Result<(String, FileMetrics)>> = tokio::task::JoinSet::new();
     let pool = db::connect(database_url).await?;
 
-    let mut state = State::new(url, &pool).await?;
+    let mut state = State::new(url, &pool, programming_language).await?;
 
     let mut previous_oid = None;
     for oid in state.commits {
