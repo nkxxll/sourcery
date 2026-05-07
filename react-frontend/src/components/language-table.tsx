@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 
 import { Button } from '#/components/ui/button'
+import type { Codebase } from '#/lib/models'
 import {
   Table,
   TableBody,
@@ -12,7 +13,7 @@ import {
   TableRow,
 } from '#/components/ui/table'
 
-type LanguageRows = Record<string, string[]>
+type LanguageRows = Record<string, Codebase[]>
 
 export function LanguageTable({ rows }: { rows: LanguageRows }) {
   const languages = useMemo(() => Object.keys(rows), [rows])
@@ -30,14 +31,14 @@ export function LanguageTable({ rows }: { rows: LanguageRows }) {
           </div>
         ),
         cell: ({ getValue }) => {
-          const packages = getValue<string[]>()
+          const codebases = getValue<Codebase[]>()
 
           return (
             <ul className="m-0 flex list-none flex-col gap-2 p-4">
-              {packages.map((pkg) => (
-                <li key={pkg}>
+              {codebases.map((codebase) => (
+                <li key={codebase.id}>
                   <Button className="align-middle" size="lg">
-                    {pkg}
+                    {codebase.name}
                   </Button>
                 </li>
               ))}

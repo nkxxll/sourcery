@@ -32,8 +32,13 @@ export const Route = createRootRoute({
     ],
   }),
   notFoundComponent: NotFoundPage,
+  errorComponent: RootErrorComponent,
   shellComponent: RootDocument,
 })
+
+function RootErrorComponent({ error }: { error: Error }) {
+  return <div>Something went wrong: {error.message}</div>
+}
 
 function RootDocument({ children }: { children: ReactNode }) {
   return (
