@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    fs::File,
+    fs,
     path::PathBuf,
     sync::Arc,
 };
