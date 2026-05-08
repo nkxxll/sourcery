@@ -1,5 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
+    fs::File,
     path::PathBuf,
     sync::Arc,
 };
@@ -124,7 +125,7 @@ pub async fn analyze_git_repository_with_database(
     let mut state = State::new(url, &pool, programming_language).await?;
 
     let mut previous_oid = None;
-    for oid in state.commits {
+    for oid in &state.commits {
         state.progress.next();
         state.sr.checkout_commit(&oid)?;
         let commit = state
@@ -245,36 +246,9 @@ pub async fn analyze_git_repository_with_database(
         let mut new_metrics_by_path = HashMap::new();
 
         for (relative_path, absolute_path) in paths_to_analyze {
-            if !absolute_path.is_file() {
-                debug!(?absolute_path, "ignored file because is not a file");
-                continue;
-            }
-            let Some(language) = ProgrammingLanguage::detect_language(&absolute_path, None) else {
-                debug!(
-                    ?absolute_path,
-                    "ignored file because could not detect language"
-                );
+            let Some(lc) = filter_map_language_config(&state, &absolute_path) else {
                 continue;
             };
-            let lc = LanguageConfig::new(language);
-            if state.sr.is_ignored_file(&absolute_path, &lc.extensions)? {
-                debug!(
-                    ?absolute_path,
-                    ?language,
-                    "ignored file because extension does not match"
-                );
-                continue;
-            }
-
-            if matches!(language, ProgrammingLanguage::Haskell) {
-                debug!(
-                    ?absolute_path,
-                    ?language,
-                    "skipping file because no language configuration is available"
-                );
-                continue;
-            }
-
             let permit = semaphore.clone().acquire_owned().await?;
             let pool = pool.clone();
             let version_id = version.id;
@@ -284,7 +258,9 @@ pub async fn analyze_git_repository_with_database(
                 let analysis = processor.analyze()?;
                 let source = processor.source();
                 let metrics = &analysis.ast_analysis;
+
                 let file_path = relative_path.display().to_string();
+                let language = &lc.language;
                 let language_name = format!("{language:?}").to_ascii_lowercase();
 
                 let file_metrics = FileMetrics {
@@ -299,6 +275,7 @@ pub async fn analyze_git_repository_with_database(
                     "comment_lines_of_code": file_metrics.comment_lines_of_code,
                     "total_cyclomatic": file_metrics.total_cyclomatic,
                 });
+
                 let file = db::insert_file(
                     &pool,
                     version_id,
@@ -307,7 +284,6 @@ pub async fn analyze_git_repository_with_database(
                     &file_metrics_json,
                 )
                 .await?;
-
                 for func in &metrics.functions {
                     // Function names may repeat by namespace, so include location.
                     let unique_name = func.name.with_location(source)?;
@@ -352,7 +328,7 @@ pub async fn analyze_git_repository_with_database(
             .extend(new_metrics_by_path);
         state.current_aggregate = version_metrics;
 
-        previous_oid = Some(oid);
+        previous_oid = Some(*oid);
     }
     Ok(())
 }
@@ -390,4 +366,70 @@ fn is_fix(message: &str) -> bool {
     });
 
     re.is_match(message)
+}
+
+fn filter_map_language_config(state: &State, absolute_path: &PathBuf) -> Option<LanguageConfig> {
+    if !absolute_path.is_file() {
+        debug!(?absolute_path, "ignored file because is not a file");
+        return None;
+    }
+    let Some(language) = ProgrammingLanguage::detect_language(absolute_path, None) else {
+        debug!(
+            ?absolute_path,
+            "ignored file because could not detect language"
+        );
+        return None;
+    };
+    let lc = LanguageConfig::new(language);
+    if state
+        .sr
+        .is_ignored_file(absolute_path, &lc.extensions)
+        .unwrap_or(true)
+    {
+        debug!(
+            ?absolute_path,
+            ?language,
+            "ignored file because extension does not match"
+        );
+        return None;
+    }
+
+    if matches!(language, ProgrammingLanguage::Haskell) {
+        debug!(
+            ?absolute_path,
+            ?language,
+            "skipping file because no language configuration is available"
+        );
+        return None;
+    }
+    Some(lc)
+}
+
+pub fn analyze_single_file(
+    path: String,
+    outfile: String,
+    programming_language: Option<ProgrammingLanguage>,
+) -> Result<()> {
+    let path = PathBuf::from(path);
+    let lc = match programming_language {
+        Some(pl) => LanguageConfig::new(pl),
+        None => {
+            let pl = ProgrammingLanguage::from_extension(
+                &path
+                    .extension()
+                    .expect("could not get extension")
+                    .to_string_lossy()
+                    .to_string(),
+            )
+            .expect("could not guess programming language from extension");
+            LanguageConfig::new(pl)
+        }
+    };
+    let processor = Processor::new(&lc, &path)?;
+    let analysis = processor.analyze()?;
+    let source = processor.source();
+    let pretty_metrics = analysis.pretty_print(source);
+
+    fs::write(outfile, pretty_metrics)?;
+    Ok(())
 }

@@ -89,6 +89,67 @@ pub struct Analysis {
     pub comment_lines_of_code: u64,
     pub total_cyclomatic: u64,
 }
+impl Analysis {
+    pub(crate) fn pretty_print(&self, source: &str) -> String {
+        // reduce perf hit by growing
+        let mut res = String::with_capacity(1024);
+
+        res.push_str(&format!("lines_of_code: {}\n", self.lines_of_code));
+        res.push_str(&format!(
+            "effective_lines_of_code: {}\n",
+            self.effective_lines_of_code
+        ));
+        res.push_str(&format!(
+            "comment_lines_of_code: {}\n",
+            self.comment_lines_of_code
+        ));
+        res.push_str(&format!("total_cyclomatic: {}\n", self.total_cyclomatic));
+
+        res.push_str("functions:\n");
+        for function in &self.ast_analysis.functions {
+            let name = function
+                .name
+                .get_content(source)
+                .unwrap_or_else(|_| "<invalid span>".to_string());
+            res.push_str(&format!(
+                "  - {}:{}..{} length={} cyclomatic={} cyclomatic_match_as_single_branch={}\n",
+                name,
+                function.definition_line_span.start_line,
+                function.definition_line_span.end_line,
+                function.function_length,
+                function.cyclomatic,
+                function.cyclomatic_match_as_single_branch,
+            ));
+        }
+
+        res.push_str("comments:\n");
+        for comment in &self.ast_analysis.comments {
+            let snippet = comment
+                .comment_span
+                .get_content(source)
+                .map(|content| content.replace('\n', "\\n"))
+                .map(|content| {
+                    const MAX_CHARS: usize = 80;
+                    if content.chars().count() > MAX_CHARS {
+                        let truncated: String = content.chars().take(MAX_CHARS).collect();
+                        format!("{truncated}...")
+                    } else {
+                        content
+                    }
+                })
+                .unwrap_or_else(|_| "<invalid span>".to_string());
+            res.push_str(&format!(
+                "  - {}..{} length={} text={:?}\n",
+                comment.comment_line_span.start_line,
+                comment.comment_line_span.end_line,
+                comment.length,
+                snippet,
+            ));
+        }
+
+        res
+    }
+}
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FileMetrics {

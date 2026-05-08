@@ -30,7 +30,7 @@ impl ToString for ProgrammingLanguage {
 }
 
 pub struct LanguageConfig {
-    language: ProgrammingLanguage,
+    pub language: ProgrammingLanguage,
     pub function_nodes: Vec<String>,
     pub function_name_field: String,
     pub comment_nodes: Vec<String>,

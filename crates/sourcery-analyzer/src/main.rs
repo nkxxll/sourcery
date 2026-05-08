@@ -1,20 +1,50 @@
-use clap::Parser;
-use sourcery_analyzer::{analyze_git_repository_with_database, language::ProgrammingLanguage};
+use clap::{Parser, Subcommand};
+use sourcery_analyzer::{analyze_git_repository_with_database, analyze_single_file, language::ProgrammingLanguage};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 pub struct CommandLineInterface {
-    url: String,
-    #[arg(long, env = "DATABASE_URL")]
-    database_url: String,
-    programming_language: Option<ProgrammingLanguage>,
+    #[command(subcommand)]
+    command: SubCommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum SubCommand {
+    Repo {
+        url: String,
+        #[arg(long, env = "DATABASE_URL")]
+        database_url: String,
+        programming_language: Option<ProgrammingLanguage>,
+    },
+    File {
+        path: String,
+        #[arg(long, default_value = "stats.txt")]
+        outfile: String,
+        programming_language: Option<ProgrammingLanguage>,
+    },
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv()?;
-    let args = CommandLineInterface::parse();
-    analyze_git_repository_with_database(&args.url, args.programming_language, &args.database_url)
-        .await?;
+    let cli = CommandLineInterface::parse();
+
+    match cli.command {
+        SubCommand::Repo {
+            url,
+            database_url,
+            programming_language,
+        } => {
+            analyze_git_repository_with_database(&url, programming_language, &database_url).await?;
+        }
+        SubCommand::File {
+            path,
+            outfile,
+            programming_language,
+        } => {
+            analyze_single_file(path, outfile, programming_language)?;
+        }
+    }
+
     Ok(())
 }
