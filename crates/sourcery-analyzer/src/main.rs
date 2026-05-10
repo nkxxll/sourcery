@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
-use sourcery_analyzer::{analyze_git_repository_with_database, analyze_single_file, language::ProgrammingLanguage};
+use sourcery_analyzer::{
+    analyze_git_repository_with_database, analyze_single_file, language::ProgrammingLanguage,
+};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -26,7 +28,7 @@ pub enum SubCommand {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    dotenvy::dotenv()?;
+    let _ = dotenvy::dotenv();
     let cli = CommandLineInterface::parse();
 
     match cli.command {

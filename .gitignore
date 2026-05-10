@@ -3,3 +3,5 @@
 mindloom/*
 analytics/*
 .env
+**/__pycache__/**
+stats.txt
