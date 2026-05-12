@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import subprocess
 import tempfile
@@ -89,7 +90,40 @@ def analyze_files(files, filetype):
             print(f"Pass file {file}")
 
 
+def parse_args():
+    a = argparse.ArgumentParser()
+    a.add_argument("--download", action=argparse.BooleanOptionalAction)
+    a.add_argument("--build", action=argparse.BooleanOptionalAction)
+    return a.parse_args()
+
+
 if __name__ == "__main__":
-    build()
+    args = parse_args()
+    if args.download:
+        prefix = ["gh", "repo", "clone"]
+        postfix = ["--", "--depth", "1"]
+        downloads = [
+            [
+                *prefix,
+                "dlesbre/advent-of-code",
+                "./toanalyze/aoc/ocaml/advent-of-code",
+                *postfix,
+            ],
+            [
+                *prefix,
+                "ColasNahaboo/advent-of-code-my-solutions",
+                "./toanalyze/aoc/ocaml/advent-of-code-my-solutions",
+                *postfix,
+            ],
+        ]
+        for download in downloads:
+            res = subprocess.run(download)
+            if res.returncode != 0:
+                print(f"WARN: could not download repo {download}")
+
+    if args.build:
+        print("Building...")
+        build()
+
     analyze_files(gofiles, FileType.GOLANG)
     analyze_files(ocamlfiles, FileType.OCAML)
