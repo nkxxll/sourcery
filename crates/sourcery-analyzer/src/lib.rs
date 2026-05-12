@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow};
+use ecow::EcoString;
 use git2::Oid;
 use regex::Regex;
 use serde_json::json;
@@ -62,7 +63,7 @@ struct State {
     pub progress: Progress,
     pub commits: Vec<Oid>,
     pub current_aggregate: AggregatedFileMetrics,
-    pub current_file_metrics_by_path: HashMap<String, FileMetrics>,
+    pub current_file_metrics_by_path: HashMap<EcoString, FileMetrics>,
 }
 
 impl State {
@@ -119,7 +120,7 @@ pub async fn analyze_git_repository_with_database(
     database_url: &str,
 ) -> Result<()> {
     let semaphore = Arc::new(Semaphore::new(100));
-    let mut join_set: JoinSet<Result<(String, FileMetrics)>> = tokio::task::JoinSet::new();
+    let mut join_set: JoinSet<Result<(EcoString, FileMetrics)>> = tokio::task::JoinSet::new();
     let pool = db::connect(database_url).await?;
 
     let mut state = State::new(url, &pool, programming_language).await?;
@@ -259,7 +260,7 @@ pub async fn analyze_git_repository_with_database(
                 let source = processor.source();
                 let metrics = &analysis.ast_analysis;
 
-                let file_path = relative_path.display().to_string();
+                let file_path = EcoString::from(relative_path.display().to_string());
                 let language = &lc.language;
                 let language_name = format!("{language:?}").to_ascii_lowercase();
 
@@ -299,7 +300,7 @@ pub async fn analyze_git_repository_with_database(
                     db::insert_function(
                         &pool,
                         file.id,
-                        &unique_name,
+                        unique_name.as_str(),
                         start_line,
                         end_line,
                         &function_metrics,
@@ -321,7 +322,7 @@ pub async fn analyze_git_repository_with_database(
         for changed_path in commit_diff.files() {
             state
                 .current_file_metrics_by_path
-                .remove(&changed_path.display().to_string());
+                .remove(changed_path.display().to_string().as_str());
         }
         state
             .current_file_metrics_by_path
@@ -335,8 +336,8 @@ pub async fn analyze_git_repository_with_database(
 
 fn gather_old_metrics(
     changed_paths: &[PathBuf],
-    current_file_metrics_by_path: &HashMap<String, FileMetrics>,
-) -> HashMap<String, FileMetrics> {
+    current_file_metrics_by_path: &HashMap<EcoString, FileMetrics>,
+) -> HashMap<EcoString, FileMetrics> {
     if changed_paths.is_empty() {
         return HashMap::new();
     }
@@ -345,7 +346,7 @@ fn gather_old_metrics(
     changed_paths
         .into_iter()
         .filter_map(|path| {
-            let path = path.display().to_string();
+            let path = EcoString::from(path.display().to_string());
             if !seen.insert(path.clone()) {
                 return None;
             }

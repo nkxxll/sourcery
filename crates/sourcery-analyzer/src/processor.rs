@@ -1,6 +1,7 @@
 use std::{collections::HashMap, collections::HashSet, ops::Range, path::Path};
 
 use anyhow::{Result, anyhow};
+use ecow::EcoString;
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
@@ -8,7 +9,7 @@ use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 
 pub struct Processor<'processor> {
     lc: &'processor LanguageConfig,
-    source: String,
+    source: EcoString,
     new_line_map: NewLineMap,
 }
 
@@ -18,7 +19,7 @@ impl<'processor> Processor<'processor> {
         Ok(Self::from_source(lc, source))
     }
 
-    pub fn from_source(lc: &'processor LanguageConfig, source: impl Into<String>) -> Self {
+    pub fn from_source(lc: &'processor LanguageConfig, source: impl Into<EcoString>) -> Self {
         let source = source.into();
         let new_line_map = NewLineMap::new(&source);
         Self {
@@ -39,7 +40,8 @@ impl<'processor> Processor<'processor> {
     /// analyze is where all analysis happens for a single file.
     pub fn analyze(&self) -> Result<Analysis> {
         let tree = self.lc.parse_tree(&self.source)?;
-        let ast_analysis = AstProcessor::analyze_tree(&tree, self.lc, &self.new_line_map)?;
+        let ast_analysis =
+            AstProcessor::analyze_tree(&tree, self.lc, &self.new_line_map, &self.source)?;
         let lines_of_code = self.new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
         let comment_lines_of_code = ast_analysis
@@ -92,6 +94,7 @@ pub struct CommentAnalysis {
 
 #[derive(Debug)]
 pub struct FunctionAnalysis {
+    pub function_name: EcoString,
     pub name: CodeByteSpan,
     pub definition: CodeByteSpan,
     pub definition_line_span: CodeLineSpan,
@@ -128,10 +131,7 @@ impl Analysis {
 
         res.push_str("functions:\n");
         for function in &self.ast_analysis.functions {
-            let name = function
-                .name
-                .get_content(source)
-                .unwrap_or_else(|_| "<invalid span>".to_string());
+            let name = &function.function_name;
             res.push_str(&format!(
                 "  - {}:{}..{} length={} cyclomatic={} cyclomatic_match_as_single_branch={}\n",
                 name,
@@ -148,17 +148,17 @@ impl Analysis {
             let snippet = comment
                 .comment_span
                 .get_content(source)
-                .map(|content| content.replace('\n', "\\n"))
+                .map(|content| content.replace("\n", "\\n"))
                 .map(|content| {
                     const MAX_CHARS: usize = 80;
                     if content.chars().count() > MAX_CHARS {
-                        let truncated: String = content.chars().take(MAX_CHARS).collect();
-                        format!("{truncated}...")
+                        let truncated: EcoString = content.chars().take(MAX_CHARS).collect();
+                        format!("{truncated}...").into()
                     } else {
                         content
                     }
                 })
-                .unwrap_or_else(|_| "<invalid span>".to_string());
+                .unwrap_or_else(|_| "<invalid span>".into());
             res.push_str(&format!(
                 "  - {}..{} length={} text={:?}\n",
                 comment.comment_line_span.start_line,
@@ -268,7 +268,7 @@ impl AggregatedFileMetrics {
         })
     }
 
-    pub fn from_file_metrics_map(file_metrics_by_path: &HashMap<String, FileMetrics>) -> Self {
+    pub fn from_file_metrics_map(file_metrics_by_path: &HashMap<EcoString, FileMetrics>) -> Self {
         let mut aggregated = Self::default();
         for metrics in file_metrics_by_path.values() {
             aggregated.add_file_metrics(metrics);
@@ -506,24 +506,36 @@ struct NodeKindClassifier<'a> {
 
 impl<'a> NodeKindClassifier<'a> {
     fn from_language(profile: &'a LanguageConfig) -> Self {
-        let function_nodes = profile.function_nodes.iter().map(String::as_str).collect();
-        let comment_nodes = profile.comment_nodes.iter().map(String::as_str).collect();
+        let function_nodes = profile
+            .function_nodes
+            .iter()
+            .map(EcoString::as_str)
+            .collect();
+        let comment_nodes = profile
+            .comment_nodes
+            .iter()
+            .map(EcoString::as_str)
+            .collect();
         let match_constructs: HashSet<&str> = profile
             .match_construct_nodes
             .iter()
-            .map(String::as_str)
+            .map(EcoString::as_str)
             .collect();
         let control_flow = profile
             .control_flow_nodes
             .iter()
-            .map(String::as_str)
+            .map(EcoString::as_str)
             .filter(|kind| !match_constructs.contains(kind))
             .collect();
-        let match_arms = profile.match_arm_nodes.iter().map(String::as_str).collect();
+        let match_arms = profile
+            .match_arm_nodes
+            .iter()
+            .map(EcoString::as_str)
+            .collect();
         let boolean_operators = profile
             .boolean_operators
             .iter()
-            .map(String::as_str)
+            .map(EcoString::as_str)
             .collect();
 
         Self {
@@ -542,6 +554,7 @@ impl AstProcessor {
         tree: &Tree,
         profile: &LanguageConfig,
         new_line_map: &NewLineMap,
+        source: &str,
     ) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(profile);
         let mut state = AstTraversalState::default();
@@ -550,6 +563,7 @@ impl AstProcessor {
             profile,
             &classifier,
             new_line_map,
+            source,
             &mut state,
         )?;
 
@@ -564,6 +578,7 @@ impl AstProcessor {
         profile: &LanguageConfig,
         classifier: &NodeKindClassifier<'_>,
         new_line_map: &NewLineMap,
+        source: &str,
         state: &mut AstTraversalState,
     ) -> Result<()> {
         let kind = node.kind();
@@ -574,7 +589,7 @@ impl AstProcessor {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    Self::traverse(child, profile, classifier, new_line_map, state)?;
+                    Self::traverse(child, profile, classifier, new_line_map, source, state)?;
                 }
                 return Ok(());
             };
@@ -582,6 +597,7 @@ impl AstProcessor {
             let definition_span = LanguageConfig::node_span(node);
             let definition_line_span = new_line_map.get_code_line_span(&definition_span)?;
             state.functions.push(FunctionAnalysis {
+                function_name: name_span.get_content(source)?,
                 name: name_span,
                 definition: definition_span,
                 definition_line_span: definition_line_span,
@@ -614,7 +630,7 @@ impl AstProcessor {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse(child, profile, classifier, new_line_map, state)?;
+            Self::traverse(child, profile, classifier, new_line_map, source, state)?;
         }
 
         if entered_function {
@@ -635,6 +651,7 @@ impl AstProcessor {
 mod tests {
     use super::{AggregatedFileMetrics, FileMetrics, NewLineMap, Processor};
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
+    use ecow::EcoString;
     use std::collections::HashMap;
 
     #[test]
@@ -757,7 +774,7 @@ let merge a b =
     fn aggregated_file_metrics_sums_file_metrics_map() {
         let old_metrics = HashMap::from([
             (
-                "src/a.rs".to_string(),
+                EcoString::from("src/a.rs"),
                 FileMetrics {
                     lines_of_code: 10,
                     effective_lines_of_code: 8,
@@ -766,7 +783,7 @@ let merge a b =
                 },
             ),
             (
-                "src/b.rs".to_string(),
+                EcoString::from("src/b.rs"),
                 FileMetrics {
                     lines_of_code: 20,
                     effective_lines_of_code: 15,

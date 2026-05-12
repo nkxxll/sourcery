@@ -4,12 +4,13 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
+use ecow::EcoString;
 use git2::{BranchType, Commit, Oid, Repository, Revwalk, Sort};
 
 const REPOSITORIES_DIRECTORY: &str = "toanalyze";
 
 pub struct SourceRepository {
-    pub url: String,
+    pub url: EcoString,
     repo: Repository,
     pub dest_dir: PathBuf,
     pub cwd: PathBuf,
@@ -99,7 +100,7 @@ impl SourceRepository {
             clone_repo()?
         };
         Ok(SourceRepository {
-            url: url.to_string(),
+            url: url.into(),
             repo,
             dest_dir,
             cwd,
@@ -132,7 +133,7 @@ impl SourceRepository {
         let cwd = std::env::current_dir()?;
         let repo = Repository::open(&path)?;
         Ok(SourceRepository {
-            url: path.display().to_string(),
+            url: path.display().to_string().into(),
             repo,
             // this works as long as this is a test
             dest_dir: path.clone(),
@@ -140,7 +141,7 @@ impl SourceRepository {
         })
     }
 
-    pub(crate) fn get_repo_base_name(url: &str) -> String {
+    pub(crate) fn get_repo_base_name(url: &str) -> EcoString {
         url.trim_end_matches('/')
             .trim_end_matches(".git")
             .rsplit('/')
@@ -151,7 +152,7 @@ impl SourceRepository {
 
     fn get_dest_directory(url: &str, cwd: &Path) -> PathBuf {
         let name = Self::get_repo_base_name(url);
-        cwd.join(REPOSITORIES_DIRECTORY).join(name)
+        cwd.join(REPOSITORIES_DIRECTORY).join(name.as_str())
     }
 
     /// Returns a preconfigured `Revwalk` iterator over first-parent commits.
@@ -176,7 +177,7 @@ impl SourceRepository {
         Ok(())
     }
 
-    pub fn is_ignored_file(self: &Self, path: &Path, extension: &Vec<String>) -> Result<bool> {
+    pub fn is_ignored_file(self: &Self, path: &Path, extension: &[EcoString]) -> Result<bool> {
         if self.is_path_ignored(path)? {
             return Ok(true);
         }
