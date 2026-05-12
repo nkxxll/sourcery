@@ -4,7 +4,7 @@ use anyhow::{Result, anyhow};
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
-use crate::language::{CodeByteSpan, LanguageConfig};
+use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 
 pub struct Processor<'processor> {
     lc: &'processor LanguageConfig,
@@ -41,12 +41,15 @@ impl<'processor> Processor<'processor> {
         let tree = self.lc.parse_tree(&self.source)?;
         let ast_analysis = AstProcessor::analyze_tree(&tree, self.lc, &self.new_line_map)?;
         let lines_of_code = self.new_line_map.line_count() as u64;
+        let blank_lines = self.blank_lines();
         let comment_lines_of_code = ast_analysis
             .comments
             .iter()
-            .map(|comment| comment.length)
+            .map(|comment| comment.lines)
             .sum::<usize>() as u64;
-        let effective_lines_of_code = lines_of_code.saturating_sub(comment_lines_of_code);
+        let effective_lines_of_code = lines_of_code
+            .saturating_sub(comment_lines_of_code)
+            .saturating_sub(blank_lines);
         let total_cyclomatic = ast_analysis
             .functions
             .iter()
@@ -56,10 +59,26 @@ impl<'processor> Processor<'processor> {
         Ok(Analysis {
             ast_analysis,
             lines_of_code,
-            effective_lines_of_code,
+            blank_lines,
             comment_lines_of_code,
+            effective_lines_of_code,
             total_cyclomatic,
         })
+    }
+
+    fn blank_lines(&self) -> u64 {
+        let mut res = 0;
+        let mut last: Option<usize> = None;
+        for newline in &self.new_line_map.newline_offsets {
+            if let Some(l) = last
+                && l == newline - 1
+            {
+                // there is nothing in the line a blank line is here defined as a line that holds no other character
+                res += 1;
+            }
+            last = Some(*newline);
+        }
+        res
     }
 }
 
@@ -68,7 +87,7 @@ pub struct CommentAnalysis {
     pub comment_span: CodeByteSpan,
     pub comment_line_span: CodeLineSpan,
     /// Length in lines gathered by the newline map.
-    pub length: usize,
+    pub lines: usize,
 }
 
 #[derive(Debug)]
@@ -85,8 +104,9 @@ pub struct FunctionAnalysis {
 pub struct Analysis {
     pub ast_analysis: AstAnalysis,
     pub lines_of_code: u64,
-    pub effective_lines_of_code: u64,
+    pub blank_lines: u64,
     pub comment_lines_of_code: u64,
+    pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
 }
 impl Analysis {
@@ -95,13 +115,14 @@ impl Analysis {
         let mut res = String::with_capacity(1024);
 
         res.push_str(&format!("lines_of_code: {}\n", self.lines_of_code));
-        res.push_str(&format!(
-            "effective_lines_of_code: {}\n",
-            self.effective_lines_of_code
-        ));
+        res.push_str(&format!("blank_lines: {}\n", self.blank_lines));
         res.push_str(&format!(
             "comment_lines_of_code: {}\n",
             self.comment_lines_of_code
+        ));
+        res.push_str(&format!(
+            "effective_lines_of_code: {}\n",
+            self.effective_lines_of_code
         ));
         res.push_str(&format!("total_cyclomatic: {}\n", self.total_cyclomatic));
 
@@ -142,7 +163,7 @@ impl Analysis {
                 "  - {}..{} length={} text={:?}\n",
                 comment.comment_line_span.start_line,
                 comment.comment_line_span.end_line,
-                comment.length,
+                comment.lines,
                 snippet,
             ));
         }
@@ -387,7 +408,14 @@ struct CyclomaticCounts {
 }
 
 impl CyclomaticCounts {
-    fn add_from_kind(&mut self, kind: &str, classifier: &NodeKindClassifier<'_>) {
+    fn add_from_node(
+        &mut self,
+        node: Node,
+        profile: &LanguageConfig,
+        classifier: &NodeKindClassifier<'_>,
+    ) {
+        let kind = node.kind();
+
         if classifier.control_flow.contains(kind) {
             self.control_flow += 1;
         }
@@ -395,11 +423,55 @@ impl CyclomaticCounts {
             self.match_constructs += 1;
         }
         if classifier.match_arms.contains(kind) {
-            self.match_arms += 1;
+            self.match_arms += Self::match_arm_complexity(node, profile);
         }
         if classifier.boolean_operators.contains(kind) {
             self.boolean_operators += 1;
         }
+    }
+
+    fn match_arm_complexity(node: Node, profile: &LanguageConfig) -> u64 {
+        if profile.language != ProgrammingLanguage::Ocaml || node.kind() != "match_case" {
+            return 1;
+        }
+
+        let pattern_complexity = node
+            .child_by_field_name("pattern")
+            .map(Self::ocaml_pattern_complexity)
+            .unwrap_or(1);
+        let guard_complexity = u64::from(Self::has_named_child_kind(node, "guard"));
+
+        pattern_complexity + guard_complexity
+    }
+
+    fn ocaml_pattern_complexity(pattern: Node) -> u64 {
+        if pattern.kind() == "parenthesized_pattern" {
+            return Self::first_named_child(pattern)
+                .map(Self::ocaml_pattern_complexity)
+                .unwrap_or(1);
+        }
+
+        if pattern.kind() != "tuple_pattern" {
+            return 1;
+        }
+
+        let mut cursor = pattern.walk();
+        pattern
+            .children(&mut cursor)
+            .filter(|child| child.is_named())
+            .count()
+            .max(1) as u64
+    }
+
+    fn first_named_child(node: Node) -> Option<Node> {
+        let mut cursor = node.walk();
+        node.children(&mut cursor).find(|child| child.is_named())
+    }
+
+    fn has_named_child_kind(node: Node, kind: &str) -> bool {
+        let mut cursor = node.walk();
+        node.children(&mut cursor)
+            .any(|child| child.is_named() && child.kind() == kind)
     }
 
     fn cyclomatic(self) -> u64 {
@@ -530,12 +602,14 @@ impl AstProcessor {
             state.comments.push(CommentAnalysis {
                 comment_span,
                 comment_line_span: new_line_map.get_code_line_span(&comment_span)?,
-                length,
+                lines: length,
             });
         }
 
         for frame in &mut state.function_stack {
-            frame.cyclomatic_counts.add_from_kind(kind, classifier);
+            frame
+                .cyclomatic_counts
+                .add_from_node(node, profile, classifier);
         }
 
         let mut cursor = node.walk();
@@ -658,6 +732,25 @@ def identity(value):
         assert_eq!(metrics.functions.len(), 1);
         assert_eq!(metrics.functions[0].cyclomatic, 1);
         assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 1);
+    }
+
+    #[test]
+    fn ocaml_match_counts_tuple_patterns_and_guards() {
+        let source = r#"
+let merge a b =
+  match (a, b) with
+  | ([], []) -> []
+  | (x :: xs, y :: ys) when x > y -> merge xs ys
+  | _ -> failwith "unsupported"
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
+        let processor = Processor::from_source(&profile, source);
+
+        let metrics = processor.analyze().unwrap().ast_analysis;
+
+        assert_eq!(metrics.functions.len(), 1);
+        assert_eq!(metrics.functions[0].cyclomatic, 7);
+        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 2);
     }
 
     #[test]
