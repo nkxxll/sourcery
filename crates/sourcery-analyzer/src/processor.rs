@@ -101,6 +101,7 @@ pub struct FunctionAnalysis {
     pub function_length: usize,
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
+    pub functions_called: Vec<EcoString>,
 }
 
 #[derive(Debug)]
@@ -488,11 +489,13 @@ struct AstTraversalState {
     functions: Vec<FunctionAnalysis>,
     comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
+    function_map: HashMap<EcoString, Vec<EcoString>>,
 }
 
 struct FunctionFrame {
     function_index: usize,
     cyclomatic_counts: CyclomaticCounts,
+    function_calls: Vec<EcoString>,
 }
 
 struct NodeKindClassifier<'a> {
@@ -604,6 +607,7 @@ impl AstProcessor {
                 function_length: definition_line_span.line_length(),
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
+                functions_called: Vec::new(),
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -622,7 +626,7 @@ impl AstProcessor {
             });
         }
 
-        for frame in &mut state.function_stack {
+        if let Some(frame) = state.function_stack.last() {
             frame
                 .cyclomatic_counts
                 .add_from_node(node, profile, classifier);
