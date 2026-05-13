@@ -2,7 +2,6 @@ use std::{collections::HashMap, collections::HashSet, ops::Range, path::Path};
 
 use anyhow::{Result, anyhow};
 use ecow::EcoString;
-use sourcery_db::Function;
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
@@ -51,8 +50,13 @@ impl<'processor> Processor<'processor> {
     /// analyze is where all analysis happens for a single file.
     pub fn analyze(&self) -> Result<Analysis> {
         let tree = self.lc.parse_tree(&self.source)?;
-        let ast_analysis =
-            AstProcessor::analyze_tree(&tree, self.lc, &self.new_line_map, &self.source)?;
+        let ast_analysis = AstProcessor::analyze_tree(
+            &tree,
+            self.lc,
+            &self.new_line_map,
+            &self.source,
+            self.file.clone(),
+        )?;
         let lines_of_code = self.new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
         let comment_lines_of_code = ast_analysis
@@ -70,6 +74,7 @@ impl<'processor> Processor<'processor> {
             .sum::<u64>();
 
         Ok(Analysis {
+            file: self.file.clone(),
             ast_analysis,
             lines_of_code,
             blank_lines,
@@ -117,13 +122,14 @@ pub struct FunctionAnalysis {
 
 #[derive(Debug)]
 pub struct FunctionCall {
-    name: EcoString,
-    pos: CodeByteSpan,
-    file: EcoString,
+    pub name: EcoString,
+    pub pos: CodeByteSpan,
+    pub file: EcoString,
 }
 
 #[derive(Debug)]
 pub struct Analysis {
+    pub file: EcoString,
     pub ast_analysis: AstAnalysis,
     pub lines_of_code: u64,
     pub blank_lines: u64,
@@ -519,6 +525,7 @@ impl CyclomaticCounts {
 
 #[derive(Default)]
 struct AstTraversalState {
+    file: EcoString,
     functions: Vec<FunctionAnalysis>,
     comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
@@ -599,7 +606,10 @@ impl AstProcessor {
         file: EcoString,
     ) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(profile);
-        let mut state = AstTraversalState::default();
+        let mut state = AstTraversalState {
+            file,
+            ..Default::default()
+        };
         Self::traverse(
             tree.root_node(),
             profile,
@@ -607,7 +617,6 @@ impl AstProcessor {
             new_line_map,
             source,
             &mut state,
-            file,
         )?;
 
         Ok(AstAnalysis {
@@ -623,7 +632,6 @@ impl AstProcessor {
         new_line_map: &NewLineMap,
         source: &str,
         state: &mut AstTraversalState,
-        file: &EcoString,
     ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
@@ -633,15 +641,7 @@ impl AstProcessor {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    Self::traverse(
-                        child,
-                        profile,
-                        classifier,
-                        new_line_map,
-                        source,
-                        state,
-                        file,
-                    )?;
+                    Self::traverse(child, profile, classifier, new_line_map, source, state)?;
                 }
                 return Ok(());
             };
@@ -681,14 +681,14 @@ impl AstProcessor {
                 .cyclomatic_counts
                 .add_from_node(node, profile, classifier);
             if classifier.function_call.contains(kind) {
-                let name = Self::get_function_call(node, source, file.clone())?;
+                let name = Self::get_function_call(node, source, &state.file)?;
                 frame.function_calls.push(name);
             }
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse(child, profile, classifier, new_line_map, source, state, file)?;
+            Self::traverse(child, profile, classifier, new_line_map, source, state)?;
         }
 
         if entered_function {
@@ -705,11 +705,15 @@ impl AstProcessor {
         Ok(())
     }
 
-    fn get_function_call(node: Node, source: &str, file: EcoString) -> Result<FunctionCall> {
+    fn get_function_call(node: Node, source: &str, file: &EcoString) -> Result<FunctionCall> {
         if let Some(field) = node.child_by_field_name("function") {
             let pos = CodeByteSpan::from_node(field);
             let name = EcoString::from(field.utf8_text(source.as_bytes())?);
-            let func_call = FunctionCall { name, pos, file };
+            let func_call = FunctionCall {
+                name,
+                pos,
+                file: file.clone(),
+            };
             return Ok(func_call);
         }
         Err(anyhow::anyhow!("field not found"))
@@ -793,7 +797,7 @@ def analyze(x, values):
     return 6 if x < 0 else 7
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source);
+        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
@@ -811,7 +815,7 @@ def identity(value):
     return result
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source);
+        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
@@ -830,7 +834,7 @@ let merge a b =
   | _ -> failwith "unsupported"
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
-        let processor = Processor::from_source(&profile, source);
+        let processor = Processor::from_source(&profile, source, EcoString::from("test.ml"));
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
