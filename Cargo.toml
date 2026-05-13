@@ -3,6 +3,7 @@ members = [
     "crates/sourcery-db",
     "crates/sourcery-analyzer",
     "crates/sourcery-web",
+    "crates/sourcery-lsp-client",
 ]
 default-members = ["crates/sourcery-db", "crates/sourcery-analyzer"]
 resolver = "2"
