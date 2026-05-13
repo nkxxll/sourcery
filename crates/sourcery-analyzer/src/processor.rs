@@ -2,6 +2,7 @@ use std::{collections::HashMap, collections::HashSet, ops::Range, path::Path};
 
 use anyhow::{Result, anyhow};
 use ecow::EcoString;
+use sourcery_db::Function;
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
@@ -11,21 +12,31 @@ pub struct Processor<'processor> {
     lc: &'processor LanguageConfig,
     source: EcoString,
     new_line_map: NewLineMap,
+    file: EcoString,
 }
 
 impl<'processor> Processor<'processor> {
     pub fn new(lc: &'processor LanguageConfig, path: &Path) -> Result<Self> {
         let source = std::fs::read_to_string(path)?;
-        Ok(Self::from_source(lc, source))
+        Ok(Self::from_source(
+            lc,
+            source,
+            EcoString::from(path.to_string_lossy()),
+        ))
     }
 
-    pub fn from_source(lc: &'processor LanguageConfig, source: impl Into<EcoString>) -> Self {
+    pub fn from_source(
+        lc: &'processor LanguageConfig,
+        source: impl Into<EcoString>,
+        file: EcoString,
+    ) -> Self {
         let source = source.into();
         let new_line_map = NewLineMap::new(&source);
         Self {
             lc,
             source,
             new_line_map,
+            file,
         }
     }
 
@@ -101,7 +112,14 @@ pub struct FunctionAnalysis {
     pub function_length: usize,
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
-    pub functions_called: Vec<EcoString>,
+    pub functions_called: Vec<FunctionCall>,
+}
+
+#[derive(Debug)]
+pub struct FunctionCall {
+    name: EcoString,
+    pos: CodeByteSpan,
+    file: EcoString,
 }
 
 #[derive(Debug)]
@@ -179,7 +197,8 @@ impl Analysis {
         for function in functions {
             let name = &function.function_name;
             for called in &function.functions_called {
-                res.push_str(&format!("\t\"{name}\" -> \"{called}\"\n"));
+                let called_name = &called.name;
+                res.push_str(&format!("\t\"{name}\" -> \"{called_name}\"\n"));
             }
         }
         res.push_str("}\n\n");
@@ -508,7 +527,7 @@ struct AstTraversalState {
 struct FunctionFrame {
     function_index: usize,
     cyclomatic_counts: CyclomaticCounts,
-    function_calls: Vec<EcoString>,
+    function_calls: Vec<FunctionCall>,
 }
 
 struct NodeKindClassifier<'a> {
@@ -577,6 +596,7 @@ impl AstProcessor {
         profile: &LanguageConfig,
         new_line_map: &NewLineMap,
         source: &str,
+        file: EcoString,
     ) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(profile);
         let mut state = AstTraversalState::default();
@@ -587,6 +607,7 @@ impl AstProcessor {
             new_line_map,
             source,
             &mut state,
+            file,
         )?;
 
         Ok(AstAnalysis {
@@ -602,6 +623,7 @@ impl AstProcessor {
         new_line_map: &NewLineMap,
         source: &str,
         state: &mut AstTraversalState,
+        file: &EcoString,
     ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
@@ -611,7 +633,15 @@ impl AstProcessor {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    Self::traverse(child, profile, classifier, new_line_map, source, state)?;
+                    Self::traverse(
+                        child,
+                        profile,
+                        classifier,
+                        new_line_map,
+                        source,
+                        state,
+                        file,
+                    )?;
                 }
                 return Ok(());
             };
@@ -651,14 +681,14 @@ impl AstProcessor {
                 .cyclomatic_counts
                 .add_from_node(node, profile, classifier);
             if classifier.function_call.contains(kind) {
-                let name = Self::get_function_field_text_from_node(node, source)?;
+                let name = Self::get_function_call(node, source, file.clone())?;
                 frame.function_calls.push(name);
             }
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse(child, profile, classifier, new_line_map, source, state)?;
+            Self::traverse(child, profile, classifier, new_line_map, source, state, file)?;
         }
 
         if entered_function {
@@ -675,9 +705,12 @@ impl AstProcessor {
         Ok(())
     }
 
-    fn get_function_field_text_from_node(node: Node, source: &str) -> Result<EcoString> {
+    fn get_function_call(node: Node, source: &str, file: EcoString) -> Result<FunctionCall> {
         if let Some(field) = node.child_by_field_name("function") {
-            return Ok(EcoString::from(field.utf8_text(source.as_bytes())?));
+            let pos = CodeByteSpan::from_node(field);
+            let name = EcoString::from(field.utf8_text(source.as_bytes())?);
+            let func_call = FunctionCall { name, pos, file };
+            return Ok(func_call);
         }
         Err(anyhow::anyhow!("field not found"))
     }
@@ -723,7 +756,7 @@ mod tests {
     fn processor_uses_newline_map_for_file_and_comment_lines() {
         let source = "# module comment";
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source);
+        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
 
         let analysis = processor.analyze().unwrap();
 

@@ -151,6 +151,12 @@ impl CodeByteSpan {
         }
         Self { start, end }
     }
+
+    pub fn from_node(node: Node) -> Self {
+        let start = node.start_byte();
+        let end = node.end_byte();
+        Self::new(start, end)
+    }
 }
 
 impl From<CodeByteSpan> for Range<usize> {
@@ -210,7 +216,7 @@ impl LanguageConfig {
                 eco_vec(&["match_expression"]),
                 eco_vec(&["match_case"]),
                 eco_vec(&["ml", "mli"]),
-                eco_vec(&["apply_expression"]),
+                eco_vec(&["application_expression"]),
             ),
             ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
             ProgrammingLanguage::Golang => (
