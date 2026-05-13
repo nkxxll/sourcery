@@ -1513,6 +1513,7 @@ dependencies = [
  "sourcery-db",
  "tokio",
  "tracing",
+ "tracing-subscriber",
  "tree-sitter",
  "tree-sitter-go",
  "tree-sitter-ocaml",

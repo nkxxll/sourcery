@@ -13,6 +13,7 @@ serde_json.workspace = true
 sourcery-db = { path = "../sourcery-db" }
 tokio.workspace = true
 tracing.workspace = true
+tracing-subscriber.workspace = true
 tree-sitter.workspace = true
 tree-sitter-go.workspace = true
 tree-sitter-ocaml.workspace = true

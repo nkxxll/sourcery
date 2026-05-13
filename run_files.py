@@ -29,7 +29,6 @@ ocamlfiles = [
     "./toanalyze/aoc/ocaml/advent-of-code/2024/Day03/puzzle.ml",
 ]
 
-
 class FileType(Enum):
     GOLANG = ("go", "golang")
     OCAML = ("ml", "ocaml")

@@ -131,6 +131,7 @@ impl Analysis {
         res.push_str(&format!("total_cyclomatic: {}\n", self.total_cyclomatic));
 
         res.push_str("functions:\n");
+        res.push_str(&self.print_call_graph(&self.ast_analysis.functions));
         for function in &self.ast_analysis.functions {
             let name = &function.function_name;
             res.push_str(&format!(
@@ -169,6 +170,19 @@ impl Analysis {
             ));
         }
 
+        res
+    }
+
+    fn print_call_graph(&self, functions: &[FunctionAnalysis]) -> String {
+        let mut res = String::with_capacity(512);
+        res.push_str("\n\ndigraph CallGraph {\n");
+        for function in functions {
+            let name = &function.function_name;
+            for called in &function.functions_called {
+                res.push_str(&format!("\t\"{name}\" -> \"{called}\"\n"));
+            }
+        }
+        res.push_str("}\n\n");
         res
     }
 }
@@ -489,7 +503,6 @@ struct AstTraversalState {
     functions: Vec<FunctionAnalysis>,
     comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
-    function_map: HashMap<EcoString, Vec<EcoString>>,
 }
 
 struct FunctionFrame {
@@ -505,6 +518,7 @@ struct NodeKindClassifier<'a> {
     match_constructs: HashSet<&'a str>,
     match_arms: HashSet<&'a str>,
     boolean_operators: HashSet<&'a str>,
+    function_call: HashSet<&'a str>,
 }
 
 impl<'a> NodeKindClassifier<'a> {
@@ -540,7 +554,11 @@ impl<'a> NodeKindClassifier<'a> {
             .iter()
             .map(EcoString::as_str)
             .collect();
-
+        let function_call = profile
+            .function_call_nodes
+            .iter()
+            .map(EcoString::as_str)
+            .collect();
         Self {
             function_nodes,
             comment_nodes,
@@ -548,6 +566,7 @@ impl<'a> NodeKindClassifier<'a> {
             match_constructs,
             match_arms,
             boolean_operators,
+            function_call,
         }
     }
 }
@@ -612,6 +631,7 @@ impl AstProcessor {
             state.function_stack.push(FunctionFrame {
                 function_index,
                 cyclomatic_counts: CyclomaticCounts::default(),
+                function_calls: Vec::new(),
             });
             entered_function = true;
         }
@@ -626,10 +646,14 @@ impl AstProcessor {
             });
         }
 
-        if let Some(frame) = state.function_stack.last() {
+        if let Some(frame) = &mut state.function_stack.last_mut() {
             frame
                 .cyclomatic_counts
                 .add_from_node(node, profile, classifier);
+            if classifier.function_call.contains(kind) {
+                let name = Self::get_function_field_text_from_node(node, source)?;
+                frame.function_calls.push(name);
+            }
         }
 
         let mut cursor = node.walk();
@@ -645,9 +669,17 @@ impl AstProcessor {
             function.cyclomatic = frame.cyclomatic_counts.cyclomatic();
             function.cyclomatic_match_as_single_branch =
                 frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
+            function.functions_called = frame.function_calls;
         }
 
         Ok(())
+    }
+
+    fn get_function_field_text_from_node(node: Node, source: &str) -> Result<EcoString> {
+        if let Some(field) = node.child_by_field_name("function") {
+            return Ok(EcoString::from(field.utf8_text(source.as_bytes())?));
+        }
+        Err(anyhow::anyhow!("field not found"))
     }
 }
 

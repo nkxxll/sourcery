@@ -29,6 +29,12 @@ pub enum SubCommand {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let _ = dotenvy::dotenv();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "sourcery_analyzer=info".into()),
+        )
+        .init();
     let cli = CommandLineInterface::parse();
 
     match cli.command {

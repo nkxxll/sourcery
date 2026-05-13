@@ -40,6 +40,7 @@ pub struct LanguageConfig {
     pub match_construct_nodes: Vec<EcoString>,
     pub match_arm_nodes: Vec<EcoString>,
     pub extensions: Vec<EcoString>,
+    pub function_call_nodes: Vec<EcoString>,
 }
 
 impl ProgrammingLanguage {
@@ -173,6 +174,7 @@ impl LanguageConfig {
             match_construct_nodes,
             match_arm_nodes,
             extensions,
+            function_call_nodes,
         ) = match language {
             ProgrammingLanguage::Python => (
                 eco_vec(&["function_definition"]),
@@ -191,6 +193,7 @@ impl LanguageConfig {
                 eco_vec(&["match_statement"]),
                 eco_vec(&["case_clause"]),
                 eco_vec(&["py"]),
+                eco_vec(&["call"]),
             ),
             ProgrammingLanguage::Ocaml => (
                 eco_vec(&["let_binding"]),
@@ -207,6 +210,7 @@ impl LanguageConfig {
                 eco_vec(&["match_expression"]),
                 eco_vec(&["match_case"]),
                 eco_vec(&["ml", "mli"]),
+                eco_vec(&["apply_expression"]),
             ),
             ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
             ProgrammingLanguage::Golang => (
@@ -233,6 +237,7 @@ impl LanguageConfig {
                     "default_case",
                 ]),
                 eco_vec(&["go"]),
+                eco_vec(&["call_expression"]),
             ),
         };
 
@@ -246,6 +251,7 @@ impl LanguageConfig {
             match_construct_nodes,
             match_arm_nodes,
             extensions,
+            function_call_nodes,
         }
     }
 
