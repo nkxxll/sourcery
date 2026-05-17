@@ -11,6 +11,7 @@ git2.workspace = true
 regex.workspace = true
 serde_json.workspace = true
 sourcery-db = { path = "../sourcery-db" }
+sourcery-lsp-client = { path = "../sourcery-lsp-client" }
 tokio.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true

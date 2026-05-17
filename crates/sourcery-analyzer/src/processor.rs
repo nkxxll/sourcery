@@ -7,35 +7,25 @@ use tree_sitter::{Node, Tree};
 
 use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 
-pub struct Processor<'processor> {
-    lc: &'processor LanguageConfig,
+pub struct ProcessorSource {
     source: EcoString,
     new_line_map: NewLineMap,
     file: EcoString,
 }
 
-impl<'processor> Processor<'processor> {
-    pub fn new(lc: &'processor LanguageConfig, path: &Path) -> Result<Self> {
+impl ProcessorSource {
+    pub fn from_path(path: &Path) -> Result<Self> {
         let source = std::fs::read_to_string(path)?;
-        Ok(Self::from_source(
-            lc,
-            source,
-            EcoString::from(path.to_string_lossy()),
-        ))
+        Ok(Self::from_text(source, path.to_string_lossy()))
     }
 
-    pub fn from_source(
-        lc: &'processor LanguageConfig,
-        source: impl Into<EcoString>,
-        file: EcoString,
-    ) -> Self {
+    pub fn from_text(source: impl Into<EcoString>, file: impl Into<EcoString>) -> Self {
         let source = source.into();
         let new_line_map = NewLineMap::new(&source);
         Self {
-            lc,
             source,
             new_line_map,
-            file,
+            file: file.into(),
         }
     }
 
@@ -43,21 +33,45 @@ impl<'processor> Processor<'processor> {
         &self.source
     }
 
+    pub fn file(&self) -> &EcoString {
+        &self.file
+    }
+
     pub fn new_line_map(&self) -> &NewLineMap {
         &self.new_line_map
+    }
+}
+
+pub struct Processor<'processor> {
+    lc: &'processor LanguageConfig,
+    source: ProcessorSource,
+}
+
+impl<'processor> Processor<'processor> {
+    pub fn new(lc: &'processor LanguageConfig, path: &Path) -> Result<Self> {
+        let source = ProcessorSource::from_path(path)?;
+        Ok(Self::from_source_input(lc, source))
+    }
+
+    pub fn from_source_input(lc: &'processor LanguageConfig, source: ProcessorSource) -> Self {
+        Self { lc, source }
+    }
+
+    pub fn source(&self) -> &str {
+        self.source.source()
+    }
+
+    pub fn new_line_map(&self) -> &NewLineMap {
+        self.source.new_line_map()
     }
 
     /// analyze is where all analysis happens for a single file.
     pub fn analyze(&self) -> Result<Analysis> {
-        let tree = self.lc.parse_tree(&self.source)?;
-        let ast_analysis = AstProcessor::analyze_tree(
-            &tree,
-            self.lc,
-            &self.new_line_map,
-            &self.source,
-            self.file.clone(),
-        )?;
-        let lines_of_code = self.new_line_map.line_count() as u64;
+        let source = self.source.source();
+        let new_line_map = self.source.new_line_map();
+        let ast_processor = AstProcessor::new(self.lc, source, self.source.file().clone())?;
+        let ast_analysis = ast_processor.analyze_tree()?;
+        let lines_of_code = new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
         let comment_lines_of_code = ast_analysis
             .comments
@@ -74,7 +88,7 @@ impl<'processor> Processor<'processor> {
             .sum::<u64>();
 
         Ok(Analysis {
-            file: self.file.clone(),
+            file: self.source.file().clone(),
             ast_analysis,
             lines_of_code,
             blank_lines,
@@ -87,7 +101,7 @@ impl<'processor> Processor<'processor> {
     fn blank_lines(&self) -> u64 {
         let mut res = 0;
         let mut last: Option<usize> = None;
-        for newline in &self.new_line_map.newline_offsets {
+        for newline in &self.source.new_line_map.newline_offsets {
             if let Some(l) = last
                 && l == newline - 1
             {
@@ -437,8 +451,6 @@ impl NewLineMap {
     }
 }
 
-pub struct AstProcessor;
-
 #[derive(Default, Clone, Copy)]
 struct CyclomaticCounts {
     control_flow: u64,
@@ -523,18 +535,17 @@ impl CyclomaticCounts {
     }
 }
 
-#[derive(Default)]
-struct AstTraversalState {
-    file: EcoString,
-    functions: Vec<FunctionAnalysis>,
-    comments: Vec<CommentAnalysis>,
-    function_stack: Vec<FunctionFrame>,
-}
-
 struct FunctionFrame {
     function_index: usize,
     cyclomatic_counts: CyclomaticCounts,
     function_calls: Vec<FunctionCall>,
+}
+
+#[derive(Default)]
+struct AstTraversalState {
+    functions: Vec<FunctionAnalysis>,
+    comments: Vec<CommentAnalysis>,
+    function_stack: Vec<FunctionFrame>,
 }
 
 struct NodeKindClassifier<'a> {
@@ -597,27 +608,33 @@ impl<'a> NodeKindClassifier<'a> {
     }
 }
 
-impl AstProcessor {
-    pub fn analyze_tree(
-        tree: &Tree,
-        profile: &LanguageConfig,
-        new_line_map: &NewLineMap,
-        source: &str,
+pub struct AstProcessor<'processor> {
+    tree: Tree,
+    profile: &'processor LanguageConfig,
+    new_line_map: NewLineMap,
+    source: &'processor str,
+    file: EcoString,
+}
+
+impl<'processor> AstProcessor<'processor> {
+    pub fn new(
+        profile: &'processor LanguageConfig,
+        source: &'processor str,
         file: EcoString,
-    ) -> Result<AstAnalysis> {
-        let classifier = NodeKindClassifier::from_language(profile);
-        let mut state = AstTraversalState {
-            file,
-            ..Default::default()
-        };
-        Self::traverse(
-            tree.root_node(),
+    ) -> Result<Self> {
+        Ok(Self {
+            tree: profile.parse_tree(source)?,
             profile,
-            &classifier,
-            new_line_map,
+            new_line_map: NewLineMap::new(source),
             source,
-            &mut state,
-        )?;
+            file,
+        })
+    }
+
+    pub fn analyze_tree(&self) -> Result<AstAnalysis> {
+        let classifier = NodeKindClassifier::from_language(self.profile);
+        let mut state = AstTraversalState::default();
+        self.traverse(self.tree.root_node(), &classifier, &mut state)?;
 
         Ok(AstAnalysis {
             functions: state.functions,
@@ -626,30 +643,28 @@ impl AstProcessor {
     }
 
     fn traverse(
+        &self,
         node: Node,
-        profile: &LanguageConfig,
         classifier: &NodeKindClassifier<'_>,
-        new_line_map: &NewLineMap,
-        source: &str,
         state: &mut AstTraversalState,
     ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
 
         if classifier.function_nodes.contains(kind) {
-            let Some(name_span) = profile.function_name_span(node) else {
+            let Some(name_span) = self.profile.function_name_span(node) else {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    Self::traverse(child, profile, classifier, new_line_map, source, state)?;
+                    self.traverse(child, classifier, state)?;
                 }
                 return Ok(());
             };
             let function_index = state.functions.len();
             let definition_span = LanguageConfig::node_span(node);
-            let definition_line_span = new_line_map.get_code_line_span(&definition_span)?;
+            let definition_line_span = self.new_line_map.get_code_line_span(&definition_span)?;
             state.functions.push(FunctionAnalysis {
-                function_name: name_span.get_content(source)?,
+                function_name: name_span.get_content(self.source)?,
                 name: name_span,
                 definition: definition_span,
                 definition_line_span: definition_line_span,
@@ -666,12 +681,12 @@ impl AstProcessor {
             entered_function = true;
         }
 
-        if classifier.comment_nodes.contains(kind) || profile.is_doc_string_node(node) {
+        if classifier.comment_nodes.contains(kind) || self.profile.is_doc_string_node(node) {
             let comment_span = LanguageConfig::node_span(node);
-            let length = new_line_map.count_lines(&comment_span)?;
+            let length = self.new_line_map.count_lines(&comment_span)?;
             state.comments.push(CommentAnalysis {
                 comment_span,
-                comment_line_span: new_line_map.get_code_line_span(&comment_span)?,
+                comment_line_span: self.new_line_map.get_code_line_span(&comment_span)?,
                 lines: length,
             });
         }
@@ -679,16 +694,16 @@ impl AstProcessor {
         if let Some(frame) = &mut state.function_stack.last_mut() {
             frame
                 .cyclomatic_counts
-                .add_from_node(node, profile, classifier);
+                .add_from_node(node, self.profile, classifier);
             if classifier.function_call.contains(kind) {
-                let name = Self::get_function_call(node, source, &state.file)?;
+                let name = Self::get_function_call(node, self.source, &self.file)?;
                 frame.function_calls.push(name);
             }
         }
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            Self::traverse(child, profile, classifier, new_line_map, source, state)?;
+            self.traverse(child, classifier, state)?;
         }
 
         if entered_function {
@@ -722,7 +737,7 @@ impl AstProcessor {
 
 #[cfg(test)]
 mod tests {
-    use super::{AggregatedFileMetrics, FileMetrics, NewLineMap, Processor};
+    use super::{AggregatedFileMetrics, FileMetrics, NewLineMap, Processor, ProcessorSource};
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
     use ecow::EcoString;
     use std::collections::HashMap;
@@ -760,7 +775,8 @@ mod tests {
     fn processor_uses_newline_map_for_file_and_comment_lines() {
         let source = "# module comment";
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
+        let source_input = ProcessorSource::from_text(source, "test.py");
+        let processor = Processor::from_source_input(&profile, source_input);
 
         let analysis = processor.analyze().unwrap();
 
@@ -797,7 +813,8 @@ def analyze(x, values):
     return 6 if x < 0 else 7
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
+        let source_input = ProcessorSource::from_text(source, "test.py");
+        let processor = Processor::from_source_input(&profile, source_input);
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
@@ -815,7 +832,8 @@ def identity(value):
     return result
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let processor = Processor::from_source(&profile, source, EcoString::from("test.py"));
+        let source_input = ProcessorSource::from_text(source, "test.py");
+        let processor = Processor::from_source_input(&profile, source_input);
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
@@ -834,7 +852,8 @@ let merge a b =
   | _ -> failwith "unsupported"
 "#;
         let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
-        let processor = Processor::from_source(&profile, source, EcoString::from("test.ml"));
+        let source_input = ProcessorSource::from_text(source, "test.ml");
+        let processor = Processor::from_source_input(&profile, source_input);
 
         let metrics = processor.analyze().unwrap().ast_analysis;
 
