@@ -83,10 +83,11 @@ def analyze_file(file, filetype):
 
 def analyze_files(files, filetype):
     for file in files:
+        outfile = outfile_for(file[0] if isinstance(file, list) else file)
         if analyze_file(file, filetype) != 0:
-            print(f"Error for file {file}")
+            print(f"Error for file {file} -> {outfile}")
         else:
-            print(f"Pass file {file}")
+            print(f"Pass file {file} -> {outfile}")
 
 
 def parse_args():
