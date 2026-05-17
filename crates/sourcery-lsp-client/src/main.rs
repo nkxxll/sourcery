@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use async_lsp::lsp_types::DocumentSymbolResponse;
-use sourcery_lsp_client::Server;
+use sourcery_lsp_client::{Position, Server};
 use tracing::Level;
 
 #[tokio::main(flavor = "current_thread")]
@@ -30,7 +30,7 @@ pub async fn run_gopls_smoke() {
         let path = Path::new("yaml.go");
         let file_uri = first_socket.open_document(&path).await;
         let goto_definition_res = first_socket
-            .goto_definition(file_uri, line, character)
+            .goto_definition(file_uri, Position { line, character })
             .await;
         goto_definition_res.unwrap()
     });

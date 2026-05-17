@@ -95,12 +95,7 @@ impl<'processor> Processor<'processor> {
     pub fn analyze(&self) -> Result<Analysis> {
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
-        let ast_processor = AstProcessor::new(
-            self.lc,
-            source,
-            self.source.file().clone(),
-            self.socket.clone(),
-        );
+        let ast_processor = AstProcessor::new(self.lc, source, self.source.file().clone());
         let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
@@ -163,7 +158,18 @@ pub struct FunctionAnalysis {
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
     pub functions_called: Vec<FunctionCall>,
-    pub references: Vec<FunctionCall>,
+}
+
+#[derive(Debug)]
+pub struct EnrichedFunctionAnalysis {
+    function_analysis: FunctionAnalysis,
+    enriched: LSEnriched,
+}
+
+#[derive(Debug)]
+pub struct LSEnriched {
+    references: Vec<FunctionCall>,
+    calls: Vec<FunctionCall>,
 }
 
 #[derive(Debug)]
@@ -667,7 +673,6 @@ pub struct AstProcessor<'processor> {
     new_line_map: NewLineMap,
     source: &'processor str,
     file: PathBuf,
-    socket: Option<SharedSocket>,
 }
 
 impl<'processor> AstProcessor<'processor> {
@@ -675,7 +680,6 @@ impl<'processor> AstProcessor<'processor> {
         profile: &'processor LanguageConfig,
         source: &'processor str,
         file: PathBuf,
-        socket: Option<SharedSocket>,
     ) -> Self {
         Self {
             tree: profile.parse_tree(source).expect("could not parse tree"),
@@ -683,19 +687,58 @@ impl<'processor> AstProcessor<'processor> {
             new_line_map: NewLineMap::new(source),
             source,
             file,
-            socket,
         }
+    }
+
+    pub async fn enricht_analysis(
+        &self,
+        ast_analysis: Vec<FunctionAnalysis>,
+        socket: &mut SharedSocket,
+    ) -> Result<Vec<EnrichedFunctionAnalysis>> {
+        for fa in ast_analysis {
+            let range = fa
+                .name
+                .to_range(&self.new_line_map)
+                .expect("could not translate codebytespan to range");
+            let mut ref_socket = socket.clone();
+            let ref_fut = self.find_references(range.start, &mut ref_socket);
+            let call_positions = fa.functions_called.iter().map(|f| {
+                f.pos
+                    .to_range(&self.new_line_map)
+                    .expect("could not translate codebytespan to range")
+                    .start
+            });
+            let call_fut = self.get_enriched_calls(call_positions.collect(), socket);
+        }
+        todo!("finish this function enrichment");
+    }
+
+    async fn get_enriched_calls(
+        &self,
+        call_posisions: Vec<Position>,
+        socket: &mut SharedSocket,
+    ) -> Result<Vec<FunctionCall>> {
+        for call in call_posisions {
+            let uri = SharedSocket::project_path_to_uri(&self.file)?;
+            let res = socket.goto_definition(uri, call);
+        }
+        todo!("translate result into func call type and join at the end");
+    }
+
+    async fn find_references(
+        &self,
+        name: Position,
+        socket: &mut SharedSocket,
+    ) -> Result<Vec<FunctionCall>> {
+        let uri = SharedSocket::project_path_to_uri(&self.file)?;
+        let res = socket.find_references(uri, name).await?;
+        todo!("convert the result to the function call type")
     }
 
     pub fn analyze_tree(&self) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(self.profile);
         let mut state = AstTraversalState::default();
-        self.traverse(
-            self.tree.root_node(),
-            &classifier,
-            &mut state,
-            self.socket.as_ref(),
-        )?;
+        self.traverse(self.tree.root_node(), &classifier, &mut state)?;
 
         Ok(AstAnalysis {
             functions: state.functions,
@@ -703,16 +746,11 @@ impl<'processor> AstProcessor<'processor> {
         })
     }
 
-    fn get_references(name_range: LspRange, socket: SharedSocket) -> Vec<FunctionCall> {
-        todo!("still have to implement the references")
-    }
-
     fn traverse(
         &self,
         node: Node,
         classifier: &NodeKindClassifier<'_>,
         state: &mut AstTraversalState,
-        socket: Option<&SharedSocket>,
     ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
@@ -722,26 +760,13 @@ impl<'processor> AstProcessor<'processor> {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    self.traverse(child, classifier, state, socket)?;
+                    self.traverse(child, classifier, state)?;
                 }
                 return Ok(());
             };
             let function_index = state.functions.len();
             let definition_span = LanguageConfig::node_span(node);
             let definition_line_span = self.new_line_map.get_code_line_span(&definition_span)?;
-            let references: Vec<_> = if let Some(socket) = socket {
-                name_span
-                    .to_range(&self.new_line_map)
-                    .map(|name_range| Self::get_references(name_range, socket.clone()))
-                    .unwrap_or_else(|| {
-                        tracing::warn!(
-                            "could not convert function name to range defaulting to empty references"
-                        );
-                        Vec::new()
-                    })
-            } else {
-                Vec::new()
-            };
             state.functions.push(FunctionAnalysis {
                 function_name: name_span.get_content(self.source)?,
                 name: name_span,
@@ -751,7 +776,6 @@ impl<'processor> AstProcessor<'processor> {
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
                 functions_called: Vec::new(),
-                references,
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -783,7 +807,7 @@ impl<'processor> AstProcessor<'processor> {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            self.traverse(child, classifier, state, socket)?;
+            self.traverse(child, classifier, state)?;
         }
 
         if entered_function {

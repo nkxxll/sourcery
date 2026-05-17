@@ -6,7 +6,6 @@ use std::time::Duration;
 use anyhow::{Result, anyhow};
 use async_lsp::concurrency::{Concurrency, ConcurrencyLayer};
 use async_lsp::lsp_types::notification::{LogMessage, Progress, PublishDiagnostics, ShowMessage};
-use async_lsp::lsp_types::request::References;
 use async_lsp::lsp_types::{
     self, ClientCapabilities, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
     DocumentSymbolParams, DocumentSymbolResponse, GotoDefinitionParams, GotoDefinitionResponse,
@@ -199,6 +198,13 @@ impl SharedSocket {
             .unwrap();
     }
 
+    pub fn project_path_to_uri(path: &Path) -> Result<Url> {
+        match Url::from_file_path(path) {
+            Ok(url) => Ok(url),
+            Err(_) => Err(anyhow!("error converting path to uri")),
+        }
+    }
+
     pub async fn open_document(&mut self, path: &Path) -> Url {
         let file_uri = Url::from_file_path(path).unwrap();
         let text = tokio::fs::read_to_string(path)
@@ -218,7 +224,7 @@ impl SharedSocket {
         file_uri
     }
 
-    pub async fn get_references(
+    pub async fn find_references(
         &mut self,
         uri: Url,
         position: Position,
@@ -244,13 +250,12 @@ impl SharedSocket {
     pub async fn goto_definition(
         &mut self,
         uri: Url,
-        line: u32,
-        character: u32,
+        position: Position,
     ) -> Result<GotoDefinitionResponse> {
         let goto_definition_params = GotoDefinitionParams {
             text_document_position_params: TextDocumentPositionParams {
                 text_document: TextDocumentIdentifier { uri },
-                position: lsp_types::Position { line, character },
+                position: position.into(),
             },
             work_done_progress_params: WorkDoneProgressParams::default(),
             partial_result_params: PartialResultParams::default(),
