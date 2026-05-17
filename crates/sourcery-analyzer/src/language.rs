@@ -9,6 +9,8 @@ use tree_sitter_go;
 use tree_sitter_ocaml;
 use tree_sitter_python;
 
+use crate::processor::NewLineMap;
+
 /// sets up structures for the languages and language specific analysis metadata
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
@@ -17,6 +19,17 @@ pub enum ProgrammingLanguage {
     Ocaml,
     Haskell,
     Golang,
+}
+
+impl ProgrammingLanguage {
+    pub fn lsp(&self) -> (&str, &[&str]) {
+        match self {
+            ProgrammingLanguage::Python => ("pyright-langserver", &["--stdio"]),
+            ProgrammingLanguage::Ocaml => ("ocamllsp", &[]),
+            ProgrammingLanguage::Haskell => todo!("haven't implemented haskell yet"),
+            ProgrammingLanguage::Golang => ("gopls", &["serve"]),
+        }
+    }
 }
 
 impl ToString for ProgrammingLanguage {
@@ -136,6 +149,15 @@ impl CodeByteSpan {
     pub fn with_location(&self, content: &str) -> Result<EcoString> {
         let name = self.get_content(content)?;
         Ok(format!("{}:{}", name, self.start).into())
+    }
+
+    /// to zero based lsp position
+    pub fn to_range(&self, newline_map: &NewLineMap) -> Option<sourcery_lsp_client::Range> {
+        if let (Some(start), Some(end)) =  (newline_map.position(self.start), newline_map.position(self.start)) {
+            Some(sourcery_lsp_client::Range { start, end })
+        } else {
+            None
+        }
     }
 
     pub fn get_content(&self, content: &str) -> Result<EcoString> {
@@ -371,6 +393,17 @@ let add a b =
         let tree = profile.parse_tree(source).unwrap();
 
         assert!(!tree.root_node().has_error());
+    }
+
+    #[test]
+    fn language_servers_for_python_and_ocaml_are_configured_correctly() {
+        let (python_bin, python_args) = ProgrammingLanguage::Python.lsp();
+        let (ocaml_bin, ocaml_args) = ProgrammingLanguage::Ocaml.lsp();
+
+        assert_eq!(python_bin, "pyright-langserver");
+        assert_eq!(python_args, &["--stdio"]);
+        assert_eq!(ocaml_bin, "ocamllsp");
+        assert!(ocaml_args.is_empty());
     }
 
     #[test]

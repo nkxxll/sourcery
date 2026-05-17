@@ -1,7 +1,13 @@
-use std::{collections::HashMap, collections::HashSet, ops::Range, path::Path};
+use std::{
+    collections::HashMap,
+    collections::HashSet,
+    ops::Range as ByteRange,
+    path::{Path, PathBuf},
+};
 
 use anyhow::{Result, anyhow};
 use ecow::EcoString;
+use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket};
 use tracing::warn;
 use tree_sitter::{Node, Tree};
 
@@ -10,16 +16,16 @@ use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 pub struct ProcessorSource {
     source: EcoString,
     new_line_map: NewLineMap,
-    file: EcoString,
+    file: PathBuf,
 }
 
 impl ProcessorSource {
     pub fn from_path(path: &Path) -> Result<Self> {
         let source = std::fs::read_to_string(path)?;
-        Ok(Self::from_text(source, path.to_string_lossy()))
+        Ok(Self::from_text(source, path.to_path_buf()))
     }
 
-    pub fn from_text(source: impl Into<EcoString>, file: impl Into<EcoString>) -> Self {
+    pub fn from_text(source: impl Into<EcoString>, file: impl Into<PathBuf>) -> Self {
         let source = source.into();
         let new_line_map = NewLineMap::new(&source);
         Self {
@@ -33,7 +39,7 @@ impl ProcessorSource {
         &self.source
     }
 
-    pub fn file(&self) -> &EcoString {
+    pub fn file(&self) -> &PathBuf {
         &self.file
     }
 
@@ -45,16 +51,36 @@ impl ProcessorSource {
 pub struct Processor<'processor> {
     lc: &'processor LanguageConfig,
     source: ProcessorSource,
+    socket: Option<SharedSocket>,
 }
 
 impl<'processor> Processor<'processor> {
-    pub fn new(lc: &'processor LanguageConfig, path: &Path) -> Result<Self> {
+    pub fn new(
+        lc: &'processor LanguageConfig,
+        path: &Path,
+        mut socket: SharedSocket,
+    ) -> Result<Self> {
         let source = ProcessorSource::from_path(path)?;
-        Ok(Self::from_source_input(lc, source))
+        // load the file into memory on the ls side
+        let _ = socket.open_document(path);
+        Ok(Self {
+            lc,
+            source,
+            socket: Some(socket),
+        })
     }
 
     pub fn from_source_input(lc: &'processor LanguageConfig, source: ProcessorSource) -> Self {
-        Self { lc, source }
+        Self {
+            lc,
+            source,
+            socket: None,
+        }
+    }
+
+    pub async fn close_language_server_file(&mut self) {
+        let path = self.source.file();
+        self.socket.as_mut().unwrap().close_document(path).await;
     }
 
     pub fn source(&self) -> &str {
@@ -69,7 +95,12 @@ impl<'processor> Processor<'processor> {
     pub fn analyze(&self) -> Result<Analysis> {
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
-        let ast_processor = AstProcessor::new(self.lc, source, self.source.file().clone())?;
+        let ast_processor = AstProcessor::new(
+            self.lc,
+            source,
+            self.source.file().clone(),
+            self.socket.clone(),
+        );
         let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
@@ -132,18 +163,19 @@ pub struct FunctionAnalysis {
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
     pub functions_called: Vec<FunctionCall>,
+    pub references: Vec<FunctionCall>,
 }
 
 #[derive(Debug)]
 pub struct FunctionCall {
     pub name: EcoString,
     pub pos: CodeByteSpan,
-    pub file: EcoString,
+    pub file: PathBuf,
 }
 
 #[derive(Debug)]
 pub struct Analysis {
-    pub file: EcoString,
+    pub file: PathBuf,
     pub ast_analysis: AstAnalysis,
     pub lines_of_code: u64,
     pub blank_lines: u64,
@@ -412,18 +444,39 @@ impl NewLineMap {
         }
     }
 
-    pub fn get_line(&self, byte: usize) -> Option<usize> {
+    pub fn position(&self, byte: usize) -> Option<Position> {
+        let line_rest = self.get_line_and_rest(byte);
+        line_rest.map(|(line, rest)| Position {
+            line: (line - 1) as u32,
+            character: (rest - 1) as u32,
+        })
+    }
+
+    pub fn get_line_and_rest(&self, byte: usize) -> Option<(usize, usize)> {
         if self.source_len == 0 || byte >= self.source_len {
             return None;
         }
 
         match self.newline_offsets.binary_search(&byte) {
-            Ok(i) | Err(i) => Some(i),
+            Ok(i) | Err(i) => {
+                let line = i + 1;
+                let rest = if i == 0 {
+                    byte + 1
+                } else {
+                    byte - self.newline_offsets[i - 1]
+                };
+                Some((line, rest))
+            }
         }
     }
 
+    pub fn get_line(&self, byte: usize) -> Option<usize> {
+        let line_rest = self.get_line_and_rest(byte);
+        line_rest.map(|(line, _)| line)
+    }
+
     pub fn get_code_line_span(&self, code_byte_span: &CodeByteSpan) -> Result<CodeLineSpan> {
-        let span: Range<usize> = (*code_byte_span).into();
+        let span: ByteRange<usize> = (*code_byte_span).into();
         if span.end > self.source_len {
             return Err(anyhow!(
                 "span end {} exceeds source length {}",
@@ -613,28 +666,36 @@ pub struct AstProcessor<'processor> {
     profile: &'processor LanguageConfig,
     new_line_map: NewLineMap,
     source: &'processor str,
-    file: EcoString,
+    file: PathBuf,
+    socket: Option<SharedSocket>,
 }
 
 impl<'processor> AstProcessor<'processor> {
     pub fn new(
         profile: &'processor LanguageConfig,
         source: &'processor str,
-        file: EcoString,
-    ) -> Result<Self> {
-        Ok(Self {
-            tree: profile.parse_tree(source)?,
+        file: PathBuf,
+        socket: Option<SharedSocket>,
+    ) -> Self {
+        Self {
+            tree: profile.parse_tree(source).expect("could not parse tree"),
             profile,
             new_line_map: NewLineMap::new(source),
             source,
             file,
-        })
+            socket,
+        }
     }
 
     pub fn analyze_tree(&self) -> Result<AstAnalysis> {
         let classifier = NodeKindClassifier::from_language(self.profile);
         let mut state = AstTraversalState::default();
-        self.traverse(self.tree.root_node(), &classifier, &mut state)?;
+        self.traverse(
+            self.tree.root_node(),
+            &classifier,
+            &mut state,
+            self.socket.as_ref(),
+        )?;
 
         Ok(AstAnalysis {
             functions: state.functions,
@@ -642,11 +703,16 @@ impl<'processor> AstProcessor<'processor> {
         })
     }
 
+    fn get_references(name_range: LspRange, socket: SharedSocket) -> Vec<FunctionCall> {
+        todo!("still have to implement the references")
+    }
+
     fn traverse(
         &self,
         node: Node,
         classifier: &NodeKindClassifier<'_>,
         state: &mut AstTraversalState,
+        socket: Option<&SharedSocket>,
     ) -> Result<()> {
         let kind = node.kind();
         let mut entered_function = false;
@@ -656,13 +722,26 @@ impl<'processor> AstProcessor<'processor> {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
                 for child in node.children(&mut cursor) {
-                    self.traverse(child, classifier, state)?;
+                    self.traverse(child, classifier, state, socket)?;
                 }
                 return Ok(());
             };
             let function_index = state.functions.len();
             let definition_span = LanguageConfig::node_span(node);
             let definition_line_span = self.new_line_map.get_code_line_span(&definition_span)?;
+            let references: Vec<_> = if let Some(socket) = socket {
+                name_span
+                    .to_range(&self.new_line_map)
+                    .map(|name_range| Self::get_references(name_range, socket.clone()))
+                    .unwrap_or_else(|| {
+                        tracing::warn!(
+                            "could not convert function name to range defaulting to empty references"
+                        );
+                        Vec::new()
+                    })
+            } else {
+                Vec::new()
+            };
             state.functions.push(FunctionAnalysis {
                 function_name: name_span.get_content(self.source)?,
                 name: name_span,
@@ -672,6 +751,7 @@ impl<'processor> AstProcessor<'processor> {
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
                 functions_called: Vec::new(),
+                references,
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -703,7 +783,7 @@ impl<'processor> AstProcessor<'processor> {
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
-            self.traverse(child, classifier, state)?;
+            self.traverse(child, classifier, state, socket)?;
         }
 
         if entered_function {
@@ -720,7 +800,7 @@ impl<'processor> AstProcessor<'processor> {
         Ok(())
     }
 
-    fn get_function_call(node: Node, source: &str, file: &EcoString) -> Result<FunctionCall> {
+    fn get_function_call(node: Node, source: &str, file: &PathBuf) -> Result<FunctionCall> {
         if let Some(field) = node.child_by_field_name("function") {
             let pos = CodeByteSpan::from_node(field);
             let name = EcoString::from(field.utf8_text(source.as_bytes())?);
@@ -769,6 +849,20 @@ mod tests {
         let lines = map.count_lines(&span).unwrap();
 
         assert_eq!(lines, 2);
+    }
+
+    #[test]
+    fn newline_map_reports_position_for_second_line_start() {
+        let content = "first\nsecond";
+        let map = NewLineMap::new(content);
+        let byte = content.find("second").unwrap();
+
+        let line_and_rest = map.get_line_and_rest(byte).unwrap();
+        let position = map.position(byte).unwrap();
+
+        assert_eq!(line_and_rest, (2, 1));
+        assert_eq!(position.line, 1);
+        assert_eq!(position.character, 0);
     }
 
     #[test]

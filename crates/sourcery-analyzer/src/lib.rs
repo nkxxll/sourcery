@@ -11,6 +11,7 @@ use git2::Oid;
 use regex::Regex;
 use serde_json::json;
 use sourcery_db::{Codebase, PgPool};
+use sourcery_lsp_client::Server;
 use std::sync::OnceLock;
 use tokio::{sync::Semaphore, task::JoinSet};
 use tracing::{debug, info, warn};
@@ -124,6 +125,9 @@ pub async fn analyze_git_repository_with_database(
     let pool = db::connect(database_url).await?;
 
     let mut state = State::new(url, &pool, programming_language).await?;
+    let pl = programming_language.expect("should be determined by now");
+    let (binary, args) = pl.lsp();
+    let server = Server::new(&state.sr.cwd, binary, args);
 
     let mut previous_oid = None;
     for oid in &state.commits {
@@ -253,9 +257,10 @@ pub async fn analyze_git_repository_with_database(
             let permit = semaphore.clone().acquire_owned().await?;
             let pool = pool.clone();
             let version_id = version.id;
+            let socket = server.socket();
             join_set.spawn(async move {
                 let _permit = permit;
-                let processor = Processor::new(&lc, &absolute_path)?;
+                let mut processor = Processor::new(&lc, &absolute_path, socket)?;
                 let analysis = processor.analyze()?;
                 let source = processor.source();
                 let metrics = &analysis.ast_analysis;
@@ -307,6 +312,7 @@ pub async fn analyze_git_repository_with_database(
                     )
                     .await?;
                 }
+                processor.close_language_server_file().await;
                 Ok((file_path, file_metrics))
             });
         }
@@ -426,7 +432,14 @@ pub fn analyze_single_file(
             LanguageConfig::new(pl)
         }
     };
-    let processor = Processor::new(&lc, &path)?;
+    let (binary, args) = lc.language.lsp();
+    let server = Server::new(
+        path.parent()
+            .expect("could not find parent in single file mode"),
+        binary,
+        args,
+    );
+    let processor = Processor::new(&lc, &path, server.socket())?;
     let analysis = processor.analyze()?;
     let source = processor.source();
     let pretty_metrics = analysis.pretty_print(source);

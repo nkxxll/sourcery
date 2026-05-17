@@ -6,12 +6,13 @@ use std::time::Duration;
 use anyhow::{Result, anyhow};
 use async_lsp::concurrency::{Concurrency, ConcurrencyLayer};
 use async_lsp::lsp_types::notification::{LogMessage, Progress, PublishDiagnostics, ShowMessage};
+use async_lsp::lsp_types::request::References;
 use async_lsp::lsp_types::{
-    self, ClientCapabilities, DidOpenTextDocumentParams, DocumentSymbolParams,
-    DocumentSymbolResponse, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams,
-    InitializedParams, PartialResultParams, TextDocumentIdentifier, TextDocumentItem,
-    TextDocumentPositionParams, Url, WindowClientCapabilities, WorkDoneProgressParams,
-    WorkspaceFolder,
+    self, ClientCapabilities, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
+    DocumentSymbolParams, DocumentSymbolResponse, GotoDefinitionParams, GotoDefinitionResponse,
+    InitializeParams, InitializedParams, Location, PartialResultParams, ReferenceContext,
+    ReferenceParams, TextDocumentIdentifier, TextDocumentItem, TextDocumentPositionParams, Url,
+    WindowClientCapabilities, WorkDoneProgressParams, WorkspaceFolder,
 };
 use async_lsp::panic::{CatchUnwind, CatchUnwindLayer};
 use async_lsp::router::Router;
@@ -25,11 +26,18 @@ use tracing::info;
 
 struct Stop;
 type InnerMainLoop = Tracing<CatchUnwind<Concurrency<Router<()>>>>;
+type OptionReferences = Option<Vec<Location>>;
+
+/// public range type from the lsp
+pub struct Range {
+    pub start: Position,
+    pub end: Position,
+}
 
 /// own lsp position implementation to be able to publish it to the analyzer
 pub struct Position {
-    line: u32,
-    character: u32,
+    pub line: u32,
+    pub character: u32,
 }
 
 impl From<lsp_types::Position> for Position {
@@ -182,15 +190,22 @@ impl SharedSocket {
         self.socket.initialized(InitializedParams {}).unwrap();
     }
 
-    pub async fn open_document(&self, path: &str) -> Url {
-        let file_path = self.root_dir.join(path);
-        let file_uri = Url::from_file_path(&file_path).unwrap();
-        let text = tokio::fs::read_to_string(&file_path)
+    pub async fn close_document(&mut self, path: &Path) {
+        let file_uri = Url::from_file_path(path).unwrap();
+        self.socket
+            .did_close(DidCloseTextDocumentParams {
+                text_document: TextDocumentIdentifier { uri: file_uri },
+            })
+            .unwrap();
+    }
+
+    pub async fn open_document(&mut self, path: &Path) -> Url {
+        let file_uri = Url::from_file_path(path).unwrap();
+        let text = tokio::fs::read_to_string(path)
             .await
             .expect("failed to read file");
 
-        let mut socket = self.socket.clone();
-        socket
+        self.socket
             .did_open(DidOpenTextDocumentParams {
                 text_document: TextDocumentItem {
                     uri: file_uri.clone(),
@@ -201,6 +216,29 @@ impl SharedSocket {
             })
             .unwrap();
         file_uri
+    }
+
+    pub async fn get_references(
+        &mut self,
+        uri: Url,
+        position: Position,
+    ) -> Result<OptionReferences> {
+        let params = ReferenceParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier { uri },
+                position: position.into(),
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+            context: ReferenceContext {
+                include_declaration: false,
+            },
+        };
+        let res = self.socket.references(params).await;
+        match res {
+            Ok(r) => Ok(r),
+            Err(e) => Err(anyhow!("error finding references e: {}", e)),
+        }
     }
 
     pub async fn goto_definition(

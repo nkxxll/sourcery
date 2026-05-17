@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use async_lsp::lsp_types::DocumentSymbolResponse;
 use sourcery_lsp_client::Server;
 use tracing::Level;
@@ -25,7 +27,8 @@ pub async fn run_gopls_smoke() {
     let first = tokio::spawn(async move {
         let line = 691;
         let character = 11;
-        let file_uri = first_socket.open_document("yaml.go").await;
+        let path = Path::new("yaml.go");
+        let file_uri = first_socket.open_document(&path).await;
         let goto_definition_res = first_socket
             .goto_definition(file_uri, line, character)
             .await;
@@ -34,7 +37,8 @@ pub async fn run_gopls_smoke() {
 
     let mut second_socket = socket.clone();
     let second = tokio::spawn(async move {
-        let file_uri = second_socket.open_document("node.go").await;
+        let path = Path::new("node.go");
+        let file_uri = second_socket.open_document(&path).await;
         let symbols = second_socket.document_symbols(file_uri).await;
         let non_empty = match symbols {
             DocumentSymbolResponse::Flat(list) => !list.is_empty(),
