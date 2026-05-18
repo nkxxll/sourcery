@@ -179,6 +179,13 @@ impl CodeByteSpan {
         let end = node.end_byte();
         Self::new(start, end)
     }
+
+    pub(crate) fn from_position(new_line_map: &NewLineMap, start: sourcery_lsp_client::Position) -> CodeByteSpan {
+        let start = new_line_map
+            .byte_offset(start)
+            .expect("could not translate lsp position to byte offset");
+        CodeByteSpan::new(start, start + 1)
+    }
 }
 
 impl From<CodeByteSpan> for Range<usize> {

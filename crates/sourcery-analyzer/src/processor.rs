@@ -1,6 +1,5 @@
 use std::{
-    collections::HashMap,
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     ops::Range as ByteRange,
     path::{Path, PathBuf},
 };
@@ -458,6 +457,30 @@ impl NewLineMap {
         })
     }
 
+    pub fn byte_offset(&self, position: Position) -> Option<usize> {
+        let line = position.line as usize + 1;
+        let character = position.character as usize;
+
+        if line == 0 || line > self.line_count() {
+            return None;
+        }
+
+        let line_start = if line == 1 {
+            0
+        } else {
+            self.newline_offsets.get(line - 2).copied()? + 1
+        };
+
+        let line_end = self
+            .newline_offsets
+            .get(line - 1)
+            .copied()
+            .unwrap_or(self.source_len);
+
+        let byte = line_start + character;
+        (byte < line_end).then_some(byte)
+    }
+
     pub fn get_line_and_rest(&self, byte: usize) -> Option<(usize, usize)> {
         if self.source_len == 0 || byte >= self.source_len {
             return None;
@@ -692,47 +715,110 @@ impl<'processor> AstProcessor<'processor> {
 
     pub async fn enricht_analysis(
         &self,
-        ast_analysis: Vec<FunctionAnalysis>,
+        function_analysis: Vec<FunctionAnalysis>,
         socket: &mut SharedSocket,
     ) -> Result<Vec<EnrichedFunctionAnalysis>> {
-        for fa in ast_analysis {
+        let mut enrichted_functions = Vec::new();
+        for fa in function_analysis {
             let range = fa
                 .name
                 .to_range(&self.new_line_map)
                 .expect("could not translate codebytespan to range");
             let mut ref_socket = socket.clone();
-            let ref_fut = self.find_references(range.start, &mut ref_socket);
+            let ref_fut =
+                self.find_references((fa.function_name.clone(), range.start), &mut ref_socket);
             let call_positions = fa.functions_called.iter().map(|f| {
-                f.pos
-                    .to_range(&self.new_line_map)
-                    .expect("could not translate codebytespan to range")
-                    .start
+                (
+                    f.name.clone(),
+                    f.pos
+                        .to_range(&self.new_line_map)
+                        .expect("could not translate codebytespan to range")
+                        .start,
+                )
             });
             let call_fut = self.get_enriched_calls(call_positions.collect(), socket);
+            let (references, calls) = tokio::join!(ref_fut, call_fut);
+            enrichted_functions.push(EnrichedFunctionAnalysis {
+                function_analysis: fa,
+                enriched: LSEnriched {
+                    references: references?.unwrap_or_default(),
+                    calls: calls?,
+                },
+            });
         }
-        todo!("finish this function enrichment");
+        Ok(enrichted_functions)
     }
 
     async fn get_enriched_calls(
         &self,
-        call_posisions: Vec<Position>,
+        call_posisions: Vec<(EcoString, Position)>,
         socket: &mut SharedSocket,
     ) -> Result<Vec<FunctionCall>> {
-        for call in call_posisions {
+        let mut res_vec = Vec::new();
+        for (name, call) in call_posisions {
             let uri = SharedSocket::project_path_to_uri(&self.file)?;
-            let res = socket.goto_definition(uri, call);
+            // todo this needs to be async for better perf
+            let res = socket.goto_definition(uri, call).await?;
+            let func_calls: Vec<FunctionCall> = res
+                .iter()
+                .map(|location| {
+                    let lsp_range: LspRange = location.range.into();
+                    let path = PathBuf::from(location.uri.path());
+                    FunctionCall {
+                        name: name.clone(),
+                        pos: CodeByteSpan::from_position(&self.new_line_map, lsp_range.start),
+                        file: path,
+                    }
+                })
+                .collect();
+
+            let mut func_calls = func_calls.into_iter();
+            let func_call = func_calls
+                .next()
+                .expect("there should be at least one definition of a function");
+            if func_calls.next().is_some() {
+                tracing::warn!("more than one definition for function taking first");
+            }
+            res_vec.push(func_call);
         }
-        todo!("translate result into func call type and join at the end");
+        Ok(res_vec)
     }
 
     async fn find_references(
         &self,
-        name: Position,
+        func: (EcoString, Position),
         socket: &mut SharedSocket,
-    ) -> Result<Vec<FunctionCall>> {
+    ) -> Result<Option<Vec<FunctionCall>>> {
+        let (name, call) = func;
+        let line = call.line;
+        let character = call.character;
         let uri = SharedSocket::project_path_to_uri(&self.file)?;
-        let res = socket.find_references(uri, name).await?;
-        todo!("convert the result to the function call type")
+        let res = socket.find_references(uri, call).await?;
+        Ok(match res {
+            Some(res) => Some(
+                res.iter()
+                    .map(|location| {
+                        let lsp_range: LspRange = location.range.into();
+                        let path = PathBuf::from(location.uri.path());
+                        FunctionCall {
+                            name: name.clone(),
+                            pos: CodeByteSpan::from_position(&self.new_line_map, lsp_range.start),
+                            file: path,
+                        }
+                    })
+                    .collect(),
+            ),
+            None => {
+                tracing::info!(
+                    "function: {} at {}:{}:{}\nis not used in the codebase",
+                    name,
+                    line,
+                    character,
+                    self.file.to_string_lossy(),
+                );
+                None
+            }
+        })
     }
 
     pub fn analyze_tree(&self) -> Result<AstAnalysis> {

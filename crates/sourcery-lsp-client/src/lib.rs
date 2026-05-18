@@ -33,6 +33,24 @@ pub struct Range {
     pub end: Position,
 }
 
+impl From<Range> for lsp_types::Range {
+    fn from(value: Range) -> Self {
+        lsp_types::Range {
+            start: value.start.into(),
+            end: value.end.into(),
+        }
+    }
+}
+
+impl From<lsp_types::Range> for Range {
+    fn from(value: lsp_types::Range) -> Self {
+        Range {
+            start: value.start.into(),
+            end: value.end.into(),
+        }
+    }
+}
+
 /// own lsp position implementation to be able to publish it to the analyzer
 pub struct Position {
     pub line: u32,
@@ -247,11 +265,7 @@ impl SharedSocket {
         }
     }
 
-    pub async fn goto_definition(
-        &mut self,
-        uri: Url,
-        position: Position,
-    ) -> Result<GotoDefinitionResponse> {
+    pub async fn goto_definition(&mut self, uri: Url, position: Position) -> Result<Vec<Location>> {
         let goto_definition_params = GotoDefinitionParams {
             text_document_position_params: TextDocumentPositionParams {
                 text_document: TextDocumentIdentifier { uri },
@@ -262,7 +276,16 @@ impl SharedSocket {
         };
         let ret = self.socket.definition(goto_definition_params).await;
         match ret {
-            Ok(res) => Ok(res.expect("goto definition did not return a response body")),
+            Ok(res) => {
+                let res = res.expect("goto definition did not return a response body");
+                match res {
+                    GotoDefinitionResponse::Scalar(location) => Ok(vec![location]),
+                    GotoDefinitionResponse::Array(locations) => Ok(locations),
+                    GotoDefinitionResponse::Link(location_links) => {
+                        unreachable!("we shouldn't enalbe link in th capabilities")
+                    }
+                }
+            }
             Err(err) => Err(anyhow!(
                 "Error while getting goto data from function {}",
                 err
