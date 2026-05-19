@@ -23,6 +23,8 @@ pub enum SubCommand {
         #[arg(long, default_value = "stats.txt")]
         outfile: String,
         programming_language: Option<ProgrammingLanguage>,
+        #[arg(long)]
+        root_dir: Option<String>,
     },
 }
 
@@ -32,7 +34,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "sourcery_analyzer=info".into()),
+                .unwrap_or_else(|_| "sourcery_analyzer=info,sourcery_lsp_client=info".into()),
         )
         .init();
     let cli = CommandLineInterface::parse();
@@ -49,8 +51,9 @@ async fn main() -> anyhow::Result<()> {
             path,
             outfile,
             programming_language,
+            root_dir,
         } => {
-            analyze_single_file(path, outfile, programming_language)?;
+            analyze_single_file(path, outfile, programming_language, root_dir).await?;
         }
     }
 

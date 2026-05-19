@@ -6,3 +6,5 @@ analytics/*
 **/__pycache__/**
 stats.txt
 toanalyze
+
+_opam

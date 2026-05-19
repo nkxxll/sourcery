@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap, HashSet},
     fs,
     path::PathBuf,
     sync::Arc,
@@ -128,6 +128,12 @@ pub async fn analyze_git_repository_with_database(
     let pl = programming_language.expect("should be determined by now");
     let (binary, args) = pl.lsp();
     let server = Server::new(&state.sr.cwd, binary, args);
+    info!(
+        repository = url,
+        lsp_binary = binary,
+        commits = state.commits.len(),
+        "starting repository analysis"
+    );
 
     let mut previous_oid = None;
     for oid in &state.commits {
@@ -254,16 +260,37 @@ pub async fn analyze_git_repository_with_database(
             let Some(lc) = filter_map_language_config(&state, &absolute_path) else {
                 continue;
             };
+            debug!(
+                commit = %commit_hash,
+                file = %relative_path.display(),
+                "queueing file analysis task"
+            );
             let permit = semaphore.clone().acquire_owned().await?;
             let pool = pool.clone();
             let version_id = version.id;
-            let socket = server.socket();
+            let mut socket = server.socket();
             join_set.spawn(async move {
                 let _permit = permit;
-                let mut processor = Processor::new(&lc, &absolute_path, socket)?;
-                let analysis = processor.analyze()?;
+                debug!(
+                    version_id = %version_id,
+                    file = %relative_path.display(),
+                    "starting file analysis task"
+                );
+                let uri = socket.open_document(&absolute_path).await;
+                let mut processor = Processor::new(&lc, &absolute_path, socket, uri)?;
+                debug!(
+                    version_id = %version_id,
+                    file = %relative_path.display(),
+                    "running processor analyze"
+                );
+                let analysis = processor.analyze_with_enrichted_stats().await?;
+                debug!(
+                    version_id = %version_id,
+                    file = %relative_path.display(),
+                    "processor analyze completed"
+                );
                 let source = processor.source();
-                let metrics = &analysis.ast_analysis;
+                let newline_map = processor.new_line_map();
 
                 let file_path = EcoString::from(relative_path.display().to_string());
                 let language = &lc.language;
@@ -290,9 +317,48 @@ pub async fn analyze_git_repository_with_database(
                     &file_metrics_json,
                 )
                 .await?;
-                for func in &metrics.functions {
+                for func in &analysis.functions {
+                    let functions_called: Vec<String> = func
+                        .functions_called
+                        .iter()
+                        .map(|call| call.name.to_string())
+                        .collect::<BTreeSet<_>>()
+                        .into_iter()
+                        .collect();
+                    let function_calls: Vec<serde_json::Value> = func
+                        .functions_called
+                        .iter()
+                        .map(|call| {
+                            json!({
+                                "name": call.name.to_string(),
+                                "file": call.file.display().to_string(),
+                                "line": call.pos.line,
+                                "column": call.pos.column,
+                            })
+                        })
+                        .collect();
+                    let outdegree =
+                        u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
+
+                    let references: Vec<String> = analysis
+                        .functions
+                        .iter()
+                        .filter(|candidate| candidate.function_name != func.function_name)
+                        .filter(|candidate| {
+                            candidate
+                                .functions_called
+                                .iter()
+                                .any(|called| called.name == func.function_name)
+                        })
+                        .map(|candidate| candidate.function_name.to_string())
+                        .collect::<BTreeSet<_>>()
+                        .into_iter()
+                        .collect();
+                    let indegree =
+                        u64::try_from(references.len()).context("indegree exceeds u64")?;
+
                     // Function names may repeat by namespace, so include location.
-                    let unique_name = func.name.with_location(source)?;
+                    let unique_name = func.name.with_location(source, newline_map)?;
                     let start_line = i32::try_from(func.definition_line_span.start_line)
                         .context("function start_line is larger than i32")?;
                     let end_line = i32::try_from(func.definition_line_span.end_line)
@@ -301,6 +367,21 @@ pub async fn analyze_git_repository_with_database(
                         "function_length": func.function_length,
                         "cyclomatic": func.cyclomatic,
                         "cyclomatic_match_as_single_branch": func.cyclomatic_match_as_single_branch,
+                        "definition_position_range": {
+                            "start": {
+                                "line": func.definition_position_range.start.line,
+                                "column": func.definition_position_range.start.column,
+                            },
+                            "end": {
+                                "line": func.definition_position_range.end.line,
+                                "column": func.definition_position_range.end.column,
+                            },
+                        },
+                        "functions_called": functions_called,
+                        "function_calls": function_calls,
+                        "references": references,
+                        "indegree": indegree,
+                        "outdegree": outdegree,
                     });
                     db::insert_function(
                         &pool,
@@ -313,11 +394,17 @@ pub async fn analyze_git_repository_with_database(
                     .await?;
                 }
                 processor.close_language_server_file().await;
+                debug!(
+                    version_id = %version_id,
+                    file = %relative_path.display(),
+                    "finished file analysis task"
+                );
                 Ok((file_path, file_metrics))
             });
         }
         while let Some(task_result) = join_set.join_next().await {
             let (path, metrics) = task_result??;
+            debug!(commit = %commit_hash, file = %path, "collected analyzed file metrics");
             new_metrics_by_path.insert(path, metrics);
         }
 
@@ -337,6 +424,7 @@ pub async fn analyze_git_repository_with_database(
 
         previous_oid = Some(*oid);
     }
+    info!(repository = url, "finished repository analysis");
     Ok(())
 }
 
@@ -412,10 +500,11 @@ fn filter_map_language_config(state: &State, absolute_path: &PathBuf) -> Option<
     Some(lc)
 }
 
-pub fn analyze_single_file(
+pub async fn analyze_single_file(
     path: String,
     outfile: String,
     programming_language: Option<ProgrammingLanguage>,
+    root_dir: Option<String>,
 ) -> Result<()> {
     let path = PathBuf::from(path);
     let lc = match programming_language {
@@ -433,17 +522,22 @@ pub fn analyze_single_file(
         }
     };
     let (binary, args) = lc.language.lsp();
-    let server = Server::new(
+    let root = root_dir.map(|r| PathBuf::from(&r)).unwrap_or(
         path.parent()
-            .expect("could not find parent in single file mode"),
-        binary,
-        args,
+            .expect("could not find partent dir of file")
+            .into(),
     );
-    let processor = Processor::new(&lc, &path, server.socket())?;
-    let analysis = processor.analyze()?;
+    let mut server = Server::new(root, binary, args);
+    let mut socket = server.socket();
+    let mainloop = server.run_main_loop();
+    server.initialize().await;
+    let uri = socket.open_document(&path).await;
+    let mut processor = Processor::new(&lc, &path, socket, uri)?;
+    let analysis = processor.analyze_with_enrichted_stats().await?;
     let source = processor.source();
     let pretty_metrics = analysis.pretty_print(source);
 
     fs::write(outfile, pretty_metrics)?;
+    server.shutdown(mainloop).await;
     Ok(())
 }

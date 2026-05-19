@@ -7,8 +7,9 @@ use std::{
 use anyhow::{Result, anyhow};
 use ecow::EcoString;
 use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket};
-use tracing::warn;
+use tracing::{debug, info, warn};
 use tree_sitter::{Node, Tree};
+use url::Url;
 
 use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
 
@@ -51,35 +52,44 @@ pub struct Processor<'processor> {
     lc: &'processor LanguageConfig,
     source: ProcessorSource,
     socket: Option<SharedSocket>,
+    uri: Url,
 }
 
 impl<'processor> Processor<'processor> {
     pub fn new(
         lc: &'processor LanguageConfig,
         path: &Path,
-        mut socket: SharedSocket,
+        socket: SharedSocket,
+        uri: Url,
     ) -> Result<Self> {
         let source = ProcessorSource::from_path(path)?;
         // load the file into memory on the ls side
-        let _ = socket.open_document(path);
         Ok(Self {
             lc,
             source,
             socket: Some(socket),
+            uri,
         })
     }
 
     pub fn from_source_input(lc: &'processor LanguageConfig, source: ProcessorSource) -> Self {
+        let file = &source
+            .file
+            .canonicalize()
+            .expect("canonicalize failed in test");
         Self {
             lc,
             source,
             socket: None,
+            uri: Url::from_file_path(file).expect("url failed in test"),
         }
     }
 
     pub async fn close_language_server_file(&mut self) {
         let path = self.source.file();
+        debug!(file = %path.display(), "closing language server file");
         self.socket.as_mut().unwrap().close_document(path).await;
+        debug!(file = %path.display(), "closed language server file");
     }
 
     pub fn source(&self) -> &str {
@@ -91,10 +101,16 @@ impl<'processor> Processor<'processor> {
     }
 
     /// analyze is where all analysis happens for a single file.
-    pub fn analyze(&self) -> Result<Analysis> {
+    fn analyze(&self) -> Result<Analysis> {
+        debug!(file = %self.source.file().display(), "starting ast analysis");
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
-        let ast_processor = AstProcessor::new(self.lc, source, self.source.file().clone());
+        let ast_processor = AstProcessor::new(
+            self.lc,
+            source,
+            self.source.file().clone(),
+            self.uri.clone(),
+        );
         let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
         let blank_lines = self.blank_lines();
@@ -112,15 +128,58 @@ impl<'processor> Processor<'processor> {
             .map(|func| func.cyclomatic)
             .sum::<u64>();
 
-        Ok(Analysis {
+        let analysis = Analysis {
             file: self.source.file().clone(),
-            ast_analysis,
+            functions: ast_analysis.functions,
+            comments: ast_analysis.comments,
             lines_of_code,
             blank_lines,
             comment_lines_of_code,
             effective_lines_of_code,
             total_cyclomatic,
-        })
+        };
+        debug!(
+            file = %analysis.file.display(),
+            lines_of_code = analysis.lines_of_code,
+            effective_lines_of_code = analysis.effective_lines_of_code,
+            comment_lines_of_code = analysis.comment_lines_of_code,
+            total_cyclomatic = analysis.total_cyclomatic,
+            "finished ast analysis"
+        );
+        Ok(analysis)
+    }
+
+    pub async fn analyze_with_enrichted_stats(&mut self) -> Result<Analysis> {
+        info!(
+            file = %self.source.file().display(),
+            "starting analysis with lsp enrichment"
+        );
+        let mut analysis = self.analyze()?;
+        let ast_processor = AstProcessor::new(
+            self.lc,
+            self.source.source(),
+            self.source.file().to_path_buf(),
+            self.uri.clone(),
+        );
+        if let Some(socket) = self.socket.as_mut() {
+            debug!(
+                file = %self.source.file().display(),
+                functions = analysis.functions.len(),
+                "starting lsp enrichment for functions"
+            );
+            analysis.functions = ast_processor
+                .enricht_analysis(analysis.functions, socket)
+                .await?;
+            debug!(
+                file = %self.source.file().display(),
+                "finished lsp enrichment for functions"
+            );
+        }
+        info!(
+            file = %self.source.file().display(),
+            "finished analysis with lsp enrichment"
+        );
+        Ok(analysis)
     }
 
     fn blank_lines(&self) -> u64 {
@@ -139,7 +198,7 @@ impl<'processor> Processor<'processor> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CommentAnalysis {
     pub comment_span: CodeByteSpan,
     pub comment_line_span: CodeLineSpan,
@@ -147,41 +206,70 @@ pub struct CommentAnalysis {
     pub lines: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctionAnalysis {
     pub function_name: EcoString,
     pub name: CodeByteSpan,
     pub definition: CodeByteSpan,
     pub definition_line_span: CodeLineSpan,
+    pub definition_position_range: CodePositionRange,
     pub function_length: usize,
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
     pub functions_called: Vec<FunctionCall>,
+    pub references: Vec<FunctionCall>,
+    pub enriched_calls: Vec<FunctionCall>,
 }
 
-#[derive(Debug)]
-pub struct EnrichedFunctionAnalysis {
-    function_analysis: FunctionAnalysis,
-    enriched: LSEnriched,
-}
-
-#[derive(Debug)]
-pub struct LSEnriched {
-    references: Vec<FunctionCall>,
-    calls: Vec<FunctionCall>,
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FunctionCall {
     pub name: EcoString,
-    pub pos: CodeByteSpan,
+    pub pos: CodePosition,
     pub file: PathBuf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CodePosition {
+    pub line: usize,
+    pub column: usize,
+}
+
+impl CodePosition {
+    fn to_lsp_position(self) -> Position {
+        Position {
+            line: self.line.saturating_sub(1) as u32,
+            character: self.column.saturating_sub(1) as u32,
+        }
+    }
+
+    fn from_lsp_position(position: Position) -> Self {
+        Self {
+            line: position.line as usize + 1,
+            column: position.character as usize + 1,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CodePositionRange {
+    pub start: CodePosition,
+    pub end: CodePosition,
+}
+
+impl CodePositionRange {
+    fn from_lsp_range(range: LspRange) -> Self {
+        Self {
+            start: CodePosition::from_lsp_position(range.start),
+            end: CodePosition::from_lsp_position(range.end),
+        }
+    }
 }
 
 #[derive(Debug)]
 pub struct Analysis {
     pub file: PathBuf,
-    pub ast_analysis: AstAnalysis,
+    pub functions: Vec<FunctionAnalysis>,
+    pub comments: Vec<CommentAnalysis>,
     pub lines_of_code: u64,
     pub blank_lines: u64,
     pub comment_lines_of_code: u64,
@@ -206,8 +294,8 @@ impl Analysis {
         res.push_str(&format!("total_cyclomatic: {}\n", self.total_cyclomatic));
 
         res.push_str("functions:\n");
-        res.push_str(&self.print_call_graph(&self.ast_analysis.functions));
-        for function in &self.ast_analysis.functions {
+        res.push_str(&self.print_call_graph());
+        for function in &self.functions {
             let name = &function.function_name;
             res.push_str(&format!(
                 "  - {}:{}..{} length={} cyclomatic={} cyclomatic_match_as_single_branch={}\n",
@@ -221,7 +309,7 @@ impl Analysis {
         }
 
         res.push_str("comments:\n");
-        for comment in &self.ast_analysis.comments {
+        for comment in &self.comments {
             let snippet = comment
                 .comment_span
                 .get_content(source)
@@ -248,14 +336,26 @@ impl Analysis {
         res
     }
 
-    fn print_call_graph(&self, functions: &[FunctionAnalysis]) -> String {
+    fn print_call_graph(&self) -> String {
         let mut res = String::with_capacity(512);
         res.push_str("\n\ndigraph CallGraph {\n");
-        for function in functions {
+        for function in &self.functions {
             let name = &function.function_name;
-            for called in &function.functions_called {
+            let line = function.definition_position_range.start.line;
+            let column = function.definition_position_range.start.column;
+            let calls = if function.enriched_calls.is_empty() {
+                &function.functions_called
+            } else {
+                &function.enriched_calls
+            };
+            for called in calls {
                 let called_name = &called.name;
-                res.push_str(&format!("\t\"{name}\" -> \"{called_name}\"\n"));
+                let called_line = &called.pos.line;
+                let called_col = &called.pos.column;
+                let called_file = &called.file.to_string_lossy();
+                res.push_str(&format!(
+                    "\t\"{name}:{line}:{column}\" -> \"{called_file}:{called_name}:{called_line}:{called_col}\"\n"
+                ));
             }
         }
         res.push_str("}\n\n");
@@ -696,6 +796,7 @@ pub struct AstProcessor<'processor> {
     new_line_map: NewLineMap,
     source: &'processor str,
     file: PathBuf,
+    uri: Url,
 }
 
 impl<'processor> AstProcessor<'processor> {
@@ -703,6 +804,7 @@ impl<'processor> AstProcessor<'processor> {
         profile: &'processor LanguageConfig,
         source: &'processor str,
         file: PathBuf,
+        uri: Url,
     ) -> Self {
         Self {
             tree: profile.parse_tree(source).expect("could not parse tree"),
@@ -710,43 +812,62 @@ impl<'processor> AstProcessor<'processor> {
             new_line_map: NewLineMap::new(source),
             source,
             file,
+            uri,
         }
     }
 
     pub async fn enricht_analysis(
         &self,
-        function_analysis: Vec<FunctionAnalysis>,
+        mut function_analysis: Vec<FunctionAnalysis>,
         socket: &mut SharedSocket,
-    ) -> Result<Vec<EnrichedFunctionAnalysis>> {
-        let mut enrichted_functions = Vec::new();
-        for fa in function_analysis {
+    ) -> Result<Vec<FunctionAnalysis>> {
+        info!(
+            file = %self.file.display(),
+            functions = function_analysis.len(),
+            "starting lsp enrichment loop"
+        );
+        for (index, fa) in function_analysis.iter_mut().enumerate() {
             let range = fa
                 .name
                 .to_range(&self.new_line_map)
                 .expect("could not translate codebytespan to range");
+            let function_name = fa.function_name.clone();
+            debug!(
+                file = %self.file.display(),
+                function = %function_name,
+                function_index = index,
+                line = range.start.line,
+                character = range.start.character,
+                "starting lsp calls for function"
+            );
             let mut ref_socket = socket.clone();
             let ref_fut =
-                self.find_references((fa.function_name.clone(), range.start), &mut ref_socket);
-            let call_positions = fa.functions_called.iter().map(|f| {
-                (
-                    f.name.clone(),
-                    f.pos
-                        .to_range(&self.new_line_map)
-                        .expect("could not translate codebytespan to range")
-                        .start,
-                )
-            });
+                self.find_references((function_name.clone(), range.start), &mut ref_socket);
+            let call_positions = fa
+                .functions_called
+                .iter()
+                .map(|f| (f.name.clone(), f.pos.to_lsp_position()));
             let call_fut = self.get_enriched_calls(call_positions.collect(), socket);
             let (references, calls) = tokio::join!(ref_fut, call_fut);
-            enrichted_functions.push(EnrichedFunctionAnalysis {
-                function_analysis: fa,
-                enriched: LSEnriched {
-                    references: references?.unwrap_or_default(),
-                    calls: calls?,
-                },
-            });
+            let references = references?;
+            let calls = calls?;
+            debug!(
+                file = %self.file.display(),
+                function = %function_name,
+                function_index = index,
+                references = references.as_ref().map_or(0, Vec::len),
+                calls = calls.len(),
+                "finished lsp calls for function"
+            );
+            fa.references = references.unwrap_or_default();
+            fa.enriched_calls = calls;
         }
-        Ok(enrichted_functions)
+        info!(
+            file = %self.file.display(),
+            enriched_functions = function_analysis.len(),
+            "finished lsp enrichment loop"
+        );
+        Ok(function_analysis)
     }
 
     async fn get_enriched_calls(
@@ -756,17 +877,33 @@ impl<'processor> AstProcessor<'processor> {
     ) -> Result<Vec<FunctionCall>> {
         let mut res_vec = Vec::new();
         for (name, call) in call_posisions {
-            let uri = SharedSocket::project_path_to_uri(&self.file)?;
+            let uri = self.uri.clone();
             // todo this needs to be async for better perf
+            debug!(
+                file = %self.file.display(),
+                function = %name,
+                line = call.line,
+                character = call.character + 2,
+                "requesting goto_definition"
+            );
             let res = socket.goto_definition(uri, call).await?;
+            debug!(
+                file = %self.file.display(),
+                function = %name,
+                definitions = res.len(),
+                "received goto_definition response"
+            );
             let func_calls: Vec<FunctionCall> = res
                 .iter()
                 .map(|location| {
                     let lsp_range: LspRange = location.range.into();
                     let path = PathBuf::from(location.uri.path());
+                    debug!(path = %path.display(), range = %lsp_range, "location range in function call definition");
+                    // only debugging
+                    let pos = CodePosition::from_lsp_position(lsp_range.start);
                     FunctionCall {
                         name: name.clone(),
-                        pos: CodeByteSpan::from_position(&self.new_line_map, lsp_range.start),
+                        pos,
                         file: path,
                     }
                 })
@@ -791,9 +928,22 @@ impl<'processor> AstProcessor<'processor> {
     ) -> Result<Option<Vec<FunctionCall>>> {
         let (name, call) = func;
         let line = call.line;
-        let character = call.character;
+        let character = call.character + 2;
         let uri = SharedSocket::project_path_to_uri(&self.file)?;
+        debug!(
+            file = %self.file.display(),
+            function = %name,
+            line,
+            character,
+            "requesting find_references"
+        );
         let res = socket.find_references(uri, call).await?;
+        debug!(
+            file = %self.file.display(),
+            function = %name,
+            references = res.as_ref().map_or(0, Vec::len),
+            "received find_references response"
+        );
         Ok(match res {
             Some(res) => Some(
                 res.iter()
@@ -802,7 +952,7 @@ impl<'processor> AstProcessor<'processor> {
                         let path = PathBuf::from(location.uri.path());
                         FunctionCall {
                             name: name.clone(),
-                            pos: CodeByteSpan::from_position(&self.new_line_map, lsp_range.start),
+                            pos: CodePosition::from_lsp_position(lsp_range.start),
                             file: path,
                         }
                     })
@@ -853,15 +1003,29 @@ impl<'processor> AstProcessor<'processor> {
             let function_index = state.functions.len();
             let definition_span = LanguageConfig::node_span(node);
             let definition_line_span = self.new_line_map.get_code_line_span(&definition_span)?;
+            let definition_byte_range: ByteRange<usize> = definition_span.into();
+            let definition_lsp_range =
+                definition_span
+                    .to_range(&self.new_line_map)
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "could not translate function definition span {}..{} to lsp range",
+                            definition_byte_range.start,
+                            definition_byte_range.end
+                        )
+                    })?;
             state.functions.push(FunctionAnalysis {
                 function_name: name_span.get_content(self.source)?,
                 name: name_span,
                 definition: definition_span,
                 definition_line_span: definition_line_span,
+                definition_position_range: CodePositionRange::from_lsp_range(definition_lsp_range),
                 function_length: definition_line_span.line_length(),
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
                 functions_called: Vec::new(),
+                references: Vec::new(),
+                enriched_calls: Vec::new(),
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -886,7 +1050,7 @@ impl<'processor> AstProcessor<'processor> {
                 .cyclomatic_counts
                 .add_from_node(node, self.profile, classifier);
             if classifier.function_call.contains(kind) {
-                let name = Self::get_function_call(node, self.source, &self.file)?;
+                let name = self.get_function_call(node, self.source, &self.file)?;
                 frame.function_calls.push(name);
             }
         }
@@ -910,13 +1074,26 @@ impl<'processor> AstProcessor<'processor> {
         Ok(())
     }
 
-    fn get_function_call(node: Node, source: &str, file: &PathBuf) -> Result<FunctionCall> {
+    fn get_function_call(&self, node: Node, source: &str, file: &PathBuf) -> Result<FunctionCall> {
         if let Some(field) = node.child_by_field_name("function") {
-            let pos = CodeByteSpan::from_node(field);
-            let name = EcoString::from(field.utf8_text(source.as_bytes())?);
+            // Some grammars (notably OCaml) wrap the callable in a parenthesized expression.
+            // Use the wrapped callable node so byte/column mapping targets the symbol itself.
+            let call_target = if field.kind() == "parenthesized_expression" {
+                CyclomaticCounts::first_named_child(field).unwrap_or(field)
+            } else {
+                field
+            };
+            let position = self
+                .new_line_map
+                .get_line_and_rest(call_target.start_byte())
+                .ok_or_else(|| anyhow!("could not translate function call position"))?;
+            let name = EcoString::from(call_target.utf8_text(source.as_bytes())?);
             let func_call = FunctionCall {
                 name,
-                pos,
+                pos: CodePosition {
+                    line: position.0,
+                    column: position.1,
+                },
                 file: file.clone(),
             };
             return Ok(func_call);
@@ -1020,12 +1197,12 @@ def analyze(x, values):
         let source_input = ProcessorSource::from_text(source, "test.py");
         let processor = Processor::from_source_input(&profile, source_input);
 
-        let metrics = processor.analyze().unwrap().ast_analysis;
+        let analysis = processor.analyze().unwrap();
 
-        assert_eq!(metrics.functions.len(), 1);
-        assert_eq!(metrics.comments.len(), 3);
-        assert_eq!(metrics.functions[0].cyclomatic, 10);
-        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 9);
+        assert_eq!(analysis.functions.len(), 1);
+        assert_eq!(analysis.comments.len(), 3);
+        assert_eq!(analysis.functions[0].cyclomatic, 10);
+        assert_eq!(analysis.functions[0].cyclomatic_match_as_single_branch, 9);
     }
 
     #[test]
@@ -1039,11 +1216,11 @@ def identity(value):
         let source_input = ProcessorSource::from_text(source, "test.py");
         let processor = Processor::from_source_input(&profile, source_input);
 
-        let metrics = processor.analyze().unwrap().ast_analysis;
+        let analysis = processor.analyze().unwrap();
 
-        assert_eq!(metrics.functions.len(), 1);
-        assert_eq!(metrics.functions[0].cyclomatic, 1);
-        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 1);
+        assert_eq!(analysis.functions.len(), 1);
+        assert_eq!(analysis.functions[0].cyclomatic, 1);
+        assert_eq!(analysis.functions[0].cyclomatic_match_as_single_branch, 1);
     }
 
     #[test]
@@ -1059,11 +1236,29 @@ let merge a b =
         let source_input = ProcessorSource::from_text(source, "test.ml");
         let processor = Processor::from_source_input(&profile, source_input);
 
-        let metrics = processor.analyze().unwrap().ast_analysis;
+        let analysis = processor.analyze().unwrap();
 
-        assert_eq!(metrics.functions.len(), 1);
-        assert_eq!(metrics.functions[0].cyclomatic, 7);
-        assert_eq!(metrics.functions[0].cyclomatic_match_as_single_branch, 2);
+        assert_eq!(analysis.functions.len(), 1);
+        assert_eq!(analysis.functions[0].cyclomatic, 7);
+        assert_eq!(analysis.functions[0].cyclomatic_match_as_single_branch, 2);
+    }
+
+    #[test]
+    fn ocaml_parenthesized_callee_uses_inner_symbol_position() {
+        let source = r#"
+let run value =
+  (helper) value
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
+        let source_input = ProcessorSource::from_text(source, "test.ml");
+        let processor = Processor::from_source_input(&profile, source_input);
+
+        let analysis = processor.analyze().unwrap();
+        let call = &analysis.functions[0].functions_called[0];
+
+        assert_eq!(call.name.as_ref(), "helper");
+        assert_eq!(call.pos.line, 3);
+        assert_eq!(call.pos.column, 4);
     }
 
     #[test]

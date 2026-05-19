@@ -20,3 +20,4 @@ tree-sitter-go.workspace = true
 tree-sitter-ocaml.workspace = true
 tree-sitter-python.workspace = true
 ecow = "0.2.6"
+url = "2.5.8"

@@ -1635,6 +1635,7 @@ dependencies = [
  "tree-sitter-go",
  "tree-sitter-ocaml",
  "tree-sitter-python",
+ "url",
 ]
 
 [[package]]

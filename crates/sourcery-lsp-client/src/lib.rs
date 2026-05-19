@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::ops::ControlFlow;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
@@ -21,16 +22,26 @@ use tokio::process::{Child, Command};
 use tokio::task::JoinHandle;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 use tower::ServiceBuilder;
-use tracing::info;
+use tracing::{debug, info, warn};
 
 struct Stop;
 type InnerMainLoop = Tracing<CatchUnwind<Concurrency<Router<()>>>>;
 type OptionReferences = Option<Vec<Location>>;
 
 /// public range type from the lsp
+#[derive(Debug)]
 pub struct Range {
     pub start: Position,
     pub end: Position,
+}
+
+impl Display for Range {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Range")
+            .field("start", &self.start)
+            .field("end", &self.end)
+            .finish()
+    }
 }
 
 impl From<Range> for lsp_types::Range {
@@ -52,6 +63,7 @@ impl From<lsp_types::Range> for Range {
 }
 
 /// own lsp position implementation to be able to publish it to the analyzer
+#[derive(Debug)]
 pub struct Position {
     pub line: u32,
     pub character: u32,
@@ -115,6 +127,10 @@ impl Server {
         }
     }
 
+    pub async fn initialize(&mut self) {
+        self.socket.initialize().await;
+    }
+
     pub fn socket(&self) -> SharedSocket {
         self.socket.clone()
     }
@@ -147,6 +163,7 @@ impl Server {
     }
 
     pub fn run_main_loop(&mut self) -> JoinHandle<()> {
+        info!("starting language server main loop");
         let stdout = self.child.stdout.take().expect("missing server stdout");
         let stdin = self.child.stdin.take().expect("missing server stdin");
         let mainloop = self
@@ -159,6 +176,7 @@ impl Server {
                 .run_buffered(stdout.compat(), stdin.compat_write())
                 .await
                 .unwrap();
+            info!("language server main loop stopped");
         })
     }
 
@@ -173,17 +191,20 @@ impl Server {
     /// the timeout just makes sure that it will be shutdown eventually even if
     /// this means that it will be shutdown forcfully after 2 seconds
     pub async fn shutdown(&mut self, mainloop: JoinHandle<()>) {
+        info!("starting language server shutdown");
         let mut socket = self.socket.socket.clone();
         socket.shutdown(()).await.unwrap();
         socket.exit(()).unwrap();
         socket.emit(Stop).unwrap();
         mainloop.await.unwrap();
         let _ = tokio::time::timeout(Duration::from_secs(2), self.child.wait()).await;
+        info!("finished language server shutdown");
     }
 }
 
 impl SharedSocket {
     pub async fn initialize(&mut self) {
+        info!(root = %self.root_dir.display(), "initializing language server");
         let init_ret = self
             .socket
             .initialize(InitializeParams {
@@ -205,26 +226,38 @@ impl SharedSocket {
             .unwrap();
         info!("Initialized: {init_ret:?}");
         self.socket.initialized(InitializedParams {}).unwrap();
+        info!("sent initialized notification");
     }
 
     pub async fn close_document(&mut self, path: &Path) {
+        debug!(file = %path.display(), "sending did_close");
         let file_uri = Url::from_file_path(path).unwrap();
         self.socket
             .did_close(DidCloseTextDocumentParams {
                 text_document: TextDocumentIdentifier { uri: file_uri },
             })
             .unwrap();
+        debug!(file = %path.display(), "sent did_close");
     }
 
     pub fn project_path_to_uri(path: &Path) -> Result<Url> {
-        match Url::from_file_path(path) {
+        let path = path.canonicalize()?;
+        match Url::from_file_path(&path) {
             Ok(url) => Ok(url),
-            Err(_) => Err(anyhow!("error converting path to uri")),
+            Err(_) => Err(anyhow!(
+                "error converting path to uri {}",
+                &path.to_string_lossy()
+            )),
         }
     }
 
     pub async fn open_document(&mut self, path: &Path) -> Url {
-        let file_uri = Url::from_file_path(path).unwrap();
+        debug!(file = %path.display(), "opening document for language server");
+        let file_uri = Url::from_file_path(
+            path.canonicalize()
+                .expect("file could not be canoncialized in open document what the duc"),
+        )
+        .unwrap();
         let text = tokio::fs::read_to_string(path)
             .await
             .expect("failed to read file");
@@ -239,6 +272,7 @@ impl SharedSocket {
                 },
             })
             .unwrap();
+        debug!(file = %path.display(), "sent did_open");
         file_uri
     }
 
@@ -247,9 +281,15 @@ impl SharedSocket {
         uri: Url,
         position: Position,
     ) -> Result<OptionReferences> {
+        debug!(
+            uri = %uri,
+            line = position.line,
+            character = position.character,
+            "sending textDocument/references request"
+        );
         let params = ReferenceParams {
             text_document_position: TextDocumentPositionParams {
-                text_document: TextDocumentIdentifier { uri },
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
                 position: position.into(),
             },
             work_done_progress_params: WorkDoneProgressParams::default(),
@@ -260,15 +300,28 @@ impl SharedSocket {
         };
         let res = self.socket.references(params).await;
         match res {
-            Ok(r) => Ok(r),
+            Ok(r) => {
+                debug!(
+                    uri = %uri,
+                    references = r.as_ref().map_or(0, Vec::len),
+                    "received textDocument/references response"
+                );
+                Ok(r)
+            }
             Err(e) => Err(anyhow!("error finding references e: {}", e)),
         }
     }
 
     pub async fn goto_definition(&mut self, uri: Url, position: Position) -> Result<Vec<Location>> {
+        debug!(
+            uri = %uri,
+            line = position.line,
+            character = position.character,
+            "sending textDocument/definition request"
+        );
         let goto_definition_params = GotoDefinitionParams {
             text_document_position_params: TextDocumentPositionParams {
-                text_document: TextDocumentIdentifier { uri },
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
                 position: position.into(),
             },
             work_done_progress_params: WorkDoneProgressParams::default(),
@@ -279,9 +332,19 @@ impl SharedSocket {
             Ok(res) => {
                 let res = res.expect("goto definition did not return a response body");
                 match res {
-                    GotoDefinitionResponse::Scalar(location) => Ok(vec![location]),
-                    GotoDefinitionResponse::Array(locations) => Ok(locations),
-                    GotoDefinitionResponse::Link(location_links) => {
+                    GotoDefinitionResponse::Scalar(location) => {
+                        debug!(uri = %uri, definitions = 1, "received scalar definition response");
+                        Ok(vec![location])
+                    }
+                    GotoDefinitionResponse::Array(locations) => {
+                        debug!(
+                            uri = %uri,
+                            definitions = locations.len(),
+                            "received array definition response"
+                        );
+                        Ok(locations)
+                    }
+                    GotoDefinitionResponse::Link(_location_links) => {
                         unreachable!("we shouldn't enalbe link in th capabilities")
                     }
                 }
@@ -295,6 +358,8 @@ impl SharedSocket {
 
     /// todo: the error handling is horrible here
     pub async fn document_symbols(&mut self, file_uri: Url) -> DocumentSymbolResponse {
+        debug!(uri = %file_uri, "starting document symbols request loop");
+        let mut retry_count = 0u32;
         loop {
             let ret = self
                 .socket
@@ -308,8 +373,21 @@ impl SharedSocket {
                 .await;
 
             match ret {
-                Ok(resp) => return resp.expect("no document symbols"),
+                Ok(resp) => {
+                    debug!(
+                        uri = %file_uri,
+                        retries = retry_count,
+                        "received document symbols response"
+                    );
+                    return resp.expect("no document symbols");
+                }
                 Err(Error::Response(resp)) if resp.code == ErrorCode::CONTENT_MODIFIED => {
+                    retry_count = retry_count.saturating_add(1);
+                    warn!(
+                        uri = %file_uri,
+                        retries = retry_count,
+                        "document symbols content modified, retrying"
+                    );
                     tokio::time::sleep(Duration::from_millis(200)).await;
                 }
                 Err(err) => panic!("request failed: {err}"),

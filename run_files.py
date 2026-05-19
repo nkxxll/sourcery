@@ -9,18 +9,9 @@ from pathlib import Path
 EXEC_PATH = ["./target/debug/sourcery-analyzer", "file"]
 
 gofiles = [
-    [
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d01/d01.go",
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d01/utils.go",
-    ],
-    [
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d02/d02.go",
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d02/utils.go",
-    ],
-    [
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d03/d03.go",
-        "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d03/utils.go",
-    ],
+    "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d01/d01.go",
+    "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d02/d02.go",
+    "./toanalyze/aoc/golang/advent-of-code-my-solutions/go/2024/days/d03/d03.go",
 ]
 
 ocamlfiles = [
@@ -28,6 +19,7 @@ ocamlfiles = [
     "./toanalyze/aoc/ocaml/advent-of-code/2024/Day02/puzzle.ml",
     "./toanalyze/aoc/ocaml/advent-of-code/2024/Day03/puzzle.ml",
 ]
+
 
 class FileType(Enum):
     GOLANG = ("go", "golang")

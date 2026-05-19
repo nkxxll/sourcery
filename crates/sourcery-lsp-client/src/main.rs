@@ -20,8 +20,8 @@ pub async fn run_gopls_smoke() {
     const TEST_ROOT: &str = "../../toanalyze/go-yaml";
     let mut server = Server::new(TEST_ROOT, "gopls", &["serve"]);
     let mainloop = server.run_main_loop();
-    let mut socket = server.socket();
-    socket.initialize().await;
+    let socket = server.socket();
+    server.initialize().await;
 
     let mut first_socket = socket.clone();
     let first = tokio::spawn(async move {
@@ -50,14 +50,7 @@ pub async fn run_gopls_smoke() {
     let (first, second) = tokio::join!(first, second);
     println!(
         "first returned {} second returned {}!",
-        match first.unwrap() {
-            async_lsp::lsp_types::GotoDefinitionResponse::Scalar(location) =>
-                format!("{:?}", location),
-            async_lsp::lsp_types::GotoDefinitionResponse::Array(locations) =>
-                format!("{:?}", locations),
-            async_lsp::lsp_types::GotoDefinitionResponse::Link(location_links) =>
-                format!("{:?}", location_links),
-        },
+        format!("{:?}", first),
         second.unwrap()
     );
     server.shutdown(mainloop).await;

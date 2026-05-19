@@ -146,14 +146,23 @@ pub struct CodeByteSpan {
 }
 
 impl CodeByteSpan {
-    pub fn with_location(&self, content: &str) -> Result<EcoString> {
+    pub fn with_location(&self, content: &str, newline_map: &NewLineMap) -> Result<EcoString> {
         let name = self.get_content(content)?;
-        Ok(format!("{}:{}", name, self.start).into())
+        let position = newline_map.position(self.start).ok_or_else(|| {
+            anyhow!(
+                "could not translate byte offset {} to line/column",
+                self.start
+            )
+        })?;
+        Ok(format!("{}:{}:{}", name, position.line + 1, position.character + 1).into())
     }
 
     /// to zero based lsp position
     pub fn to_range(&self, newline_map: &NewLineMap) -> Option<sourcery_lsp_client::Range> {
-        if let (Some(start), Some(end)) =  (newline_map.position(self.start), newline_map.position(self.start)) {
+        if let (Some(start), Some(end)) = (
+            newline_map.position(self.start),
+            newline_map.position(self.start),
+        ) {
             Some(sourcery_lsp_client::Range { start, end })
         } else {
             None
@@ -178,13 +187,6 @@ impl CodeByteSpan {
         let start = node.start_byte();
         let end = node.end_byte();
         Self::new(start, end)
-    }
-
-    pub(crate) fn from_position(new_line_map: &NewLineMap, start: sourcery_lsp_client::Position) -> CodeByteSpan {
-        let start = new_line_map
-            .byte_offset(start)
-            .expect("could not translate lsp position to byte offset");
-        CodeByteSpan::new(start, start + 1)
     }
 }
 
