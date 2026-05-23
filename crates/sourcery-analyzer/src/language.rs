@@ -43,19 +43,6 @@ impl ToString for ProgrammingLanguage {
     }
 }
 
-pub struct LanguageConfig {
-    pub language: ProgrammingLanguage,
-    pub function_nodes: Vec<EcoString>,
-    pub function_name_field: EcoString,
-    pub comment_nodes: Vec<EcoString>,
-    pub control_flow_nodes: Vec<EcoString>,
-    pub boolean_operators: Vec<EcoString>,
-    pub match_construct_nodes: Vec<EcoString>,
-    pub match_arm_nodes: Vec<EcoString>,
-    pub extensions: Vec<EcoString>,
-    pub function_call_nodes: Vec<EcoString>,
-}
-
 impl ProgrammingLanguage {
     pub fn detect_language(path: &Path, content: Option<&str>) -> Option<Self> {
         if let Some(extension) = path.extension().and_then(|ext| ext.to_str()) {
@@ -196,10 +183,24 @@ impl From<CodeByteSpan> for Range<usize> {
     }
 }
 
+pub struct LanguageConfig {
+    pub language: ProgrammingLanguage,
+    pub function_nodes: Vec<&'static str>,
+    pub function_name_field: &'static str,
+    pub comment_nodes: Vec<&'static str>,
+    pub control_flow_nodes: Vec<&'static str>,
+    pub boolean_operators: Vec<&'static str>,
+    pub match_construct_nodes: Vec<&'static str>,
+    pub match_arm_nodes: Vec<&'static str>,
+    pub extensions: Vec<&'static str>,
+    pub function_call_nodes: Vec<&'static str>,
+    pub halstead_nodes: Vec<&'static str>,
+}
+
 impl LanguageConfig {
     pub fn new(language: ProgrammingLanguage) -> Self {
-        fn eco_vec(values: &[&str]) -> Vec<EcoString> {
-            values.iter().map(|value| (*value).into()).collect()
+        fn str_vec(values: &[&'static str]) -> Vec<&'static str> {
+            values.to_vec()
         }
 
         let (
@@ -212,12 +213,13 @@ impl LanguageConfig {
             match_arm_nodes,
             extensions,
             function_call_nodes,
+            halstead_nodes,
         ) = match language {
             ProgrammingLanguage::Python => (
-                eco_vec(&["function_definition"]),
-                EcoString::from("name"),
-                eco_vec(&["comment"]),
-                eco_vec(&[
+                str_vec(&["function_definition"]),
+                "name",
+                str_vec(&["comment"]),
+                str_vec(&[
                     "if_statement",
                     "elif_clause",
                     "for_statement",
@@ -226,55 +228,58 @@ impl LanguageConfig {
                     "conditional_expression",
                     "match_statement",
                 ]),
-                eco_vec(&["boolean_operator"]),
-                eco_vec(&["match_statement"]),
-                eco_vec(&["case_clause"]),
-                eco_vec(&["py"]),
-                eco_vec(&["call"]),
+                str_vec(&["boolean_operator"]),
+                str_vec(&["match_statement"]),
+                str_vec(&["case_clause"]),
+                str_vec(&["py"]),
+                str_vec(&["call"]),
+                str_vec(&[""]),
             ),
             ProgrammingLanguage::Ocaml => (
-                eco_vec(&["let_binding"]),
-                EcoString::from("pattern"),
-                eco_vec(&["comment"]),
-                eco_vec(&[
+                str_vec(&["let_binding"]),
+                "pattern",
+                str_vec(&["comment"]),
+                str_vec(&[
                     "if_expression",
                     "for_expression",
                     "while_expression",
                     "try_expression",
                     "match_expression",
                 ]),
-                eco_vec(&["and_operator", "or_operator"]),
-                eco_vec(&["match_expression"]),
-                eco_vec(&["match_case"]),
-                eco_vec(&["ml", "mli"]),
-                eco_vec(&["application_expression"]),
+                str_vec(&["and_operator", "or_operator"]),
+                str_vec(&["match_expression"]),
+                str_vec(&["match_case"]),
+                str_vec(&["ml", "mli"]),
+                str_vec(&["application_expression"]),
+                str_vec(&[""]),
             ),
             ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
             ProgrammingLanguage::Golang => (
-                eco_vec(&["function_declaration", "method_declaration"]),
-                EcoString::from("name"),
-                eco_vec(&["comment"]),
-                eco_vec(&[
+                str_vec(&["function_declaration", "method_declaration"]),
+                "name",
+                str_vec(&["comment"]),
+                str_vec(&[
                     "if_statement",
                     "for_statement",
                     "expression_switch_statement",
                     "type_switch_statement",
                     "select_statement",
                 ]),
-                eco_vec(&["&&", "||"]),
-                eco_vec(&[
+                str_vec(&["&&", "||"]),
+                str_vec(&[
                     "expression_switch_statement",
                     "type_switch_statement",
                     "select_statement",
                 ]),
-                eco_vec(&[
+                str_vec(&[
                     "expression_case",
                     "type_case",
                     "communication_case",
                     "default_case",
                 ]),
-                eco_vec(&["go"]),
-                eco_vec(&["call_expression"]),
+                str_vec(&["go"]),
+                str_vec(&["call_expression"]),
+                str_vec(&[""]),
             ),
         };
 
@@ -289,6 +294,7 @@ impl LanguageConfig {
             match_arm_nodes,
             extensions,
             function_call_nodes,
+            halstead_nodes,
         }
     }
 
@@ -306,7 +312,7 @@ impl LanguageConfig {
     }
 
     pub fn function_name_span(&self, function_node: Node) -> Option<CodeByteSpan> {
-        let name_node = function_node.child_by_field_name(self.function_name_field.as_str())?;
+        let name_node = function_node.child_by_field_name(self.function_name_field)?;
         Some(Self::node_span(name_node))
     }
 

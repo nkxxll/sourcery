@@ -73,15 +73,26 @@ impl<'processor> Processor<'processor> {
     }
 
     pub fn from_source_input(lc: &'processor LanguageConfig, source: ProcessorSource) -> Self {
-        let file = &source
-            .file
-            .canonicalize()
-            .expect("canonicalize failed in test");
+        // Try to canonicalize the path (makes it absolute and resolves symlinks).
+        // If canonicalize fails (e.g. in tests the file may not exist), fall back to
+        // constructing an absolute path from the current directory.
+        let file_path = match source.file.canonicalize() {
+            Ok(p) => p,
+            Err(_) => {
+                if source.file.is_absolute() {
+                    source.file.clone()
+                } else {
+                    std::env::current_dir()
+                        .unwrap_or_else(|_| PathBuf::from("."))
+                        .join(&source.file)
+                }
+            }
+        };
         Self {
             lc,
             source,
             socket: None,
-            uri: Url::from_file_path(file).expect("url failed in test"),
+            uri: Url::from_file_path(&file_path).expect("url failed in test"),
         }
     }
 
@@ -139,6 +150,7 @@ impl<'processor> Processor<'processor> {
             bracket_lines_of_code,
             comment_lines_of_code,
             effective_lines_of_code,
+            halstead: ast_analysis.halstead,
             total_cyclomatic,
         };
         debug!(
@@ -291,6 +303,7 @@ pub struct Analysis {
     pub bracket_lines_of_code: u64,
     pub comment_lines_of_code: u64,
     pub effective_lines_of_code: u64,
+    pub halstead: HalsteadMetrics,
     pub total_cyclomatic: u64,
 }
 impl Analysis {
@@ -539,6 +552,7 @@ impl AggregatedFileMetrics {
 pub struct AstAnalysis {
     pub functions: Vec<FunctionAnalysis>,
     pub comments: Vec<CommentAnalysis>,
+    pub halstead: HalsteadMetrics,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -759,6 +773,7 @@ struct FunctionFrame {
     function_index: usize,
     cyclomatic_counts: CyclomaticCounts,
     function_calls: Vec<FunctionCall>,
+    halstead: HalsteadBuilder,
 }
 
 #[derive(Default)]
@@ -766,15 +781,44 @@ struct AstTraversalState {
     functions: Vec<FunctionAnalysis>,
     comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
-    halstead: HalsteadMetrics,
+    halstead: HalsteadBuilder,
+}
+
+#[derive(Default, Debug, Clone)]
+struct HalsteadMetrics {
+    unique_operators: usize,
+    unique_operands: usize,
+    operands: usize,
+    operators: usize,
 }
 
 #[derive(Default, Debug)]
-struct HalsteadMetrics {
-    unique_operators: usize,
-    unique_operands: uszie,
-    operands: usize,
+struct HalsteadBuilder {
+    unique_operators: HashSet<EcoString>,
+    unique_operands: HashSet<EcoString>,
     operators: usize,
+    operands: usize,
+}
+
+impl HalsteadBuilder {
+    fn add_operator(&mut self, op: &str) {
+        self.operators += 1;
+        self.unique_operators.insert(EcoString::from(op));
+    }
+
+    fn add_operand(&mut self, opd: &str) {
+        self.operands += 1;
+        self.unique_operands.insert(EcoString::from(opd));
+    }
+
+    fn into_metrics(self) -> HalsteadMetrics {
+        HalsteadMetrics {
+            unique_operators: self.unique_operators.len(),
+            unique_operands: self.unique_operands.len(),
+            operands: self.operands,
+            operators: self.operators,
+        }
+    }
 }
 
 struct NodeKindClassifier<'a> {
@@ -785,6 +829,7 @@ struct NodeKindClassifier<'a> {
     match_arms: HashSet<&'a str>,
     boolean_operators: HashSet<&'a str>,
     function_call: HashSet<&'a str>,
+    halstead_nodes: HashSet<&'a str>,
 }
 
 impl<'a> NodeKindClassifier<'a> {
@@ -792,38 +837,43 @@ impl<'a> NodeKindClassifier<'a> {
         let function_nodes = profile
             .function_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .collect();
         let comment_nodes = profile
             .comment_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .collect();
         let match_constructs: HashSet<&str> = profile
             .match_construct_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .collect();
         let control_flow = profile
             .control_flow_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .filter(|kind| !match_constructs.contains(kind))
             .collect();
         let match_arms = profile
             .match_arm_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .collect();
         let boolean_operators = profile
             .boolean_operators
             .iter()
-            .map(EcoString::as_str)
+            .copied()
             .collect();
         let function_call = profile
             .function_call_nodes
             .iter()
-            .map(EcoString::as_str)
+            .copied()
+            .collect();
+        let halstead_nodes = profile
+            .halstead_nodes
+            .iter()
+            .copied()
             .collect();
         Self {
             function_nodes,
@@ -833,6 +883,7 @@ impl<'a> NodeKindClassifier<'a> {
             match_arms,
             boolean_operators,
             function_call,
+            halstead_nodes,
         }
     }
 }
@@ -1026,6 +1077,7 @@ impl<'processor> AstProcessor<'processor> {
         Ok(AstAnalysis {
             functions: state.functions,
             comments: state.comments,
+            halstead: state.halstead.into_metrics(),
         })
     }
 
@@ -1073,11 +1125,13 @@ impl<'processor> AstProcessor<'processor> {
                 functions_called: Vec::new(),
                 references: Vec::new(),
                 enriched_calls: Vec::new(),
+                halstead: HalsteadMetrics::default(),
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
                 cyclomatic_counts: CyclomaticCounts::default(),
                 function_calls: Vec::new(),
+                halstead: HalsteadBuilder::default(),
             });
             entered_function = true;
         }
@@ -1102,6 +1156,8 @@ impl<'processor> AstProcessor<'processor> {
             }
         }
 
+        self.halstead();
+
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             self.traverse(child, classifier, state)?;
@@ -1116,9 +1172,28 @@ impl<'processor> AstProcessor<'processor> {
             function.cyclomatic_match_as_single_branch =
                 frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
             function.functions_called = frame.function_calls;
+            function.halstead = frame.halstead.into_metrics();
         }
 
         Ok(())
+    }
+
+    fn find_operators_operands_halstead() {
+        let mut is_operator = false;
+        let mut is_operand = false;
+
+        if is_operand {
+            state.halstead.add_operand(token);
+            if let Some(frame) = state.function_stack.last_mut() {
+                frame.halstead.add_operand(token);
+            }
+        }
+        if is_operator {
+            state.halstead.add_operator(token);
+            if let Some(frame) = state.function_stack.last_mut() {
+                frame.halstead.add_operator(token);
+            }
+        }
     }
 
     fn get_function_call(&self, node: Node, source: &str, file: &PathBuf) -> Result<FunctionCall> {
@@ -1151,10 +1226,13 @@ impl<'processor> AstProcessor<'processor> {
 
 #[cfg(test)]
 mod tests {
-    use super::{AggregatedFileMetrics, FileMetrics, NewLineMap, Processor, ProcessorSource};
+    use super::{
+        AggregatedFileMetrics, AstProcessor, FileMetrics, NewLineMap, Processor, ProcessorSource,
+    };
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
     use ecow::EcoString;
     use std::collections::HashMap;
+    use url::Url;
 
     #[test]
     fn newline_map_counts_lines_without_trailing_newline() {
@@ -1398,13 +1476,73 @@ func main() {
     )
 }
 "#;
-        let nm1 = NewLineMap::new(source1);
-        let nm2 = NewLineMap::new(source2);
-
         let brackets1 = Processor::bracket_lines(source1);
         let brackets2 = Processor::bracket_lines(source2);
 
         assert_eq!(brackets1, 1);
         assert_eq!(brackets2, 2);
+    }
+
+    #[test]
+    fn halstead_collects_per_function_and_per_file_ocaml() {
+        let source = r#"
+let add a b =
+  a + b
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Ocaml);
+        let file = std::env::current_dir().unwrap().join("test.ml");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let ap = AstProcessor::new(&profile, source, file.clone(), uri);
+        let analysis = ap.analyze_tree().unwrap();
+
+        assert_eq!(analysis.functions.len(), 1);
+        let func_h = &analysis.functions[0].halstead;
+        let file_h = &analysis.halstead;
+
+        assert!(func_h.operators > 0 || func_h.operands > 0);
+        assert!(file_h.unique_operators >= func_h.unique_operators);
+        assert!(file_h.unique_operands >= func_h.unique_operands);
+        assert!(file_h.operands >= func_h.operands);
+        assert!(file_h.operators >= func_h.operators);
+        assert!(func_h.unique_operators <= func_h.operators);
+        assert!(func_h.unique_operands <= func_h.operands);
+
+        assert_eq!(file_h.operators, 3);
+        assert_eq!(file_h.operands, 5);
+        assert_eq!(file_h.unique_operators, 3);
+        assert_eq!(file_h.unique_operands, 3);
+    }
+
+    #[test]
+    fn halstead_collects_per_function_and_per_file_golang() {
+        let source = r#"
+package main
+
+func add(a int, b int) int {
+    return a + b
+}
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let ap = AstProcessor::new(&profile, source, file.clone(), uri);
+        let analysis = ap.analyze_tree().unwrap();
+
+        assert_eq!(analysis.functions.len(), 1);
+        let func_h = &analysis.functions[0].halstead;
+        let file_h = &analysis.halstead;
+
+        assert!(func_h.operators > 0 || func_h.operands > 0);
+        assert!(file_h.unique_operators >= func_h.unique_operators);
+        assert!(file_h.unique_operands >= func_h.unique_operands);
+        assert!(file_h.operands >= func_h.operands);
+        assert!(file_h.operators >= func_h.operators);
+        assert!(func_h.unique_operators <= func_h.operators);
+        assert!(func_h.unique_operands <= func_h.operands);
+
+        assert_eq!(file_h.operators, 7);
+        assert_eq!(file_h.operands, 6);
+        assert_eq!(file_h.unique_operators, 5);
+        assert_eq!(file_h.unique_operands, 4);
     }
 }
