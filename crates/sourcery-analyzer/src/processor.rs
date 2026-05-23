@@ -113,6 +113,8 @@ impl<'processor> Processor<'processor> {
         );
         let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
+        // those are lines that only have a stanalone bracket
+        let bracket_lines_of_code = Self::bracket_lines(source);
         let blank_lines = self.blank_lines();
         let comment_lines_of_code = ast_analysis
             .comments
@@ -134,6 +136,7 @@ impl<'processor> Processor<'processor> {
             comments: ast_analysis.comments,
             lines_of_code,
             blank_lines,
+            bracket_lines_of_code,
             comment_lines_of_code,
             effective_lines_of_code,
             total_cyclomatic,
@@ -143,6 +146,7 @@ impl<'processor> Processor<'processor> {
             lines_of_code = analysis.lines_of_code,
             effective_lines_of_code = analysis.effective_lines_of_code,
             comment_lines_of_code = analysis.comment_lines_of_code,
+            bracket_lines_of_code = analysis.bracket_lines_of_code,
             total_cyclomatic = analysis.total_cyclomatic,
             "finished ast analysis"
         );
@@ -182,6 +186,17 @@ impl<'processor> Processor<'processor> {
         Ok(analysis)
     }
 
+    fn bracket_lines(source: &str) -> u64 {
+        let mut res = 0;
+        for line in source.lines() {
+            match line.trim() {
+                "[" | "]" | "{" | "}" | "(" | ")" | ";;" | ";" => res += 1,
+                _ => continue,
+            }
+        }
+        res
+    }
+
     fn blank_lines(&self) -> u64 {
         let mut res = 0;
         let mut last: Option<usize> = None;
@@ -219,6 +234,7 @@ pub struct FunctionAnalysis {
     pub functions_called: Vec<FunctionCall>,
     pub references: Vec<FunctionCall>,
     pub enriched_calls: Vec<FunctionCall>,
+    pub halstead: HalsteadMetrics,
 }
 
 #[derive(Debug, Clone)]
@@ -272,6 +288,7 @@ pub struct Analysis {
     pub comments: Vec<CommentAnalysis>,
     pub lines_of_code: u64,
     pub blank_lines: u64,
+    pub bracket_lines_of_code: u64,
     pub comment_lines_of_code: u64,
     pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
@@ -283,6 +300,10 @@ impl Analysis {
 
         res.push_str(&format!("lines_of_code: {}\n", self.lines_of_code));
         res.push_str(&format!("blank_lines: {}\n", self.blank_lines));
+        res.push_str(&format!(
+            "bracket_lines_of_code: {}\n",
+            self.bracket_lines_of_code
+        ));
         res.push_str(&format!(
             "comment_lines_of_code: {}\n",
             self.comment_lines_of_code
@@ -368,6 +389,7 @@ pub struct FileMetrics {
     pub lines_of_code: u64,
     pub effective_lines_of_code: u64,
     pub comment_lines_of_code: u64,
+    pub bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
 }
 
@@ -386,6 +408,10 @@ impl FileMetrics {
                 .get("comment_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            bracket_lines_of_code: metrics
+                .get("bracket_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
             total_cyclomatic: metrics
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
@@ -400,6 +426,7 @@ pub struct AggregatedFileMetrics {
     pub total_lines_of_code: u64,
     pub total_effective_lines_of_code: u64,
     pub total_comment_lines_of_code: u64,
+    pub total_bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
 }
 
@@ -409,6 +436,7 @@ impl AggregatedFileMetrics {
         self.total_lines_of_code += metrics.lines_of_code;
         self.total_effective_lines_of_code += metrics.effective_lines_of_code;
         self.total_comment_lines_of_code += metrics.comment_lines_of_code;
+        self.total_bracket_lines_of_code += metrics.bracket_lines_of_code;
         self.total_cyclomatic += metrics.total_cyclomatic;
     }
 
@@ -438,6 +466,10 @@ impl AggregatedFileMetrics {
                 .get("total_comment_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            total_bracket_lines_of_code: metrics
+                .get("total_bracket_lines_of_code")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
             total_cyclomatic: metrics
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
@@ -451,10 +483,12 @@ impl AggregatedFileMetrics {
             "total_lines_of_code": self.total_lines_of_code,
             "total_effective_lines_of_code": self.total_effective_lines_of_code,
             "total_comment_lines_of_code": self.total_comment_lines_of_code,
+            "total_bracket_lines_of_code": self.total_bracket_lines_of_code,
             "total_cyclomatic": self.total_cyclomatic,
             "mean_lines_of_code_per_file": Self::mean(self.total_lines_of_code, self.files),
             "mean_effective_lines_of_code_per_file": Self::mean(self.total_effective_lines_of_code, self.files),
             "mean_comment_lines_of_code_per_file": Self::mean(self.total_comment_lines_of_code, self.files),
+            "mean_bracket_lines_of_code_per_file": Self::mean(self.total_bracket_lines_of_code, self.files),
             "mean_cyclomatic_complexity_per_file": Self::mean(self.total_cyclomatic, self.files),
         })
     }
@@ -489,6 +523,10 @@ impl AggregatedFileMetrics {
                 .total_comment_lines_of_code
                 .saturating_sub(old_metrics.total_comment_lines_of_code)
                 .saturating_add(new_metrics.total_comment_lines_of_code),
+            total_bracket_lines_of_code: previous
+                .total_bracket_lines_of_code
+                .saturating_sub(old_metrics.total_bracket_lines_of_code)
+                .saturating_add(new_metrics.total_bracket_lines_of_code),
             total_cyclomatic: previous
                 .total_cyclomatic
                 .saturating_sub(old_metrics.total_cyclomatic)
@@ -728,6 +766,15 @@ struct AstTraversalState {
     functions: Vec<FunctionAnalysis>,
     comments: Vec<CommentAnalysis>,
     function_stack: Vec<FunctionFrame>,
+    halstead: HalsteadMetrics,
+}
+
+#[derive(Default, Debug)]
+struct HalsteadMetrics {
+    unique_operators: usize,
+    unique_operands: uszie,
+    operands: usize,
+    operators: usize,
 }
 
 struct NodeKindClassifier<'a> {
@@ -1270,6 +1317,7 @@ let run value =
                     lines_of_code: 10,
                     effective_lines_of_code: 8,
                     comment_lines_of_code: 2,
+                    bracket_lines_of_code: 1,
                     total_cyclomatic: 3,
                 },
             ),
@@ -1279,6 +1327,7 @@ let run value =
                     lines_of_code: 20,
                     effective_lines_of_code: 15,
                     comment_lines_of_code: 5,
+                    bracket_lines_of_code: 3,
                     total_cyclomatic: 7,
                 },
             ),
@@ -1290,6 +1339,7 @@ let run value =
         assert_eq!(aggregated.total_lines_of_code, 30);
         assert_eq!(aggregated.total_effective_lines_of_code, 23);
         assert_eq!(aggregated.total_comment_lines_of_code, 7);
+        assert_eq!(aggregated.total_bracket_lines_of_code, 4);
         assert_eq!(aggregated.total_cyclomatic, 10);
     }
 
@@ -1300,6 +1350,7 @@ let run value =
             total_lines_of_code: 60,
             total_effective_lines_of_code: 48,
             total_comment_lines_of_code: 12,
+            total_bracket_lines_of_code: 9,
             total_cyclomatic: 18,
         };
         let old_metrics = AggregatedFileMetrics {
@@ -1307,6 +1358,7 @@ let run value =
             total_lines_of_code: 35,
             total_effective_lines_of_code: 28,
             total_comment_lines_of_code: 7,
+            total_bracket_lines_of_code: 6,
             total_cyclomatic: 10,
         };
         let new_metrics = AggregatedFileMetrics {
@@ -1314,6 +1366,7 @@ let run value =
             total_lines_of_code: 30,
             total_effective_lines_of_code: 26,
             total_comment_lines_of_code: 4,
+            total_bracket_lines_of_code: 5,
             total_cyclomatic: 9,
         };
 
@@ -1323,6 +1376,35 @@ let run value =
         assert_eq!(reconciled.total_lines_of_code, 55);
         assert_eq!(reconciled.total_effective_lines_of_code, 46);
         assert_eq!(reconciled.total_comment_lines_of_code, 9);
+        assert_eq!(reconciled.total_bracket_lines_of_code, 8);
         assert_eq!(reconciled.total_cyclomatic, 17);
+    }
+
+    #[test]
+    fn test_bracket_counting() {
+        let source1 = r"let some_function =
+    let first = 1 in
+    let second = 2 in
+;;
+let () = some_function;;
+";
+        let source2 = r#"package main
+import "fmt"
+
+func main() {
+    fmt.println("hello world")
+    fmt.println(
+        "some string that is very long"
+    )
+}
+"#;
+        let nm1 = NewLineMap::new(source1);
+        let nm2 = NewLineMap::new(source2);
+
+        let brackets1 = Processor::bracket_lines(source1);
+        let brackets2 = Processor::bracket_lines(source2);
+
+        assert_eq!(brackets1, 1);
+        assert_eq!(brackets2, 2);
     }
 }

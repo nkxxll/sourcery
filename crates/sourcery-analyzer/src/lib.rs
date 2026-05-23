@@ -300,12 +300,14 @@ pub async fn analyze_git_repository_with_database(
                     lines_of_code: analysis.lines_of_code,
                     effective_lines_of_code: analysis.effective_lines_of_code,
                     comment_lines_of_code: analysis.comment_lines_of_code,
+                    bracket_lines_of_code: analysis.bracket_lines_of_code,
                     total_cyclomatic: analysis.total_cyclomatic,
                 };
                 let file_metrics_json = json!({
                     "lines_of_code": file_metrics.lines_of_code,
                     "effective_lines_of_code": file_metrics.effective_lines_of_code,
                     "comment_lines_of_code": file_metrics.comment_lines_of_code,
+                    "bracket_lines_of_code": file_metrics.bracket_lines_of_code,
                     "total_cyclomatic": file_metrics.total_cyclomatic,
                 });
 
