@@ -28,6 +28,7 @@ const DEFAULT_DATABASE_URL: &str = "postgres://localhost:5432/postgres";
 
 pub mod diff;
 pub mod git_handler;
+pub mod halstead_subprocess;
 pub mod language;
 pub mod processor;
 pub mod progress;

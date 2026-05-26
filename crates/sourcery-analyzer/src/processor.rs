@@ -111,41 +111,70 @@ impl<'processor> Processor<'processor> {
         self.source.new_line_map()
     }
 
-    /// analyze is where all analysis happens for a single file.
-    fn analyze(&self, ast_processor: &AstProcessor) -> Result<Analysis> {
-        debug!(file = %self.source.file().display(), "starting ast analysis");
+    /// Compute all LOC metrics from the syntax analysis and source.
+    fn compute_loc_metrics(
+        &self,
+        syntax_functions: &[FunctionAnalysis],
+        comments: &[CommentAnalysis],
+    ) -> (u64, u64, u64, u64, u64, u64) {
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
-        let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
-        // those are lines that only have a stanalone bracket
         let bracket_lines_of_code = Self::bracket_lines(source);
         let blank_lines = self.blank_lines();
-        let comment_lines_of_code = ast_analysis
-            .comments
-            .iter()
-            .map(|comment| comment.lines)
-            .sum::<usize>() as u64;
-        let effective_lines_of_code = lines_of_code
-            .saturating_sub(comment_lines_of_code)
-            .saturating_sub(blank_lines);
-        let total_cyclomatic = ast_analysis
-            .functions
-            .iter()
-            .map(|func| func.cyclomatic)
-            .sum::<u64>();
+        let comment_lines_of_code = comments.iter().map(|comment| comment.lines).sum::<usize>() as u64;
+        let effective_lines_of_code =
+            lines_of_code.saturating_sub(comment_lines_of_code).saturating_sub(blank_lines);
+        let total_cyclomatic = syntax_functions.iter().map(|func| func.cyclomatic).sum::<u64>();
 
-        let analysis = Analysis {
-            file: self.source.file().clone(),
-            functions: ast_analysis.functions,
-            comments: ast_analysis.comments,
+        (
             lines_of_code,
             blank_lines,
             bracket_lines_of_code,
             comment_lines_of_code,
             effective_lines_of_code,
             total_cyclomatic,
+        )
+    }
+
+    /// Compute syntax analysis: extract all structural information from source.
+    pub fn compute_syntax_analysis(&self, ast_processor: &AstProcessor) -> Result<SyntaxAnalysis> {
+        debug!(file = %self.source.file().display(), "starting syntax analysis");
+        let ast_analysis = ast_processor.analyze_tree()?;
+
+        let (lines_of_code, blank_lines, bracket_lines_of_code, comment_lines_of_code, effective_lines_of_code, total_cyclomatic) =
+            self.compute_loc_metrics(&ast_analysis.functions, &ast_analysis.comments);
+
+        let syntax = SyntaxAnalysis {
+            lines_of_code,
+            blank_lines,
+            bracket_lines_of_code,
+            comment_lines_of_code,
+            effective_lines_of_code,
+            total_cyclomatic,
+            functions: ast_analysis.functions,
+            comments: ast_analysis.comments,
         };
+
+        debug!(
+            file = %self.source.file().display(),
+            lines_of_code = syntax.lines_of_code,
+            effective_lines_of_code = syntax.effective_lines_of_code,
+            comment_lines_of_code = syntax.comment_lines_of_code,
+            bracket_lines_of_code = syntax.bracket_lines_of_code,
+            total_cyclomatic = syntax.total_cyclomatic,
+            functions = syntax.functions.len(),
+            "finished syntax analysis"
+        );
+        Ok(syntax)
+    }
+
+    /// Synchronous analysis without enrichment (for testing).
+    #[allow(dead_code)]
+    fn analyze(&self, ast_processor: &AstProcessor) -> Result<Analysis> {
+        debug!(file = %self.source.file().display(), "starting ast analysis");
+        let syntax = self.compute_syntax_analysis(ast_processor)?;
+        let analysis = Self::combine_analysis(self.source.file().clone(), syntax, None, None);
         debug!(
             file = %analysis.file.display(),
             lines_of_code = analysis.lines_of_code,
@@ -158,10 +187,11 @@ impl<'processor> Processor<'processor> {
         Ok(analysis)
     }
 
+
     pub async fn analyze_with_enrichted_stats(&mut self) -> Result<Analysis> {
         info!(
             file = %self.source.file().display(),
-            "starting analysis with lsp enrichment"
+            "starting analysis with parallel lsp enrichment and halstead computation"
         );
         let ast_processor = AstProcessor::new(
             self.lc,
@@ -169,26 +199,111 @@ impl<'processor> Processor<'processor> {
             self.source.file().to_path_buf(),
             self.uri.clone(),
         );
-        let mut analysis = self.analyze(&ast_processor)?;
-        if let Some(socket) = self.socket.as_mut() {
-            debug!(
-                file = %self.source.file().display(),
-                functions = analysis.functions.len(),
-                "starting lsp enrichment for functions"
-            );
-            analysis.functions = ast_processor
-                .enricht_analysis(analysis.functions, socket)
-                .await?;
-            debug!(
-                file = %self.source.file().display(),
-                "finished lsp enrichment for functions"
-            );
-        }
-        info!(
+
+        // Phase 1: Compute syntax analysis (required before parallel work)
+        let syntax = self.compute_syntax_analysis(&ast_processor)?;
+
+        debug!(
             file = %self.source.file().display(),
-            "finished analysis with lsp enrichment"
+            functions = syntax.functions.len(),
+            "starting parallel tasks for lsp enrichment and halstead computation"
+        );
+
+        // Phase 2 & 3: Run LSP enrichment and halstead computation in parallel
+        let socket_opt = self.socket.take();
+
+        let lsp_future = async {
+            if let Some(mut sock) = socket_opt {
+                debug!(file = %self.source.file().display(), "starting lsp enrichment");
+                match ast_processor.enricht_analysis(syntax.functions.clone(), &mut sock).await {
+                    Ok(enriched) => {
+                        debug!(file = %self.source.file().display(), "finished lsp enrichment");
+                        Some(enriched)
+                    }
+                    Err(e) => {
+                        warn!(file = %self.source.file().display(), error = ?e, "lsp enrichment failed");
+                        None
+                    }
+                }
+            } else {
+                None
+            }
+        };
+
+        let halstead_future = async {
+            debug!(file = %self.source.file().display(), "starting halstead metrics computation");
+            match crate::halstead_subprocess::spawn_halstead_metrics_process(
+                self.source.file(),
+                &self.lc.language.to_string(),
+                self.source.source(),
+                &syntax.functions,
+            )
+            .await
+            {
+                Ok(result) => {
+                    debug!(file = %self.source.file().display(), "finished halstead metrics computation");
+                    Some(result)
+                }
+                Err(e) => {
+                    warn!(file = %self.source.file().display(), error = ?e, "halstead metrics computation failed");
+                    None
+                }
+            }
+        };
+
+        // Wait for both tasks to complete
+        let (lsp_result, halstead_result) = tokio::join!(lsp_future, halstead_future);
+
+        debug!(
+            file = %self.source.file().display(),
+            "finished parallel tasks"
+        );
+
+        // Combine all analysis results
+        let analysis = Self::combine_analysis(
+            self.source.file().clone(),
+            syntax,
+            lsp_result,
+            halstead_result,
+        );
+
+        info!(
+            file = %analysis.file.display(),
+            "finished analysis with lsp enrichment and halstead metrics"
         );
         Ok(analysis)
+    }
+
+    /// Combine syntax analysis, LSP enrichment, and halstead metrics into final Analysis.
+    fn combine_analysis(
+        file: PathBuf,
+        syntax: SyntaxAnalysis,
+        enriched_functions: Option<Vec<FunctionAnalysis>>,
+        halstead_result: Option<crate::halstead_subprocess::HalsteadSubprocessResult>,
+    ) -> Analysis {
+        let mut functions = syntax.functions;
+
+        // Apply LSP enrichment if available
+        if let Some(enriched) = enriched_functions {
+            functions = enriched;
+        }
+
+        // Apply halstead metrics if available
+        if let Some(halstead) = halstead_result {
+            crate::halstead_subprocess::apply_halstead_to_functions(&mut functions, &halstead);
+        }
+
+        Analysis {
+            file,
+            functions,
+            comments: syntax.comments,
+            lines_of_code: syntax.lines_of_code,
+            blank_lines: syntax.blank_lines,
+            bracket_lines_of_code: syntax.bracket_lines_of_code,
+            comment_lines_of_code: syntax.comment_lines_of_code,
+            effective_lines_of_code: syntax.effective_lines_of_code,
+            total_cyclomatic: syntax.total_cyclomatic,
+        }
     }
 
     fn bracket_lines(source: &str) -> u64 {
@@ -226,6 +341,31 @@ pub struct CommentAnalysis {
     pub lines: usize,
 }
 
+#[derive(Debug, Clone, Copy, Default)]
+pub struct HalsteadMetrics {
+    pub unique_operators: usize,
+    pub unique_operands: usize,
+    pub operands: usize,
+    pub operators: usize,
+}
+
+#[derive(Debug, Clone)]
+pub struct SyntaxAnalysis {
+    /// LOC metrics computed from the entire file
+    pub lines_of_code: u64,
+    pub blank_lines: u64,
+    pub bracket_lines_of_code: u64,
+    pub comment_lines_of_code: u64,
+    pub effective_lines_of_code: u64,
+    pub total_cyclomatic: u64,
+
+    /// Syntax-level function data (no LSP or halstead yet)
+    pub functions: Vec<FunctionAnalysis>,
+
+    /// Comment positions
+    pub comments: Vec<CommentAnalysis>,
+}
+
 #[derive(Debug, Clone)]
 pub struct FunctionAnalysis {
     pub function_name: EcoString,
@@ -239,6 +379,7 @@ pub struct FunctionAnalysis {
     pub functions_called: Vec<FunctionCall>,
     pub references: Vec<FunctionCall>,
     pub enriched_calls: Vec<FunctionCall>,
+    pub halstead: Option<HalsteadMetrics>,
 }
 
 #[derive(Debug, Clone)]
@@ -248,7 +389,7 @@ pub struct FunctionCall {
     pub file: PathBuf,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct CodePosition {
     pub line: usize,
     pub column: usize,
@@ -270,7 +411,7 @@ impl CodePosition {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct CodePositionRange {
     pub start: CodePosition,
     pub end: CodePosition,
@@ -545,7 +686,7 @@ pub struct AstAnalysis {
     pub comments: Vec<CommentAnalysis>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct CodeLineSpan {
     pub start_line: usize,
     pub end_line: usize,
@@ -1045,6 +1186,7 @@ impl<'processor> AstProcessor<'processor> {
                 functions_called: Vec::new(),
                 references: Vec::new(),
                 enriched_calls: Vec::new(),
+                halstead: None,
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -1176,9 +1318,9 @@ mod tests {
 
     #[test]
     fn processor_uses_newline_map_for_file_and_comment_lines() {
-        let source = "# module comment";
-        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let file = std::env::current_dir().unwrap().join("test.py");
+        let source = "package main\n\n// module comment";
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
         let uri = Url::from_file_path(&file).expect("url failed in test");
         let source_input = ProcessorSource::from_text(source, file.clone());
         let processor = Processor::from_source_input(&profile, source_input);
@@ -1186,40 +1328,50 @@ mod tests {
 
         let analysis = processor.analyze(&ast_processor).unwrap();
 
-        assert_eq!(analysis.lines_of_code, 1);
+        assert_eq!(analysis.lines_of_code, 3);
         assert_eq!(analysis.comment_lines_of_code, 1);
-        assert_eq!(analysis.effective_lines_of_code, 0);
+        assert_eq!(analysis.effective_lines_of_code, 1);
     }
 
     #[test]
     fn one_pass_analysis_collects_functions_comments_and_cyclomatic() {
-        let source = r#"
-"""module docs"""
-# module comment
-def analyze(x, values):
-    """function docs"""
-    if x > 10 and x < 20:
+        let source = r#"package main
+
+// analyze function
+// with multi-line comment
+func analyze(x int, values []int) int {
+    // function comment
+    if x > 10 && x < 20 {
         return 1
-    elif x == 0:
+    } else if x == 0 {
         return 2
+    }
 
-    for value in values:
-        if value % 2 == 0:
+    for _, value := range values {
+        if value%2 == 0 {
             return 3
+        }
+    }
 
-    while x > 0:
-        x -= 1
+    for x > 0 {
+        x--
+    }
 
-    match x:
-        case 1:
-            return 4
-        case _:
-            return 5
+    switch x {
+    case 1:
+        return 4
+    case 2:
+        return 5
+    }
 
-    return 6 if x < 0 else 7
+    if x < 0 {
+        return 6
+    }
+    return 7
+}
 "#;
-        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let file = std::env::current_dir().unwrap().join("test.py");
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
         let uri = Url::from_file_path(&file).expect("url failed in test");
         let source_input = ProcessorSource::from_text(source, file.clone());
         let processor = Processor::from_source_input(&profile, source_input);
@@ -1235,13 +1387,15 @@ def analyze(x, values):
 
     #[test]
     fn one_pass_analysis_keeps_straight_line_function_at_one() {
-        let source = r#"
-def identity(value):
-    result = value + 1
+        let source = r#"package main
+
+func identity(value int) int {
+    result := value + 1
     return result
+}
 "#;
-        let profile = LanguageConfig::new(ProgrammingLanguage::Python);
-        let file = std::env::current_dir().unwrap().join("test.py");
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
         let uri = Url::from_file_path(&file).expect("url failed in test");
         let source_input = ProcessorSource::from_text(source, file.clone());
         let processor = Processor::from_source_input(&profile, source_input);
@@ -1373,25 +1527,95 @@ let run value =
     #[test]
     fn test_bracket_counting() {
         let source1 = r"let some_function =
-    let first = 1 in
-    let second = 2 in
-;;
-let () = some_function;;
-";
+     let first = 1 in
+     let second = 2 in
+ ;;
+ let () = some_function;;
+ ";
         let source2 = r#"package main
-import "fmt"
+ import "fmt"
 
-func main() {
-    fmt.println("hello world")
-    fmt.println(
-        "some string that is very long"
-    )
-}
-"#;
+ func main() {
+     fmt.println("hello world")
+     fmt.println(
+         "some string that is very long"
+     )
+ }
+ "#;
         let brackets1 = Processor::bracket_lines(source1);
         let brackets2 = Processor::bracket_lines(source2);
 
         assert_eq!(brackets1, 1);
         assert_eq!(brackets2, 2);
+    }
+
+    #[test]
+    fn compute_syntax_analysis_creates_correct_metrics() {
+        let source = r#"package main
+
+import "fmt"
+
+// Module comment
+func analyze(x int, values []int) int {
+    // Function comment
+    if x > 10 && x < 20 {
+        return 1
+    } else if x == 0 {
+        return 2
+    }
+    return 3
+}
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let source_input = ProcessorSource::from_text(source, file.clone());
+        let processor = Processor::from_source_input(&profile, source_input);
+        let ast_processor = AstProcessor::new(&profile, source, file, uri);
+
+        let syntax = processor.compute_syntax_analysis(&ast_processor).unwrap();
+
+        // Verify LOC metrics
+        assert!(syntax.lines_of_code > 0);
+        assert!(syntax.comment_lines_of_code > 0);
+        assert!(syntax.functions.len() > 0);
+        assert!(syntax.comments.len() > 0);
+
+        // Verify function extraction
+        assert_eq!(syntax.functions[0].cyclomatic, 4);
+        assert_eq!(syntax.functions[0].cyclomatic_match_as_single_branch, 4);
+
+        // Verify halstead is initially None
+        assert!(syntax.functions[0].halstead.is_none());
+    }
+
+    #[test]
+    fn combine_analysis_merges_syntax_correctly() {
+        let source = r#"
+package main
+
+import "fmt"
+
+func main() {
+    someNumber := 10
+    someOtherNumber := 11
+    fmt.Println("Some text", someNumber + someOtherNumber)
+}
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let source_input = ProcessorSource::from_text(source, file.clone());
+        let processor = Processor::from_source_input(&profile, source_input);
+        let ast_processor = AstProcessor::new(&profile, source, file.clone(), uri);
+
+        let syntax = processor.compute_syntax_analysis(&ast_processor).unwrap();
+        let analysis = Processor::combine_analysis(file.clone(), syntax, None, None);
+
+        // Verify Analysis contains all SyntaxAnalysis data
+        assert_eq!(analysis.lines_of_code, 10);  // 9 lines + 1 for blank line metric
+        assert_eq!(analysis.functions.len(), 1);
+        assert_eq!(analysis.file, file);
+        assert!(analysis.functions[0].halstead.is_none());
     }
 }

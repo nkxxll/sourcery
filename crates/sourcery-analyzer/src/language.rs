@@ -126,7 +126,7 @@ impl ProgrammingLanguage {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct CodeByteSpan {
     start: usize,
     end: usize,

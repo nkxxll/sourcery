@@ -1625,6 +1625,7 @@ dependencies = [
  "ecow",
  "git2",
  "regex",
+ "serde",
  "serde_json",
  "sourcery-db",
  "sourcery-lsp-client",
