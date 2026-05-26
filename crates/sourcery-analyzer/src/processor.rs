@@ -112,16 +112,10 @@ impl<'processor> Processor<'processor> {
     }
 
     /// analyze is where all analysis happens for a single file.
-    fn analyze(&self) -> Result<Analysis> {
+    fn analyze(&self, ast_processor: &AstProcessor) -> Result<Analysis> {
         debug!(file = %self.source.file().display(), "starting ast analysis");
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
-        let ast_processor = AstProcessor::new(
-            self.lc,
-            source,
-            self.source.file().clone(),
-            self.uri.clone(),
-        );
         let ast_analysis = ast_processor.analyze_tree()?;
         let lines_of_code = new_line_map.line_count() as u64;
         // those are lines that only have a stanalone bracket
@@ -170,13 +164,13 @@ impl<'processor> Processor<'processor> {
             file = %self.source.file().display(),
             "starting analysis with lsp enrichment"
         );
-        let mut analysis = self.analyze()?;
         let ast_processor = AstProcessor::new(
             self.lc,
             self.source.source(),
             self.source.file().to_path_buf(),
             self.uri.clone(),
         );
+        let mut analysis = self.analyze(&ast_processor)?;
         if let Some(socket) = self.socket.as_mut() {
             debug!(
                 file = %self.source.file().display(),
@@ -1155,8 +1149,6 @@ impl<'processor> AstProcessor<'processor> {
                 frame.function_calls.push(name);
             }
         }
-
-        self.halstead();
 
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {

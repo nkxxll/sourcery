@@ -1,5 +1,6 @@
 open Lexing
 open Parser
+module Lexer = Ocamlhalstead.Lexer
 module StringSet = Set.Make (String)
 
 module Halstead = struct
@@ -49,6 +50,7 @@ module Halstead = struct
   ;;
 
   let lex_file t =
+    Lexer.init ();
     let lexbuf = Lexing.from_channel (open_in t.file) in
     let rec collect lexbuf acc =
       let start = lexbuf.lex_start_p in
@@ -296,9 +298,75 @@ module Halstead = struct
     | _ -> false
   ;;
 
+  let builtin_keywords =
+    StringSet.of_list
+      [ "and"
+      ; "as"
+      ; "asr"
+      ; "assert"
+      ; "begin"
+      ; "class"
+      ; "constraint"
+      ; "do"
+      ; "done"
+      ; "downto"
+      ; "else"
+      ; "end"
+      ; "exception"
+      ; "external"
+      ; "false"
+      ; "for"
+      ; "fun"
+      ; "function"
+      ; "functor"
+      ; "if"
+      ; "in"
+      ; "include"
+      ; "inherit"
+      ; "initializer"
+      ; "lazy"
+      ; "land"
+      ; "let"
+      ; "lor"
+      ; "lsl"
+      ; "lsr"
+      ; "lxor"
+      ; "match"
+      ; "method"
+      ; "mod"
+      ; "module"
+      ; "mutable"
+      ; "new"
+      ; "nonrec"
+      ; "object"
+      ; "of"
+      ; "open"
+      ; "or"
+      ; "private"
+      ; "rec"
+      ; "sig"
+      ; "struct"
+      ; "then"
+      ; "to"
+      ; "true"
+      ; "try"
+      ; "type"
+      ; "val"
+      ; "virtual"
+      ; "when"
+      ; "while"
+      ; "with"
+      ]
+  ;;
+
+  let is_builtin_keyword (token : Parser.token) =
+    let name = token_name token |> String.lowercase_ascii in
+    StringSet.mem name builtin_keywords
+  ;;
+
   let is_keyword (token : Parser.token) =
     let name = token_name token |> String.lowercase_ascii in
-    Lexer.is_keyword name
+    StringSet.mem name builtin_keywords || Lexer.is_keyword name
   ;;
 
   let is_operator (token : Parser.token) =
@@ -337,16 +405,42 @@ module Halstead = struct
     | _ -> false
   ;;
 
-  let halstead_for_token_list token_list =
+  let logging_enabled =
+    match Sys.getenv_opt "HALSTEAD_LOG" with
+    | Some value ->
+      let value = String.lowercase_ascii value in
+      value = "1" || value = "true" || value = "yes" || value = "on"
+    | None -> false
+  ;;
+
+  let log_token ~scope ~kind (token : token) =
+    if logging_enabled
+    then (
+      let tok = token.type_ in
+      let pos = token.start in
+      let col = pos.pos_cnum - pos.pos_bol in
+      Printf.eprintf
+        "[halstead] %s %s token=%s text=%s at %d:%d\n"
+        scope
+        kind
+        (token_name tok)
+        (String.escaped (token_to_string tok))
+        pos.pos_lnum
+        col)
+  ;;
+
+  let halstead_for_token_list ?(scope = "totals") token_list =
     let add_operator token hal =
-      let name = token_to_string token in
+      let name = token_to_string token.type_ in
+      log_token ~scope ~kind:"operator" token;
       { hal with
         operators = hal.operators + 1
       ; unique_operators = StringSet.add name hal.unique_operators
       }
     in
     let add_operand token hal =
-      let name = token_to_string token in
+      let name = token_to_string token.type_ in
+      log_token ~scope ~kind:"operand" token;
       { hal with
         operands = hal.operands + 1
       ; unique_operands = StringSet.add name hal.unique_operands
@@ -355,13 +449,15 @@ module Halstead = struct
     List.fold_left
       (fun hal token ->
          let tok = token.type_ in
-         if is_operand tok
-         then add_operand tok hal
+         if is_keyword tok || is_operator tok
+         then add_operator token hal
+         else if is_operand tok
+         then add_operand token hal
          else if is_ignored tok
          then hal
-         else if is_keyword tok || is_operator tok
-         then add_operator tok hal
-         else hal)
+         else (
+           log_token ~scope ~kind:"undefined" token;
+           hal))
       halstead_init
       token_list
   ;;
@@ -380,7 +476,9 @@ module Halstead = struct
     fields
     |> List.mapi (fun index (name, value) ->
       indent indent_width
-      ^ "\"" ^ name ^ "\": "
+      ^ "\""
+      ^ name
+      ^ "\": "
       ^ string_of_int value
       ^ if index = last_index && not with_trailing_comma then "\n" else ",\n")
     |> String.concat ""
@@ -426,15 +524,11 @@ module Halstead = struct
     "{\n"
     ^ indent 4
     ^ "\"totals\": {\n"
-    ^ string_of_halstead_fields
-        ~indent_width:8
-        ~with_trailing_comma:false
-        output.totals
+    ^ string_of_halstead_fields ~indent_width:8 ~with_trailing_comma:false output.totals
     ^ indent 4
     ^ "},\n"
     ^ string_of_functions output.functions
     ^ "\n}"
-
   ;;
 end
 
@@ -453,13 +547,17 @@ let () =
   let input = read_input () in
   let halstead_info = Halstead.parse_input input in
   let tokens = Halstead.lex_file halstead_info in
-  let totals = Halstead.halstead_for_token_list tokens in
+  let totals = Halstead.halstead_for_token_list ~scope:"totals" tokens in
   let functions =
     List.map
       (fun func_def ->
-        let func_tokens = Halstead.tokens_for_func_def func_def tokens in
-        let metrics = Halstead.halstead_for_token_list func_tokens in
-        { Halstead.name = func_def.name; metrics })
+         let func_tokens = Halstead.tokens_for_func_def func_def tokens in
+         let metrics =
+           Halstead.halstead_for_token_list
+             ~scope:("function:" ^ func_def.name)
+             func_tokens
+         in
+         { Halstead.name = func_def.name; metrics })
       halstead_info.functions
   in
   let output : Halstead.output = { totals; functions } in
