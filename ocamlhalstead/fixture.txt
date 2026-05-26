@@ -1,0 +1,6 @@
+/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml
+func_x:4:7
+func_bang:9:9
+func_y:11:14
+func_c:16:18
+print_main:20:20

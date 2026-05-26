@@ -1,0 +1,4 @@
+(executable
+ (public_name ocamlhalstead)
+ (name main)
+ (libraries ocamlhalstead compiler-libs.common))

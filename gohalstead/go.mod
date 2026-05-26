@@ -1,0 +1,3 @@
+module gohalstead
+
+go 1.26.3

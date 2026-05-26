@@ -1,0 +1,5 @@
+/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml
+sub:1:1
+func_x:4:7
+func_y:11:14
+func_c:16:18
