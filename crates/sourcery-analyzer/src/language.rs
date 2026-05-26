@@ -194,7 +194,6 @@ pub struct LanguageConfig {
     pub match_arm_nodes: Vec<&'static str>,
     pub extensions: Vec<&'static str>,
     pub function_call_nodes: Vec<&'static str>,
-    pub halstead_nodes: Vec<&'static str>,
 }
 
 impl LanguageConfig {
@@ -213,7 +212,6 @@ impl LanguageConfig {
             match_arm_nodes,
             extensions,
             function_call_nodes,
-            halstead_nodes,
         ) = match language {
             ProgrammingLanguage::Python => (
                 str_vec(&["function_definition"]),
@@ -233,7 +231,6 @@ impl LanguageConfig {
                 str_vec(&["case_clause"]),
                 str_vec(&["py"]),
                 str_vec(&["call"]),
-                str_vec(&[""]),
             ),
             ProgrammingLanguage::Ocaml => (
                 str_vec(&["let_binding"]),
@@ -251,7 +248,6 @@ impl LanguageConfig {
                 str_vec(&["match_case"]),
                 str_vec(&["ml", "mli"]),
                 str_vec(&["application_expression"]),
-                str_vec(&[""]),
             ),
             ProgrammingLanguage::Haskell => todo!("this language is not implemented yet!"),
             ProgrammingLanguage::Golang => (
@@ -279,7 +275,6 @@ impl LanguageConfig {
                 ]),
                 str_vec(&["go"]),
                 str_vec(&["call_expression"]),
-                str_vec(&[""]),
             ),
         };
 
@@ -294,7 +289,6 @@ impl LanguageConfig {
             match_arm_nodes,
             extensions,
             function_call_nodes,
-            halstead_nodes,
         }
     }
 
