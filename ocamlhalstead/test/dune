@@ -1,3 +1,9 @@
-(test
- (name test_ocamlhalstead)
- (libraries ocamlhalstead))
+(rule
+ (alias runtest)
+ (deps ../fixture.txt expected_output.json)
+ (action
+  (progn
+   (with-stdout-to output.json
+    (with-stdin-from ../fixture.txt
+     (run %{bin:ocamlhalstead})))
+   (diff expected_output.json output.json))))

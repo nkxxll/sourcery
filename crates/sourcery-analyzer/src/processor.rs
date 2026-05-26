@@ -341,14 +341,6 @@ pub struct CommentAnalysis {
     pub lines: usize,
 }
 
-#[derive(Debug, Clone, Copy, Default)]
-pub struct HalsteadMetrics {
-    pub unique_operators: usize,
-    pub unique_operands: usize,
-    pub operands: usize,
-    pub operators: usize,
-}
-
 #[derive(Debug, Clone)]
 pub struct SyntaxAnalysis {
     /// LOC metrics computed from the entire file

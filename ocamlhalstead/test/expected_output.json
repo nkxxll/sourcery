@@ -1,0 +1,55 @@
+{
+    "totals": {
+        "unique_operators": 7,
+        "unique_operands": 11,
+        "operators": 32,
+        "operands": 27
+    },
+    "functions": [
+        {
+            "name": "func_x",
+            "metrics": {
+                "unique_operators": 4,
+                "unique_operands": 5,
+                "operators": 8,
+                "operands": 7
+            }
+        },
+        {
+            "name": "func_bang",
+            "metrics": {
+                "unique_operators": 2,
+                "unique_operands": 2,
+                "operators": 2,
+                "operands": 3
+            }
+        },
+        {
+            "name": "func_y",
+            "metrics": {
+                "unique_operators": 4,
+                "unique_operands": 5,
+                "operators": 8,
+                "operands": 7
+            }
+        },
+        {
+            "name": "func_c",
+            "metrics": {
+                "unique_operators": 5,
+                "unique_operands": 3,
+                "operators": 6,
+                "operands": 5
+            }
+        },
+        {
+            "name": "print_main",
+            "metrics": {
+                "unique_operators": 1,
+                "unique_operands": 2,
+                "operators": 1,
+                "operands": 2
+            }
+        }
+    ]
+}
