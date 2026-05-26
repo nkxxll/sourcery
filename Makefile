@@ -4,25 +4,21 @@ BIN_DIR := $(CURDIR)/bin
 GO_DIR := gohalstead
 OCAML_DIR := ocamlhalstead
 
-# Export bin into PATH for commands run from make
-export PATH := $(BIN_DIR):$(PATH)
-
 .PHONY: all gohalstead ocamlhalstead clean test print-path
 
 all: gohalstead ocamlhalstead
 
-bin:
-	mkdir -p $(BIN_DIR)
-
-gohalstead: bin
+gohalstead:
 	cd $(GO_DIR) && go build -o $(BIN_DIR)/gohalstead .
 
-ocamlhalstead: bin
+ocamlhalstead:
 	cd $(OCAML_DIR) && dune build
 	@if [ -f _build/default/bin/ocamlhalstead.exe ]; then \
 		cp _build/default/bin/ocamlhalstead.exe $(BIN_DIR)/ocamlhalstead; \
 	elif [ -f _build/default/bin/main.exe ]; then \
 		cp _build/default/bin/main.exe $(BIN_DIR)/ocamlhalstead; \
+	elif [ -f $(OCAML_DIR)/_build/default/bin/main.exe ]; then \
+			cp ocamlhalstead/_build/default/bin/main.exe $(BIN_DIR)/ocamlhalstead; \
 	else \
 		echo "OCaml binary not found in _build/default/bin"; exit 1; \
 	fi

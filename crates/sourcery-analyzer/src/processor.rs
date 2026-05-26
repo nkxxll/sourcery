@@ -11,7 +11,7 @@ use tracing::{debug, info, warn};
 use tree_sitter::{Node, Tree};
 use url::Url;
 
-use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
+use crate::{halstead_subprocess::HalsteadMetrics, language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage}};
 
 pub struct ProcessorSource {
     source: EcoString,

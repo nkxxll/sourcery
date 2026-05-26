@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::processor::FunctionAnalysis;
 
+const OCAML_HALSTEAD: &str = "ocamlhalstead";
+const GO_HALSTEAD: &str = "gohalstead";
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct Root {
     pub totals: HalsteadMetrics,
@@ -45,6 +48,11 @@ impl HalsteadService {
         let end_line = function.definition_line_span.end_line;
         format!("{}:{}:{}", name, start_line, end_line)
     }
+
+    fn setup_process() {
+        let child =
+    }
+
 }
 
 #[cfg(test)]
@@ -54,22 +62,23 @@ mod tests {
 
     #[test]
     fn test_generate_input_format() {
-        let functions = vec![
-            FunctionAnalysis {
-                function_name: "foo".into(),
-                name: crate::language::CodeByteSpan::new(0, 1),
-                definition: crate::language::CodeByteSpan::new(0, 1),
-                definition_line_span: crate::processor::CodeLineSpan { start_line: 1, end_line: 2 },
-                definition_position_range: crate::processor::CodePositionRange::default(),
-                function_length: 1,
-                cyclomatic: 0,
-                cyclomatic_match_as_single_branch: 0,
-                functions_called: vec![],
-                references: vec![],
-                enriched_calls: vec![],
-                halstead: None,
+        let functions = vec![FunctionAnalysis {
+            function_name: "foo".into(),
+            name: crate::language::CodeByteSpan::new(0, 1),
+            definition: crate::language::CodeByteSpan::new(0, 1),
+            definition_line_span: crate::processor::CodeLineSpan {
+                start_line: 1,
+                end_line: 2,
             },
-        ];
+            definition_position_range: crate::processor::CodePositionRange::default(),
+            function_length: 1,
+            cyclomatic: 0,
+            cyclomatic_match_as_single_branch: 0,
+            functions_called: vec![],
+            references: vec![],
+            enriched_calls: vec![],
+            halstead: None,
+        }];
 
         let input = HalsteadService::generate_input(&Path::new("myfile.go"), functions);
         let expected = format!("myfile.go\nfoo:1:2\n");
