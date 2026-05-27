@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Creates a small git repo under test_fixtures/ with a few commits for integration testing.
-# If the repo already exists, resets it to the tip of main.
+# If the repo already exists, resets it to the tip of its default branch.
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)/test_fixtures/test_repo"
@@ -9,13 +9,30 @@ CHECKOUT_DIR="${REPO_DIR}_checkout"
 
 reset_repo() {
     cd "$1"
-    git checkout main --force
+    local branch
+    if git show-ref --verify --quiet refs/heads/main; then
+        branch=main
+    elif git show-ref --verify --quiet refs/heads/master; then
+        branch=master
+    else
+        branch="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+        branch="${branch#origin/}"
+    fi
+
+    if [ -z "$branch" ]; then
+        echo "Could not determine default branch for $1" >&2
+        return 1
+    fi
+
+    git checkout "$branch" --force
+    git reset --hard "$branch"
     git clean -fd
 }
 
 if [ -d "$REPO_DIR/.git" ]; then
     reset_repo "$REPO_DIR"
-    reset_repo "$CHECKOUT_DIR"
+    rm -rf "$CHECKOUT_DIR"
+    cp -R "$REPO_DIR" "$CHECKOUT_DIR"
     echo "Test repos reset"
     exit 0
 fi
@@ -25,6 +42,7 @@ mkdir -p "$REPO_DIR"
 cd "$REPO_DIR"
 
 git init
+git branch -M main
 git config user.email "test@example.com"
 git config user.name "Test Author"
 
