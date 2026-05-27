@@ -12,7 +12,10 @@ use tree_sitter::{Node, Tree};
 use url::Url;
 
 use crate::{
-    halstead_subprocess::{HalsteadMetrics, HalsteadMetricsResponse, apply_halstead_to_functions, compute_halstead_metrics},
+    halstead_subprocess::{
+        HalsteadMetrics, HalsteadMetricsResponse, apply_halstead_to_functions,
+        compute_halstead_metrics,
+    },
     language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage},
 };
 
@@ -248,12 +251,8 @@ impl<'processor> Processor<'processor> {
 
         let halstead_future = async {
             debug!(file = %self.source.file().display(), "starting halstead metrics computation");
-            match compute_halstead_metrics(
-                self.source.file(),
-                &syntax.functions,
-                self.lc.language
-            )
-            .await
+            match compute_halstead_metrics(self.source.file(), &syntax.functions, self.lc.language)
+                .await
             {
                 Ok(result) => {
                     debug!(file = %self.source.file().display(), "finished halstead metrics computation");
@@ -1654,12 +1653,7 @@ func main() {
                 functions_called: vec![],
                 references: vec![],
                 enriched_calls: vec![],
-                halstead: Some(HalsteadMetrics {
-                    unique_operators: 1,
-                    unique_operands: 2,
-                    operators: 3,
-                    operands: 4,
-                }),
+                halstead: Some(HalsteadMetrics::from_counts(1, 2, 3, 4)),
             }],
             comments: vec![],
             lines_of_code: 1,
@@ -1668,18 +1662,11 @@ func main() {
             comment_lines_of_code: 0,
             effective_lines_of_code: 1,
             total_cyclomatic: 1,
-            total_halstead: HalsteadMetrics {
-                unique_operators: 1,
-                unique_operands: 2,
-                operators: 3,
-                operands: 4,
-            },
+            total_halstead: HalsteadMetrics::from_counts(1, 2, 3, 4),
         };
 
         let pretty = analysis.pretty_print("");
 
-        assert!(pretty.contains(
-            "halstead: unique_operators=1 unique_operands=2 operators=3 operands=4"
-        ));
+        assert!(pretty.contains("halstead: unique_operators=1 unique_operands=2 operators=3 operands=4 length=7 vocabulary=3"));
     }
 }

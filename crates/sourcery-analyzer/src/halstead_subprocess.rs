@@ -1,8 +1,8 @@
-use std::{path::Path, process::Stdio};
 use std::fmt;
+use std::{path::Path, process::Stdio};
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json;
 use tokio::{io::AsyncWriteExt, process::Command};
 
@@ -25,21 +25,113 @@ pub struct Functions {
     metrics: HalsteadMetrics,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize)]
 /// Halstead counts for a single file or function.
 pub struct HalsteadMetrics {
     pub unique_operators: usize,
     pub unique_operands: usize,
     pub operands: usize,
     pub operators: usize,
+    pub length: usize,
+    pub vocabulary: usize,
+    pub calculated_length: f64,
+    pub volume: f64,
+    pub difficulty: f64,
+    pub effort: f64,
+    pub time_seconds: f64,
+    pub bugs: f64,
+}
+
+#[derive(Deserialize)]
+struct BaseHalsteadMetrics {
+    unique_operators: usize,
+    unique_operands: usize,
+    operands: usize,
+    operators: usize,
+}
+
+impl HalsteadMetrics {
+    pub fn from_counts(
+        unique_operators: usize,
+        unique_operands: usize,
+        operators: usize,
+        operands: usize,
+    ) -> Self {
+        let length = operators + operands;
+        let vocabulary = unique_operators + unique_operands;
+        let calculated_length = (unique_operators as f64 * log2_usize(unique_operators))
+            + (unique_operands as f64 * log2_usize(unique_operands));
+        let volume = if length == 0 || vocabulary == 0 {
+            0.0
+        } else {
+            length as f64 * (vocabulary as f64).log2()
+        };
+        let difficulty = if unique_operands == 0 {
+            0.0
+        } else {
+            (unique_operators as f64 / 2.0) * (operands as f64 / unique_operands as f64)
+        };
+        let effort = difficulty * volume;
+        let time_seconds = effort / 18.0;
+        let bugs = volume / 3000.0;
+
+        Self {
+            unique_operators,
+            unique_operands,
+            operands,
+            operators,
+            length,
+            vocabulary,
+            calculated_length,
+            volume,
+            difficulty,
+            effort,
+            time_seconds,
+            bugs,
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for HalsteadMetrics {
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let base = BaseHalsteadMetrics::deserialize(deserializer)?;
+        Ok(Self::from_counts(
+            base.unique_operators,
+            base.unique_operands,
+            base.operators,
+            base.operands,
+        ))
+    }
+}
+
+fn log2_usize(value: usize) -> f64 {
+    if value == 0 {
+        0.0
+    } else {
+        (value as f64).log2()
+    }
 }
 
 impl fmt::Display for HalsteadMetrics {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "unique_operators={} unique_operands={} operators={} operands={}",
-            self.unique_operators, self.unique_operands, self.operators, self.operands
+            "unique_operators={} unique_operands={} operators={} operands={} length={} vocabulary={} calculated_length={:.3} volume={:.3} difficulty={:.3} effort={:.3} time_seconds={:.3} bugs={:.6}",
+            self.unique_operators,
+            self.unique_operands,
+            self.operators,
+            self.operands,
+            self.length,
+            self.vocabulary,
+            self.calculated_length,
+            self.volume,
+            self.difficulty,
+            self.effort,
+            self.time_seconds,
+            self.bugs
         )
     }
 }
@@ -180,5 +272,27 @@ mod tests {
         let input = hal_serv.generate_input();
         let expected = format!("myfile.go\nfoo:1:2\n");
         assert_eq!(input, expected);
+    }
+
+    #[test]
+    fn deserializes_base_counts_and_computes_derived_metrics() {
+        let metrics: HalsteadMetrics = serde_json::from_str(
+            r#"{
+                "unique_operators": 2,
+                "unique_operands": 4,
+                "operators": 6,
+                "operands": 8
+            }"#,
+        )
+        .expect("deserialize halstead metrics");
+
+        assert_eq!(metrics.length, 14);
+        assert_eq!(metrics.vocabulary, 6);
+        assert_eq!(metrics.calculated_length, 10.0);
+        assert!((metrics.volume - 36.189_475).abs() < 0.000_001);
+        assert_eq!(metrics.difficulty, 2.0);
+        assert!((metrics.effort - 72.378_95).abs() < 0.000_01);
+        assert!((metrics.time_seconds - 4.021_052).abs() < 0.000_001);
+        assert!((metrics.bugs - 0.012_063).abs() < 0.000_001);
     }
 }
