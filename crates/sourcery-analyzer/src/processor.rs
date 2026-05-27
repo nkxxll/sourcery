@@ -11,7 +11,10 @@ use tracing::{debug, info, warn};
 use tree_sitter::{Node, Tree};
 use url::Url;
 
-use crate::{halstead_subprocess::HalsteadMetrics, language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage}};
+use crate::{
+    halstead_subprocess::{HalsteadMetrics, HalsteadMetricsResponse, apply_halstead_to_functions, compute_halstead_metrics},
+    language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage},
+};
 
 pub struct ProcessorSource {
     source: EcoString,
@@ -122,10 +125,15 @@ impl<'processor> Processor<'processor> {
         let lines_of_code = new_line_map.line_count() as u64;
         let bracket_lines_of_code = Self::bracket_lines(source);
         let blank_lines = self.blank_lines();
-        let comment_lines_of_code = comments.iter().map(|comment| comment.lines).sum::<usize>() as u64;
-        let effective_lines_of_code =
-            lines_of_code.saturating_sub(comment_lines_of_code).saturating_sub(blank_lines);
-        let total_cyclomatic = syntax_functions.iter().map(|func| func.cyclomatic).sum::<u64>();
+        let comment_lines_of_code =
+            comments.iter().map(|comment| comment.lines).sum::<usize>() as u64;
+        let effective_lines_of_code = lines_of_code
+            .saturating_sub(comment_lines_of_code)
+            .saturating_sub(blank_lines);
+        let total_cyclomatic = syntax_functions
+            .iter()
+            .map(|func| func.cyclomatic)
+            .sum::<u64>();
 
         (
             lines_of_code,
@@ -142,8 +150,14 @@ impl<'processor> Processor<'processor> {
         debug!(file = %self.source.file().display(), "starting syntax analysis");
         let ast_analysis = ast_processor.analyze_tree()?;
 
-        let (lines_of_code, blank_lines, bracket_lines_of_code, comment_lines_of_code, effective_lines_of_code, total_cyclomatic) =
-            self.compute_loc_metrics(&ast_analysis.functions, &ast_analysis.comments);
+        let (
+            lines_of_code,
+            blank_lines,
+            bracket_lines_of_code,
+            comment_lines_of_code,
+            effective_lines_of_code,
+            total_cyclomatic,
+        ) = self.compute_loc_metrics(&ast_analysis.functions, &ast_analysis.comments);
 
         let syntax = SyntaxAnalysis {
             lines_of_code,
@@ -187,7 +201,6 @@ impl<'processor> Processor<'processor> {
         Ok(analysis)
     }
 
-
     pub async fn analyze_with_enrichted_stats(&mut self) -> Result<Analysis> {
         info!(
             file = %self.source.file().display(),
@@ -215,7 +228,10 @@ impl<'processor> Processor<'processor> {
         let lsp_future = async {
             if let Some(mut sock) = socket_opt {
                 debug!(file = %self.source.file().display(), "starting lsp enrichment");
-                match ast_processor.enricht_analysis(syntax.functions.clone(), &mut sock).await {
+                match ast_processor
+                    .enricht_analysis(syntax.functions.clone(), &mut sock)
+                    .await
+                {
                     Ok(enriched) => {
                         debug!(file = %self.source.file().display(), "finished lsp enrichment");
                         Some(enriched)
@@ -232,11 +248,10 @@ impl<'processor> Processor<'processor> {
 
         let halstead_future = async {
             debug!(file = %self.source.file().display(), "starting halstead metrics computation");
-            match crate::halstead_subprocess::spawn_halstead_metrics_process(
+            match compute_halstead_metrics(
                 self.source.file(),
-                &self.lc.language.to_string(),
-                self.source.source(),
                 &syntax.functions,
+                self.lc.language
             )
             .await
             {
@@ -279,7 +294,7 @@ impl<'processor> Processor<'processor> {
         file: PathBuf,
         syntax: SyntaxAnalysis,
         enriched_functions: Option<Vec<FunctionAnalysis>>,
-        halstead_result: Option<crate::halstead_subprocess::HalsteadSubprocessResult>,
+        halstead_result: Option<HalsteadMetricsResponse>,
     ) -> Analysis {
         let mut functions = syntax.functions;
 
@@ -289,8 +304,10 @@ impl<'processor> Processor<'processor> {
         }
 
         // Apply halstead metrics if available
-        if let Some(halstead) = halstead_result {
-            crate::halstead_subprocess::apply_halstead_to_functions(&mut functions, &halstead);
+        if let Some(halstead) = &halstead_result {
+            apply_halstead_to_functions(&mut functions, &halstead);
+        } else {
+            warn!("halstead did not run correctly");
         }
 
         Analysis {
@@ -303,6 +320,7 @@ impl<'processor> Processor<'processor> {
             comment_lines_of_code: syntax.comment_lines_of_code,
             effective_lines_of_code: syntax.effective_lines_of_code,
             total_cyclomatic: syntax.total_cyclomatic,
+            total_halstead: halstead_result.unwrap_or_default().totals,
         }
     }
 
@@ -429,6 +447,7 @@ pub struct Analysis {
     pub comment_lines_of_code: u64,
     pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
+    pub total_halstead: HalsteadMetrics,
 }
 impl Analysis {
     pub(crate) fn pretty_print(&self, source: &str) -> String {
@@ -464,6 +483,9 @@ impl Analysis {
                 function.cyclomatic,
                 function.cyclomatic_match_as_single_branch,
             ));
+            if let Some(halstead) = function.halstead {
+                res.push_str(&format!("    halstead: {halstead}\n"));
+            }
         }
 
         res.push_str("comments:\n");
@@ -1258,11 +1280,13 @@ impl<'processor> AstProcessor<'processor> {
 #[cfg(test)]
 mod tests {
     use super::{
-        AggregatedFileMetrics, AstProcessor, FileMetrics, NewLineMap, Processor, ProcessorSource,
+        AggregatedFileMetrics, Analysis, AstProcessor, CodeLineSpan, CodePositionRange,
+        FileMetrics, FunctionAnalysis, HalsteadMetrics, NewLineMap, Processor, ProcessorSource,
     };
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
     use ecow::EcoString;
     use std::collections::HashMap;
+    use std::path::PathBuf;
     use url::Url;
 
     #[test]
@@ -1605,9 +1629,57 @@ func main() {
         let analysis = Processor::combine_analysis(file.clone(), syntax, None, None);
 
         // Verify Analysis contains all SyntaxAnalysis data
-        assert_eq!(analysis.lines_of_code, 10);  // 9 lines + 1 for blank line metric
+        assert_eq!(analysis.lines_of_code, 10); // 9 lines + 1 for blank line metric
         assert_eq!(analysis.functions.len(), 1);
         assert_eq!(analysis.file, file);
         assert!(analysis.functions[0].halstead.is_none());
+    }
+
+    #[test]
+    fn pretty_print_includes_halstead_metrics() {
+        let analysis = Analysis {
+            file: PathBuf::from("test.go"),
+            functions: vec![FunctionAnalysis {
+                function_name: "foo".into(),
+                name: CodeByteSpan::new(0, 3),
+                definition: CodeByteSpan::new(0, 3),
+                definition_line_span: CodeLineSpan {
+                    start_line: 1,
+                    end_line: 3,
+                },
+                definition_position_range: CodePositionRange::default(),
+                function_length: 3,
+                cyclomatic: 1,
+                cyclomatic_match_as_single_branch: 1,
+                functions_called: vec![],
+                references: vec![],
+                enriched_calls: vec![],
+                halstead: Some(HalsteadMetrics {
+                    unique_operators: 1,
+                    unique_operands: 2,
+                    operators: 3,
+                    operands: 4,
+                }),
+            }],
+            comments: vec![],
+            lines_of_code: 1,
+            blank_lines: 0,
+            bracket_lines_of_code: 0,
+            comment_lines_of_code: 0,
+            effective_lines_of_code: 1,
+            total_cyclomatic: 1,
+            total_halstead: HalsteadMetrics {
+                unique_operators: 1,
+                unique_operands: 2,
+                operators: 3,
+                operands: 4,
+            },
+        };
+
+        let pretty = analysis.pretty_print("");
+
+        assert!(pretty.contains(
+            "halstead: unique_operators=1 unique_operands=2 operators=3 operands=4"
+        ));
     }
 }
