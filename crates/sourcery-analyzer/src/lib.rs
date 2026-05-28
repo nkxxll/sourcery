@@ -17,9 +17,10 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use tracing::{debug, info, warn};
 
 use crate::{
+    diff::CommitDiff,
     git_handler::{CommitInfo, SourceRepository},
     language::{LanguageConfig, ProgrammingLanguage},
-    processor::{AggregatedFileMetrics, FileMetrics, Processor},
+    processor::{AggregatedFileMetrics, Analysis, FileMetrics, NewLineMap, Processor},
     progress::Progress,
 };
 
@@ -149,7 +150,6 @@ pub async fn analyze_git_repository_with_database(
     database_url: &str,
 ) -> Result<()> {
     let semaphore = Arc::new(Semaphore::new(100));
-    let mut join_set: JoinSet<Result<(EcoString, FileMetrics)>> = tokio::task::JoinSet::new();
     let pool = db::connect(database_url).await?;
 
     let mut state = State::new(url, &pool, programming_language).await?;
@@ -164,7 +164,8 @@ pub async fn analyze_git_repository_with_database(
     );
 
     let mut previous_oid = None;
-    for oid in &state.commits {
+    let commits = state.commits.clone();
+    for oid in commits {
         state.progress.next();
         state.sr.checkout_commit(&oid)?;
         let commit_info = state.commit_info(&oid);
@@ -175,76 +176,9 @@ pub async fn analyze_git_repository_with_database(
         }
 
         let commit_diff = state.sr.commit_diff(previous_oid.as_ref(), &oid)?;
-        let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
-        let new_commit_hash = commit_diff.new_oid.to_string();
-        let pretty_diff = commit_diff.pretty_print();
-
-        let version_metrics = json!({});
-        let version = db::insert_version(
-            &pool,
-            state.codebase.id,
-            &commit_info.hash,
-            &commit_info.message,
-            &commit_info.author_name,
-            &commit_info.author_email,
-            None,
-            Some(commit_info.is_fix),
-            Some(&pretty_diff),
-            &version_metrics,
-        )
-        .await?;
-        debug!(
-            version_id = %version.id,
-            commit = %commit_info.hash,
-            old_commit_hash = ?old_commit_hash,
-            "stored commit version"
-        );
-
-        let files_changed = i32::try_from(commit_diff.files_changed())
-            .context("files_changed is larger than i32")?;
-        let insertions =
-            i32::try_from(commit_diff.insertions()).context("insertions is larger than i32")?;
-        let deletions =
-            i32::try_from(commit_diff.deletions()).context("deletions is larger than i32")?;
-        let changed_lines = i32::try_from(commit_diff.number_of_changes())
-            .context("changed_lines is larger than i32")?;
-        let diff_metrics = json!({});
-        let diff = db::insert_diff(
-            &pool,
-            version.id,
-            old_commit_hash.as_deref(),
-            &new_commit_hash,
-            files_changed,
-            insertions,
-            deletions,
-            changed_lines,
-            Some(&pretty_diff),
-            &diff_metrics,
-        )
-        .await?;
-
-        for file_change in commit_diff.file_changes() {
-            let old_path = file_change
-                .old_file()
-                .map(|path| path.display().to_string());
-            let new_path = file_change
-                .new_file()
-                .map(|path| path.display().to_string());
-            let old_blob_oid = file_change.old_blob_oid().map(|oid| oid.to_string());
-            let new_blob_oid = file_change.new_blob_oid().map(|oid| oid.to_string());
-            let file_change_metrics = json!({});
-            db::insert_file_change(
-                &pool,
-                diff.id,
-                old_path.as_deref(),
-                new_path.as_deref(),
-                file_change.status(),
-                old_blob_oid.as_deref(),
-                new_blob_oid.as_deref(),
-                &file_change_metrics,
-            )
-            .await?;
-        }
+        let stored_commit =
+            store_commit_snapshot(&pool, &state, &commit_info, &commit_diff).await?;
+        store_diff_file_changes(&pool, &stored_commit.diff, &commit_diff).await?;
 
         let old_metrics_by_path =
             gather_old_metrics(commit_diff.files(), &state.current_file_metrics_by_path);
@@ -259,216 +193,379 @@ pub async fn analyze_git_repository_with_database(
             "aggregated old metrics for changed files"
         );
 
-        for change in commit_diff.changes() {
-            let old_span = change.old_line_span();
-            let new_span = change.new_line_span();
-            let old_path = change.old_file().map(|path| path.display().to_string());
-            let new_path = change.new_file().map(|path| path.display().to_string());
-            let old_start_line =
-                i32::try_from(old_span.0).context("old_start_line is larger than i32")?;
-            let old_end_line =
-                i32::try_from(old_span.1).context("old_end_line is larger than i32")?;
-            let new_start_line =
-                i32::try_from(new_span.0).context("new_start_line is larger than i32")?;
-            let new_end_line =
-                i32::try_from(new_span.1).context("new_end_line is larger than i32")?;
-            let change_metrics = json!({
-                "old_span_length": old_span.1.saturating_sub(old_span.0),
-                "new_span_length": new_span.1.saturating_sub(new_span.0),
-            });
-            db::insert_change(
-                &pool,
-                diff.id,
-                old_path.as_deref(),
-                new_path.as_deref(),
-                old_start_line,
-                old_end_line,
-                new_start_line,
-                new_end_line,
-                &change_metrics,
-            )
-            .await?;
-        }
+        store_diff_line_changes(&pool, &stored_commit.diff, &commit_diff).await?;
 
-        let paths_to_analyze: Vec<(PathBuf, PathBuf)> = commit_diff
-            .files()
-            .iter()
-            .map(|path| (path.clone(), state.sr.dest_dir.join(path)))
-            .collect();
-        let mut new_metrics_by_path = HashMap::new();
+        let new_metrics_by_path = analyze_and_store_changed_files(
+            &pool,
+            &server,
+            semaphore.clone(),
+            &state,
+            &commit_info,
+            &stored_commit.version,
+            &commit_diff,
+        )
+        .await?;
 
-        for (relative_path, absolute_path) in paths_to_analyze {
-            let Some(lc) = filter_map_language_config(&state, &absolute_path) else {
-                continue;
-            };
-            debug!(
-                commit = %commit_info.hash,
-                file = %relative_path.display(),
-                "queueing file analysis task"
-            );
-            let permit = semaphore.clone().acquire_owned().await?;
-            let pool = pool.clone();
-            let version_id = version.id;
-            let mut socket = server.socket();
-            join_set.spawn(async move {
-                let _permit = permit;
-                debug!(
-                    version_id = %version_id,
-                    file = %relative_path.display(),
-                    "starting file analysis task"
-                );
-                let uri = socket.open_document(&absolute_path).await;
-                let mut processor = Processor::new(&lc, &absolute_path, socket, uri)?;
-                debug!(
-                    version_id = %version_id,
-                    file = %relative_path.display(),
-                    "running processor analyze"
-                );
-                let analysis = processor.analyze_with_enrichted_stats().await?;
-                debug!(
-                    version_id = %version_id,
-                    file = %relative_path.display(),
-                    "processor analyze completed"
-                );
-                let source = processor.source();
-                let newline_map = processor.new_line_map();
+        update_version_metrics(
+            &pool,
+            &mut state,
+            &stored_commit.version,
+            &commit_diff,
+            old_metrics,
+            new_metrics_by_path,
+        )
+        .await?;
 
-                let file_path = EcoString::from(relative_path.display().to_string());
-                let language = &lc.language;
-                let language_name = format!("{language:?}").to_ascii_lowercase();
-
-                let file_metrics = FileMetrics {
-                    lines_of_code: analysis.lines_of_code,
-                    effective_lines_of_code: analysis.effective_lines_of_code,
-                    comment_lines_of_code: analysis.comment_lines_of_code,
-                    bracket_lines_of_code: analysis.bracket_lines_of_code,
-                    total_cyclomatic: analysis.total_cyclomatic,
-                };
-                let file_metrics_json = json!({
-                    "lines_of_code": file_metrics.lines_of_code,
-                    "effective_lines_of_code": file_metrics.effective_lines_of_code,
-                    "comment_lines_of_code": file_metrics.comment_lines_of_code,
-                    "bracket_lines_of_code": file_metrics.bracket_lines_of_code,
-                    "total_cyclomatic": file_metrics.total_cyclomatic,
-                });
-
-                let file = db::insert_file(
-                    &pool,
-                    version_id,
-                    &file_path,
-                    Some(&language_name),
-                    &file_metrics_json,
-                )
-                .await?;
-                for func in &analysis.functions {
-                    let functions_called: Vec<String> = func
-                        .functions_called
-                        .iter()
-                        .map(|call| call.name.to_string())
-                        .collect::<BTreeSet<_>>()
-                        .into_iter()
-                        .collect();
-                    let function_calls: Vec<serde_json::Value> = func
-                        .functions_called
-                        .iter()
-                        .map(|call| {
-                            json!({
-                                "name": call.name.to_string(),
-                                "file": call.file.display().to_string(),
-                                "line": call.pos.line,
-                                "column": call.pos.column,
-                            })
-                        })
-                        .collect();
-                    let outdegree =
-                        u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
-
-                    let references: Vec<String> = analysis
-                        .functions
-                        .iter()
-                        .filter(|candidate| candidate.function_name != func.function_name)
-                        .filter(|candidate| {
-                            candidate
-                                .functions_called
-                                .iter()
-                                .any(|called| called.name == func.function_name)
-                        })
-                        .map(|candidate| candidate.function_name.to_string())
-                        .collect::<BTreeSet<_>>()
-                        .into_iter()
-                        .collect();
-                    let indegree =
-                        u64::try_from(references.len()).context("indegree exceeds u64")?;
-
-                    // Function names may repeat by namespace, so include location.
-                    let unique_name = func.name.with_location(source, newline_map)?;
-                    let start_line = i32::try_from(func.definition_line_span.start_line)
-                        .context("function start_line is larger than i32")?;
-                    let end_line = i32::try_from(func.definition_line_span.end_line)
-                        .context("function end_line is larger than i32")?;
-                    let function_metrics = json!({
-                        "function_length": func.function_length,
-                        "cyclomatic": func.cyclomatic,
-                        "cyclomatic_match_as_single_branch": func.cyclomatic_match_as_single_branch,
-                        "definition_position_range": {
-                            "start": {
-                                "line": func.definition_position_range.start.line,
-                                "column": func.definition_position_range.start.column,
-                            },
-                            "end": {
-                                "line": func.definition_position_range.end.line,
-                                "column": func.definition_position_range.end.column,
-                            },
-                        },
-                        "functions_called": functions_called,
-                        "function_calls": function_calls,
-                        "references": references,
-                        "indegree": indegree,
-                        "outdegree": outdegree,
-                    });
-                    db::insert_function(
-                        &pool,
-                        file.id,
-                        unique_name.as_str(),
-                        start_line,
-                        end_line,
-                        &function_metrics,
-                    )
-                    .await?;
-                }
-                processor.close_language_server_file().await;
-                debug!(
-                    version_id = %version_id,
-                    file = %relative_path.display(),
-                    "finished file analysis task"
-                );
-                Ok((file_path, file_metrics))
-            });
-        }
-        while let Some(task_result) = join_set.join_next().await {
-            let (path, metrics) = task_result??;
-            debug!(commit = %commit_info.hash, file = %path, "collected analyzed file metrics");
-            new_metrics_by_path.insert(path, metrics);
-        }
-
-        let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
-        let version_metrics =
-            AggregatedFileMetrics::reconcile(state.current_aggregate, old_metrics, new_metrics);
-        db::update_version_metrics(&pool, version.id, &version_metrics.to_json()).await?;
-        for changed_path in commit_diff.files() {
-            state
-                .current_file_metrics_by_path
-                .remove(changed_path.display().to_string().as_str());
-        }
-        state
-            .current_file_metrics_by_path
-            .extend(new_metrics_by_path);
-        state.current_aggregate = version_metrics;
-
-        previous_oid = Some(*oid);
+        previous_oid = Some(oid);
     }
     info!(repository = url, "finished repository analysis");
     Ok(())
+}
+
+struct StoredCommit {
+    version: db::Version,
+    diff: db::Diff,
+}
+
+async fn store_commit_snapshot(
+    pool: &PgPool,
+    state: &State,
+    commit_info: &CommitInfo,
+    commit_diff: &CommitDiff,
+) -> Result<StoredCommit> {
+    let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
+    let new_commit_hash = commit_diff.new_oid.to_string();
+    let pretty_diff = commit_diff.pretty_print();
+
+    let version = db::insert_version(
+        pool,
+        state.codebase.id,
+        &commit_info.hash,
+        &commit_info.message,
+        &commit_info.author_name,
+        &commit_info.author_email,
+        None,
+        Some(commit_info.is_fix),
+        Some(&pretty_diff),
+        &json!({}),
+    )
+    .await?;
+    debug!(
+        version_id = %version.id,
+        commit = %commit_info.hash,
+        old_commit_hash = ?old_commit_hash,
+        "stored commit version"
+    );
+
+    let diff = db::insert_diff(
+        pool,
+        version.id,
+        old_commit_hash.as_deref(),
+        &new_commit_hash,
+        usize_to_i32(commit_diff.files_changed(), "files_changed")?,
+        usize_to_i32(commit_diff.insertions(), "insertions")?,
+        usize_to_i32(commit_diff.deletions(), "deletions")?,
+        usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
+        Some(&pretty_diff),
+        &json!({}),
+    )
+    .await?;
+
+    Ok(StoredCommit { version, diff })
+}
+
+async fn store_diff_file_changes(
+    pool: &PgPool,
+    diff: &db::Diff,
+    commit_diff: &CommitDiff,
+) -> Result<()> {
+    for file_change in commit_diff.file_changes() {
+        let old_path = file_change
+            .old_file()
+            .map(|path| path.display().to_string());
+        let new_path = file_change
+            .new_file()
+            .map(|path| path.display().to_string());
+        let old_blob_oid = file_change.old_blob_oid().map(|oid| oid.to_string());
+        let new_blob_oid = file_change.new_blob_oid().map(|oid| oid.to_string());
+
+        db::insert_file_change(
+            pool,
+            diff.id,
+            old_path.as_deref(),
+            new_path.as_deref(),
+            file_change.status(),
+            old_blob_oid.as_deref(),
+            new_blob_oid.as_deref(),
+            &json!({}),
+        )
+        .await?;
+    }
+
+    Ok(())
+}
+
+async fn store_diff_line_changes(
+    pool: &PgPool,
+    diff: &db::Diff,
+    commit_diff: &CommitDiff,
+) -> Result<()> {
+    for change in commit_diff.changes() {
+        let old_span = change.old_line_span();
+        let new_span = change.new_line_span();
+        let old_path = change.old_file().map(|path| path.display().to_string());
+        let new_path = change.new_file().map(|path| path.display().to_string());
+        let change_metrics = json!({
+            "old_span_length": old_span.1.saturating_sub(old_span.0),
+            "new_span_length": new_span.1.saturating_sub(new_span.0),
+        });
+
+        db::insert_change(
+            pool,
+            diff.id,
+            old_path.as_deref(),
+            new_path.as_deref(),
+            usize_to_i32(old_span.0, "old_start_line")?,
+            usize_to_i32(old_span.1, "old_end_line")?,
+            usize_to_i32(new_span.0, "new_start_line")?,
+            usize_to_i32(new_span.1, "new_end_line")?,
+            &change_metrics,
+        )
+        .await?;
+    }
+
+    Ok(())
+}
+
+async fn analyze_and_store_changed_files(
+    pool: &PgPool,
+    server: &Server,
+    semaphore: Arc<Semaphore>,
+    state: &State,
+    commit_info: &CommitInfo,
+    version: &db::Version,
+    commit_diff: &CommitDiff,
+) -> Result<HashMap<EcoString, FileMetrics>> {
+    let mut join_set: JoinSet<Result<(EcoString, FileMetrics)>> = tokio::task::JoinSet::new();
+    let paths_to_analyze: Vec<(PathBuf, PathBuf)> = commit_diff
+        .files()
+        .iter()
+        .map(|path| (path.clone(), state.sr.dest_dir.join(path)))
+        .collect();
+
+    for (relative_path, absolute_path) in paths_to_analyze {
+        let Some(lc) = filter_map_language_config(state, &absolute_path) else {
+            continue;
+        };
+        debug!(
+            commit = %commit_info.hash,
+            file = %relative_path.display(),
+            "queueing file analysis task"
+        );
+
+        let permit = semaphore.clone().acquire_owned().await?;
+        let pool = pool.clone();
+        let version = version.clone();
+        let mut socket = server.socket();
+        join_set.spawn(async move {
+            let _permit = permit;
+            debug!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "starting file analysis task"
+            );
+
+            let uri = socket.open_document(&absolute_path).await;
+            let mut processor = Processor::new(&lc, &absolute_path, socket, uri)?;
+            debug!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "running processor analyze"
+            );
+
+            let analysis = processor.analyze_with_enrichted_stats().await?;
+            debug!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "processor analyze completed"
+            );
+
+            let file_path = EcoString::from(relative_path.display().to_string());
+            let file_metrics = store_file_analysis(
+                &pool,
+                &version,
+                &file_path,
+                &lc.language,
+                &analysis,
+                processor.source(),
+                processor.new_line_map(),
+            )
+            .await?;
+
+            processor.close_language_server_file().await;
+            debug!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "finished file analysis task"
+            );
+
+            Ok((file_path, file_metrics))
+        });
+    }
+
+    let mut metrics_by_path = HashMap::new();
+    while let Some(task_result) = join_set.join_next().await {
+        let (path, metrics) = task_result??;
+        debug!(
+            commit = %commit_info.hash,
+            file = %path,
+            "collected analyzed file metrics"
+        );
+        metrics_by_path.insert(path, metrics);
+    }
+
+    Ok(metrics_by_path)
+}
+
+async fn store_file_analysis(
+    pool: &PgPool,
+    version: &db::Version,
+    file_path: &EcoString,
+    language: &ProgrammingLanguage,
+    analysis: &Analysis,
+    source: &str,
+    newline_map: &NewLineMap,
+) -> Result<FileMetrics> {
+    let language_name = format!("{language:?}").to_ascii_lowercase();
+    let file_metrics = FileMetrics {
+        lines_of_code: analysis.lines_of_code,
+        effective_lines_of_code: analysis.effective_lines_of_code,
+        comment_lines_of_code: analysis.comment_lines_of_code,
+        bracket_lines_of_code: analysis.bracket_lines_of_code,
+        total_cyclomatic: analysis.total_cyclomatic,
+    };
+    let file = db::insert_file(
+        pool,
+        version.id,
+        file_path,
+        Some(&language_name),
+        &file_metrics_json(file_metrics),
+    )
+    .await?;
+
+    for func in &analysis.functions {
+        let functions_called: Vec<String> = func
+            .functions_called
+            .iter()
+            .map(|call| call.name.to_string())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let function_calls: Vec<serde_json::Value> = func
+            .functions_called
+            .iter()
+            .map(|call| {
+                json!({
+                    "name": call.name.to_string(),
+                    "file": call.file.display().to_string(),
+                    "line": call.pos.line,
+                    "column": call.pos.column,
+                })
+            })
+            .collect();
+        let outdegree = u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
+
+        let references: Vec<String> = analysis
+            .functions
+            .iter()
+            .filter(|candidate| candidate.function_name != func.function_name)
+            .filter(|candidate| {
+                candidate
+                    .functions_called
+                    .iter()
+                    .any(|called| called.name == func.function_name)
+            })
+            .map(|candidate| candidate.function_name.to_string())
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        let indegree = u64::try_from(references.len()).context("indegree exceeds u64")?;
+
+        // Function names may repeat by namespace, so include location.
+        let unique_name = func.name.with_location(source, newline_map)?;
+        let function_metrics = json!({
+            "function_length": func.function_length,
+            "cyclomatic": func.cyclomatic,
+            "cyclomatic_match_as_single_branch": func.cyclomatic_match_as_single_branch,
+            "definition_position_range": {
+                "start": {
+                    "line": func.definition_position_range.start.line,
+                    "column": func.definition_position_range.start.column,
+                },
+                "end": {
+                    "line": func.definition_position_range.end.line,
+                    "column": func.definition_position_range.end.column,
+                },
+            },
+            "functions_called": functions_called,
+            "function_calls": function_calls,
+            "references": references,
+            "indegree": indegree,
+            "outdegree": outdegree,
+        });
+
+        db::insert_function(
+            pool,
+            file.id,
+            unique_name.as_str(),
+            usize_to_i32(func.definition_line_span.start_line, "function start_line")?,
+            usize_to_i32(func.definition_line_span.end_line, "function end_line")?,
+            &function_metrics,
+        )
+        .await?;
+    }
+
+    Ok(file_metrics)
+}
+
+async fn update_version_metrics(
+    pool: &PgPool,
+    state: &mut State,
+    version: &db::Version,
+    commit_diff: &CommitDiff,
+    old_metrics: AggregatedFileMetrics,
+    new_metrics_by_path: HashMap<EcoString, FileMetrics>,
+) -> Result<()> {
+    let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
+    let version_metrics =
+        AggregatedFileMetrics::reconcile(state.current_aggregate, old_metrics, new_metrics);
+    db::update_version_metrics(pool, version.id, &version_metrics.to_json()).await?;
+
+    for changed_path in commit_diff.files() {
+        state
+            .current_file_metrics_by_path
+            .remove(changed_path.display().to_string().as_str());
+    }
+    state
+        .current_file_metrics_by_path
+        .extend(new_metrics_by_path);
+    state.current_aggregate = version_metrics;
+
+    Ok(())
+}
+
+fn file_metrics_json(metrics: FileMetrics) -> serde_json::Value {
+    json!({
+        "lines_of_code": metrics.lines_of_code,
+        "effective_lines_of_code": metrics.effective_lines_of_code,
+        "comment_lines_of_code": metrics.comment_lines_of_code,
+        "bracket_lines_of_code": metrics.bracket_lines_of_code,
+        "total_cyclomatic": metrics.total_cyclomatic,
+    })
+}
+
+fn usize_to_i32(value: usize, name: &str) -> Result<i32> {
+    i32::try_from(value).with_context(|| format!("{name} is larger than i32"))
 }
 
 fn gather_old_metrics(
