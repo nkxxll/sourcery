@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use ecow::EcoString;
-use git2::{Commit, Oid};
+use git2::Oid;
 use regex::Regex;
 use serde_json::json;
 use sourcery_db::{Codebase, PgPool};
@@ -174,7 +174,6 @@ pub async fn analyze_git_repository_with_database(
             debug!(?oid, "non-fix commit");
         }
 
-
         let commit_diff = state.sr.commit_diff(previous_oid.as_ref(), &oid)?;
         let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
         let new_commit_hash = commit_diff.new_oid.to_string();
@@ -223,6 +222,29 @@ pub async fn analyze_git_repository_with_database(
             &diff_metrics,
         )
         .await?;
+
+        for file_change in commit_diff.file_changes() {
+            let old_path = file_change
+                .old_file()
+                .map(|path| path.display().to_string());
+            let new_path = file_change
+                .new_file()
+                .map(|path| path.display().to_string());
+            let old_blob_oid = file_change.old_blob_oid().map(|oid| oid.to_string());
+            let new_blob_oid = file_change.new_blob_oid().map(|oid| oid.to_string());
+            let file_change_metrics = json!({});
+            db::insert_file_change(
+                &pool,
+                diff.id,
+                old_path.as_deref(),
+                new_path.as_deref(),
+                file_change.status(),
+                old_blob_oid.as_deref(),
+                new_blob_oid.as_deref(),
+                &file_change_metrics,
+            )
+            .await?;
+        }
 
         let old_metrics_by_path =
             gather_old_metrics(commit_diff.files(), &state.current_file_metrics_by_path);

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::{collections::BTreeSet, path::PathBuf};
 
-use git2::{Oid, Repository};
+use git2::{Delta, Oid, Repository};
 
 /// how to get a diff of two commits oids
 /// needed are the files that are changed the number of changes measured after
@@ -52,10 +52,41 @@ impl Change {
     }
 }
 
+pub struct FileChange {
+    old_file: Option<PathBuf>,
+    new_file: Option<PathBuf>,
+    status: &'static str,
+    old_blob_oid: Option<Oid>,
+    new_blob_oid: Option<Oid>,
+}
+
+impl FileChange {
+    pub fn old_file(&self) -> Option<&std::path::Path> {
+        self.old_file.as_deref()
+    }
+
+    pub fn new_file(&self) -> Option<&std::path::Path> {
+        self.new_file.as_deref()
+    }
+
+    pub fn status(&self) -> &'static str {
+        self.status
+    }
+
+    pub fn old_blob_oid(&self) -> Option<Oid> {
+        self.old_blob_oid
+    }
+
+    pub fn new_blob_oid(&self) -> Option<Oid> {
+        self.new_blob_oid
+    }
+}
+
 pub struct CommitDiff {
     pub new_oid: Oid,
     pub old_oid: Option<Oid>,
     files: Vec<PathBuf>,
+    file_changes: Vec<FileChange>,
     changes: Vec<Change>,
     files_changed: usize,
     number_of_changes: usize,
@@ -83,13 +114,27 @@ impl CommitDiff {
         let deletions = stats.deletions();
         let files_changed = stats.files_changed();
         let mut files = BTreeSet::new();
+        let mut file_changes = Vec::new();
         for delta in diff.deltas() {
-            if let Some(path) = delta.old_file().path() {
+            let old_file = delta.old_file();
+            let new_file = delta.new_file();
+            let old_file_buf = old_file.path().map(PathBuf::from);
+            let new_file_buf = new_file.path().map(PathBuf::from);
+
+            if let Some(path) = &old_file_buf {
                 files.insert(path.to_path_buf());
             }
-            if let Some(path) = delta.new_file().path() {
+            if let Some(path) = &new_file_buf {
                 files.insert(path.to_path_buf());
             }
+
+            file_changes.push(FileChange {
+                old_file: old_file_buf,
+                new_file: new_file_buf,
+                status: delta_status(delta.status()),
+                old_blob_oid: oid_from_delta_file(old_file.id()),
+                new_blob_oid: oid_from_delta_file(new_file.id()),
+            });
         }
         let mut changes = Vec::new();
         diff.foreach(
@@ -122,6 +167,7 @@ impl CommitDiff {
             new_oid: *new_commit_oid,
             old_oid: old_commit_oid.copied(),
             files: files.into_iter().collect(),
+            file_changes,
             changes,
             files_changed,
             number_of_changes: insertions + deletions,
@@ -132,6 +178,10 @@ impl CommitDiff {
 
     pub fn files(&self) -> &[PathBuf] {
         &self.files
+    }
+
+    pub fn file_changes(&self) -> &[FileChange] {
+        &self.file_changes
     }
 
     pub fn changes(&self) -> &[Change] {
@@ -187,5 +237,29 @@ impl CommitDiff {
             ));
         }
         lines.join("\n")
+    }
+}
+
+fn delta_status(status: Delta) -> &'static str {
+    match status {
+        Delta::Unmodified => "unmodified",
+        Delta::Added => "added",
+        Delta::Deleted => "deleted",
+        Delta::Modified => "modified",
+        Delta::Renamed => "renamed",
+        Delta::Copied => "copied",
+        Delta::Ignored => "ignored",
+        Delta::Untracked => "untracked",
+        Delta::Typechange => "typechange",
+        Delta::Unreadable => "unreadable",
+        Delta::Conflicted => "conflicted",
+    }
+}
+
+fn oid_from_delta_file(oid: Oid) -> Option<Oid> {
+    if oid.to_string() == "0000000000000000000000000000000000000000" {
+        None
+    } else {
+        Some(oid)
     }
 }

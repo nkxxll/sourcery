@@ -81,6 +81,19 @@ pub struct Change {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FileChange {
+    pub id: Uuid,
+    pub diff_id: Uuid,
+    pub old_path: Option<String>,
+    pub new_path: Option<String>,
+    pub status: String,
+    pub old_blob_oid: Option<String>,
+    pub new_blob_oid: Option<String>,
+    pub metrics: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
 // Connection
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
@@ -349,6 +362,48 @@ pub async fn delete_diff(pool: &PgPool, id: Uuid) -> Result<bool> {
         .execute(pool)
         .await?;
     Ok(result.rows_affected() > 0)
+}
+
+// File changes
+
+#[allow(clippy::too_many_arguments)]
+pub async fn insert_file_change(
+    pool: &PgPool,
+    diff_id: Uuid,
+    old_path: Option<&str>,
+    new_path: Option<&str>,
+    status: &str,
+    old_blob_oid: Option<&str>,
+    new_blob_oid: Option<&str>,
+    metrics: &serde_json::Value,
+) -> Result<FileChange> {
+    let row = sqlx::query_as::<_, FileChange>(
+        "INSERT INTO file_changes (diff_id, old_path, new_path, status, old_blob_oid, new_blob_oid, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *",
+    )
+    .bind(diff_id)
+    .bind(old_path)
+    .bind(new_path)
+    .bind(status)
+    .bind(old_blob_oid)
+    .bind(new_blob_oid)
+    .bind(metrics)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
+pub async fn list_file_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<Vec<FileChange>> {
+    let rows = sqlx::query_as::<_, FileChange>(
+        "SELECT * FROM file_changes
+         WHERE diff_id = $1
+         ORDER BY created_at, old_path, new_path",
+    )
+    .bind(diff_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
 }
 
 // Files
