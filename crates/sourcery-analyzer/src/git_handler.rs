@@ -9,6 +9,15 @@ use git2::{BranchType, Commit, Oid, Repository, Revwalk, Sort};
 
 const REPOSITORIES_DIRECTORY: &str = "toanalyze";
 
+#[derive(Debug, Default)]
+pub struct CommitInfo {
+    pub author_name: String,
+    pub author_email: String,
+    pub message: String,
+    pub is_fix: bool,
+    pub hash: String,
+}
+
 pub struct SourceRepository {
     pub url: EcoString,
     repo: Repository,

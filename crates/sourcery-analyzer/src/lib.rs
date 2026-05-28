@@ -7,7 +7,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use ecow::EcoString;
-use git2::Oid;
+use git2::{Commit, Oid};
 use regex::Regex;
 use serde_json::json;
 use sourcery_db::{Codebase, PgPool};
@@ -17,7 +17,7 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use tracing::{debug, info, warn};
 
 use crate::{
-    git_handler::SourceRepository,
+    git_handler::{CommitInfo, SourceRepository},
     language::{LanguageConfig, ProgrammingLanguage},
     processor::{AggregatedFileMetrics, FileMetrics, Processor},
     progress::Progress,
@@ -100,6 +100,33 @@ impl State {
         })
     }
 
+    fn commit_info(&self, oid: &Oid) -> CommitInfo {
+        match self
+            .sr
+            .find_commit(&oid)
+            .with_context(|| format!("failed to find commit {oid}"))
+        {
+            Ok(commit) => {
+                let message = commit.message().unwrap_or("").to_string();
+                let author_name = commit.author().name().unwrap_or_default().to_string();
+                let author_email = commit.author().email().unwrap_or_default().to_string();
+                let is_fix = is_fix(&message);
+                let commit_hash = oid.to_string();
+                CommitInfo {
+                    author_name,
+                    author_email,
+                    message: message,
+                    is_fix,
+                    hash: commit_hash,
+                }
+            }
+            Err(err) => {
+                warn!("could not find commit {err}");
+                CommitInfo::default()
+            }
+        }
+    }
+
     fn gather_commits(sr: &SourceRepository) -> Vec<Oid> {
         let mut res = Vec::new();
         for commit_oid in sr.into_iter() {
@@ -140,22 +167,13 @@ pub async fn analyze_git_repository_with_database(
     for oid in &state.commits {
         state.progress.next();
         state.sr.checkout_commit(&oid)?;
-        let commit = state
-            .sr
-            .find_commit(&oid)
-            .with_context(|| format!("failed to find commit {oid}"))?;
-        let message = commit.message().unwrap_or("").to_string();
-        let is_fix_commit = is_fix(&message);
-        if is_fix_commit {
+        let commit_info = state.commit_info(&oid);
+        if commit_info.is_fix {
             debug!(?oid, "fix commit");
         } else {
             debug!(?oid, "non-fix commit");
         }
 
-        let author = commit.author();
-        let author_name = author.name().unwrap_or("").to_string();
-        let author_email = author.email().unwrap_or("").to_string();
-        let commit_hash = oid.to_string();
 
         let commit_diff = state.sr.commit_diff(previous_oid.as_ref(), &oid)?;
         let old_commit_hash = commit_diff.old_oid.as_ref().map(ToString::to_string);
@@ -166,19 +184,19 @@ pub async fn analyze_git_repository_with_database(
         let version = db::insert_version(
             &pool,
             state.codebase.id,
-            &commit_hash,
-            &message,
-            &author_name,
-            &author_email,
+            &commit_info.hash,
+            &commit_info.message,
+            &commit_info.author_name,
+            &commit_info.author_email,
             None,
-            Some(is_fix_commit),
+            Some(commit_info.is_fix),
             Some(&pretty_diff),
             &version_metrics,
         )
         .await?;
         debug!(
             version_id = %version.id,
-            commit = %commit_hash,
+            commit = %commit_info.hash,
             old_commit_hash = ?old_commit_hash,
             "stored commit version"
         );
@@ -262,7 +280,7 @@ pub async fn analyze_git_repository_with_database(
                 continue;
             };
             debug!(
-                commit = %commit_hash,
+                commit = %commit_info.hash,
                 file = %relative_path.display(),
                 "queueing file analysis task"
             );
@@ -407,7 +425,7 @@ pub async fn analyze_git_repository_with_database(
         }
         while let Some(task_result) = join_set.join_next().await {
             let (path, metrics) = task_result??;
-            debug!(commit = %commit_hash, file = %path, "collected analyzed file metrics");
+            debug!(commit = %commit_info.hash, file = %path, "collected analyzed file metrics");
             new_metrics_by_path.insert(path, metrics);
         }
 
