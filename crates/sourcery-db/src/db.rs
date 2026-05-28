@@ -32,6 +32,11 @@ pub struct Version {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct VersionMetrics {
+    pub metrics: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Diff {
     pub id: Uuid,
     pub version_id: Uuid,
@@ -279,6 +284,16 @@ pub async fn list_versions_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Resu
         "SELECT * FROM versions WHERE codebase_id = $1 ORDER BY created_at",
     )
     .bind(codebase_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_codebase_metrics(pool: &PgPool, id: Uuid) -> Result<Vec<VersionMetrics>> {
+    let rows = sqlx::query_as::<_, VersionMetrics>(
+        "SELECT metrics FROM versions WHERE codebase_id = $1 ORDER BY created_at",
+    )
+    .bind(id)
     .fetch_all(pool)
     .await?;
     Ok(rows)

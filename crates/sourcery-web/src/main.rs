@@ -48,6 +48,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/codebases", get(list_codebases))
         .route("/codebases/{id}", get(get_codebase))
         .route("/codebases/{id}/diff", get(list_diffs_by_codebase))
+        .route("/codebases/{id}/metrics", get(list_codebase_metrics))
         .with_state(AppState { pool });
 
     let listener = tokio::net::TcpListener::bind(&args.bind)
@@ -93,6 +94,13 @@ async fn list_diffs_by_codebase(
         .await
         .map_err(internal_error)?;
     Ok(Json(diffs))
+}
+
+async fn list_codebase_metrics() -> Result<Json<Vec>> {
+    let metrics = sourcery_db::list_codebase_metrics(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(metrics))
 }
 
 fn internal_error(error: anyhow::Error) -> (StatusCode, String) {
