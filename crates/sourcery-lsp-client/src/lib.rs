@@ -330,23 +330,27 @@ impl SharedSocket {
         let ret = self.socket.definition(goto_definition_params).await;
         match ret {
             Ok(res) => {
-                let res = res.expect("goto definition did not return a response body");
-                match res {
-                    GotoDefinitionResponse::Scalar(location) => {
-                        debug!(uri = %uri, definitions = 1, "received scalar definition response");
-                        Ok(vec![location])
+                if let Some(res) = res {
+                    match res {
+                        GotoDefinitionResponse::Scalar(location) => {
+                            debug!(uri = %uri, definitions = 1, "received scalar definition response");
+                            Ok(vec![location])
+                        }
+                        GotoDefinitionResponse::Array(locations) => {
+                            debug!(
+                                uri = %uri,
+                                definitions = locations.len(),
+                                "received array definition response"
+                            );
+                            Ok(locations)
+                        }
+                        GotoDefinitionResponse::Link(_location_links) => {
+                            unreachable!("we shouldn't enalbe link in th capabilities")
+                        }
                     }
-                    GotoDefinitionResponse::Array(locations) => {
-                        debug!(
-                            uri = %uri,
-                            definitions = locations.len(),
-                            "received array definition response"
-                        );
-                        Ok(locations)
-                    }
-                    GotoDefinitionResponse::Link(_location_links) => {
-                        unreachable!("we shouldn't enalbe link in th capabilities")
-                    }
+                } else {
+                    warn!(uri=%uri , "there was no response found for gotodefinition");
+                    Ok(vec![])
                 }
             }
             Err(err) => Err(anyhow!(

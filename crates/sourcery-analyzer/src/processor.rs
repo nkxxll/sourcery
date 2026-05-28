@@ -105,7 +105,7 @@ impl<'processor> Processor<'processor> {
     pub async fn close_language_server_file(&mut self) {
         let path = self.source.file();
         debug!(file = %path.display(), "closing language server file");
-        self.socket.as_mut().unwrap().close_document(path).await;
+        self.socket.clone().unwrap().close_document(path).await;
         debug!(file = %path.display(), "closed language server file");
     }
 
@@ -226,7 +226,7 @@ impl<'processor> Processor<'processor> {
         );
 
         // Phase 2 & 3: Run LSP enrichment and halstead computation in parallel
-        let socket_opt = self.socket.take();
+        let socket_opt = self.socket.clone();
 
         let lsp_future = async {
             if let Some(mut sock) = socket_opt {
@@ -1014,16 +1014,18 @@ impl<'processor> AstProcessor<'processor> {
                 "starting lsp calls for function"
             );
             let mut ref_socket = socket.clone();
-            let ref_fut =
-                self.find_references((function_name.clone(), range.start), &mut ref_socket);
             let call_positions = fa
                 .functions_called
                 .iter()
                 .map(|f| (f.name.clone(), f.pos.to_lsp_position()));
-            let call_fut = self.get_enriched_calls(call_positions.collect(), socket);
-            let (references, calls) = tokio::join!(ref_fut, call_fut);
-            let references = references?;
-            let calls = calls?;
+            info!(uri = %self.uri, "before refereneces");
+            let references = self
+                .find_references((function_name.clone(), range.start), &mut ref_socket)
+                .await?;
+            info!(uri = %self.uri, "before definitions");
+            let calls = self
+                .get_enriched_calls(call_positions.collect(), socket)
+                .await?;
             debug!(
                 file = %self.file.display(),
                 function = %function_name,
@@ -1083,13 +1085,14 @@ impl<'processor> AstProcessor<'processor> {
                 .collect();
 
             let mut func_calls = func_calls.into_iter();
-            let func_call = func_calls
-                .next()
-                .expect("there should be at least one definition of a function");
-            if func_calls.next().is_some() {
-                tracing::warn!("more than one definition for function taking first");
+            if let Some(func_call) = func_calls.next() {
+                if func_calls.next().is_some() {
+                    warn!("more than one definition for function taking first");
+                }
+                res_vec.push(func_call);
+            } else {
+                warn!(func_name=%name, "function name without definition");
             }
-            res_vec.push(func_call);
         }
         Ok(res_vec)
     }

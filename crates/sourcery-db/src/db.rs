@@ -672,6 +672,73 @@ pub async fn upsert_file_state(
     Ok(row)
 }
 
+pub struct FileStateInsert {
+    pub codebase_id: Uuid,
+    pub version_id: Uuid,
+    pub path: String,
+    pub file_id: Option<Uuid>,
+    pub status: String,
+    pub exists: bool,
+    pub source_path: Option<String>,
+    pub metrics: serde_json::Value,
+}
+
+pub async fn batch_upsert_file_states(
+    pool: &PgPool,
+    states: Vec<FileStateInsert>,
+) -> Result<u64> {
+    if states.is_empty() {
+        return Ok(0);
+    }
+
+    let mut query_builder = sqlx::query_builder::QueryBuilder::new(
+        "INSERT INTO file_states (codebase_id, version_id, path, file_id, status, exists, source_path, metrics)"
+    );
+
+    query_builder.push(" VALUES ");
+
+    for (i, state) in states.iter().enumerate() {
+        if i > 0 {
+            query_builder.push(", ");
+        }
+        query_builder.push("(")
+            .push_bind(state.codebase_id)
+            .push(", ")
+            .push_bind(state.version_id)
+            .push(", ")
+            .push_bind(&state.path)
+            .push(", ")
+            .push_bind(state.file_id)
+            .push(", ")
+            .push_bind(&state.status)
+            .push(", ")
+            .push_bind(state.exists)
+            .push(", ")
+            .push_bind(&state.source_path)
+            .push(", ")
+            .push_bind(&state.metrics)
+            .push(")");
+    }
+
+    query_builder.push(
+        " ON CONFLICT (version_id, path) DO UPDATE SET
+            codebase_id = EXCLUDED.codebase_id,
+            file_id = EXCLUDED.file_id,
+            status = EXCLUDED.status,
+            exists = EXCLUDED.exists,
+            source_path = EXCLUDED.source_path,
+            metrics = EXCLUDED.metrics",
+    );
+
+    let rows_affected = query_builder
+        .build()
+        .execute(pool)
+        .await?
+        .rows_affected();
+
+    Ok(rows_affected)
+}
+
 pub async fn list_file_states_by_version(
     pool: &PgPool,
     version_id: Uuid,

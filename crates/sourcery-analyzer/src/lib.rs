@@ -158,7 +158,9 @@ pub async fn analyze_git_repository_with_database(
     let mut state = State::new(url, &pool, programming_language).await?;
     let pl = programming_language.expect("should be determined by now");
     let (binary, args) = pl.lsp();
-    let server = Server::new(&state.sr.cwd, binary, args);
+    let mut server = Server::new(&state.sr.dest_dir, binary, args);
+    let mainloop = server.run_main_loop();
+    server.initialize().await;
     info!(
         repository = url,
         lsp_binary = binary,
@@ -221,6 +223,7 @@ pub async fn analyze_git_repository_with_database(
 
         previous_oid = Some(oid);
     }
+    server.shutdown(mainloop).await;
     info!(repository = url, "finished repository analysis");
     Ok(())
 }
@@ -380,30 +383,52 @@ async fn analyze_and_store_changed_files(
         let pool = pool.clone();
         let version = version.clone();
         let mut socket = server.socket();
+        let relative_path_clone = relative_path.clone();
         join_set.spawn(async move {
             let _permit = permit;
-            debug!(
+            info!(
                 version_id = %version.id,
                 file = %relative_path.display(),
-                "starting file analysis task"
+                "TASK_START: starting file analysis task"
             );
 
+            info!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "TASK_CHECKPOINT: about to call open_document"
+            );
             let uri = socket.open_document(&absolute_path).await;
+            info!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "TASK_CHECKPOINT: open_document completed"
+            );
+
             let mut processor = Processor::new(&lc, &absolute_path, socket, uri)?;
-            debug!(
+            info!(
                 version_id = %version.id,
                 file = %relative_path.display(),
-                "running processor analyze"
+                "TASK_CHECKPOINT: Processor created"
             );
 
+            info!(
+                version_id = %version.id,
+                file = %relative_path.display(),
+                "TASK_CHECKPOINT: about to run processor analyze"
+            );
             let analysis = processor.analyze_with_enrichted_stats().await?;
-            debug!(
+            info!(
                 version_id = %version.id,
                 file = %relative_path.display(),
-                "processor analyze completed"
+                "TASK_CHECKPOINT: processor analyze completed"
             );
 
-            let file_path = EcoString::from(relative_path.display().to_string());
+            let file_path = EcoString::from(relative_path_clone.display().to_string());
+            info!(
+                version_id = %version.id,
+                file = %file_path,
+                "TASK_CHECKPOINT: about to store file analysis"
+            );
             let file_analysis = store_file_analysis(
                 &pool,
                 &version,
@@ -414,12 +439,22 @@ async fn analyze_and_store_changed_files(
                 processor.new_line_map(),
             )
             .await?;
-
-            processor.close_language_server_file().await;
-            debug!(
+            info!(
                 version_id = %version.id,
-                file = %relative_path.display(),
-                "finished file analysis task"
+                file = %file_path,
+                "TASK_CHECKPOINT: file analysis stored"
+            );
+
+            info!(
+                version_id = %version.id,
+                file = %file_path,
+                "TASK_CHECKPOINT: about to close language server file"
+            );
+            processor.close_language_server_file().await;
+            info!(
+                version_id = %version.id,
+                file = %file_path,
+                "TASK_END: finished file analysis task"
             );
 
             Ok((file_path, file_analysis))
@@ -436,9 +471,12 @@ async fn analyze_and_store_changed_files(
             "collected analyzed file metrics"
         );
         metrics_by_path.insert(path.clone(), analysis.metrics);
+        debug!("after metrics by path");
         analyses_by_path.insert(path, analysis);
+        debug!("after analysis by path");
     }
 
+    debug!("before store");
     store_file_states(
         pool,
         &state.codebase,
@@ -563,6 +601,16 @@ async fn store_file_states(
     commit_diff: &CommitDiff,
     analyses_by_path: &HashMap<EcoString, StoredFileAnalysis>,
 ) -> Result<()> {
+    let mut states = Vec::new();
+    let total_files = commit_diff.file_changes().len();
+    let mut processed = 0;
+
+    info!(
+        version_id = %version.id,
+        total_files = total_files,
+        "starting batch file state storage"
+    );
+
     for file_change in commit_diff.file_changes() {
         let old_path = file_change
             .old_file()
@@ -576,40 +624,57 @@ async fn store_file_states(
             let path_removed = matches!(status, "deleted" | "renamed") || new_path.is_none();
             let path_replaced = new_path.as_deref().is_some_and(|new_path| new_path != path);
             if path_removed || path_replaced {
-                db::upsert_file_state(
-                    pool,
-                    codebase.id,
-                    version.id,
-                    path,
-                    None,
-                    status,
-                    false,
-                    None,
-                    &json!({}),
-                )
-                .await?;
+                states.push(db::FileStateInsert {
+                    codebase_id: codebase.id,
+                    version_id: version.id,
+                    path: path.to_string(),
+                    file_id: None,
+                    status: status.to_string(),
+                    exists: false,
+                    source_path: None,
+                    metrics: json!({}),
+                });
             }
         }
 
         let Some(path) = new_path.as_deref() else {
+            processed += 1;
             continue;
         };
         let Some(analysis) = analyses_by_path.get(path) else {
+            processed += 1;
             continue;
         };
-        db::upsert_file_state(
-            pool,
-            codebase.id,
-            version.id,
-            path,
-            Some(analysis.file.id),
-            status,
-            true,
-            old_path.as_deref().filter(|old_path| *old_path != path),
-            &file_metrics_json(&analysis.metrics),
-        )
-        .await?;
+        states.push(db::FileStateInsert {
+            codebase_id: codebase.id,
+            version_id: version.id,
+            path: path.to_string(),
+            file_id: Some(analysis.file.id),
+            status: status.to_string(),
+            exists: true,
+            source_path: old_path
+                .as_deref()
+                .filter(|old_path| *old_path != path)
+                .map(|s| s.to_string()),
+            metrics: file_metrics_json(&analysis.metrics),
+        });
+        processed += 1;
     }
+
+    debug!(
+        version_id = %version.id,
+        collected_states = states.len(),
+        processed_files = processed,
+        "collected all file states for batch insert"
+    );
+
+    let rows_affected = db::batch_upsert_file_states(pool, states).await?;
+
+    info!(
+        version_id = %version.id,
+        rows_affected = rows_affected,
+        "completed batch file state storage"
+    );
 
     Ok(())
 }
@@ -754,9 +819,9 @@ pub async fn analyze_single_file(
             .into(),
     );
     let mut server = Server::new(root, binary, args);
-    let mut socket = server.socket();
     let mainloop = server.run_main_loop();
     server.initialize().await;
+    let mut socket = server.socket();
     let uri = socket.open_document(&path).await;
     let mut processor = Processor::new(&lc, &path, socket, uri)?;
     let analysis = processor.analyze_with_enrichted_stats().await?;
