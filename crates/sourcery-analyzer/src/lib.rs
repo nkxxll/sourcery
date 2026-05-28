@@ -6,6 +6,7 @@ use std::{
 };
 
 use anyhow::{Context, Result, anyhow};
+use chrono::{DateTime, Utc};
 use ecow::EcoString;
 use git2::Oid;
 use regex::Regex;
@@ -111,12 +112,14 @@ impl State {
                 let message = commit.message().unwrap_or("").to_string();
                 let author_name = commit.author().name().unwrap_or_default().to_string();
                 let author_email = commit.author().email().unwrap_or_default().to_string();
+                let committed_at = DateTime::<Utc>::from_timestamp(commit.time().seconds(), 0);
                 let is_fix = is_fix(&message);
                 let commit_hash = oid.to_string();
                 CommitInfo {
                     author_name,
                     author_email,
                     message: message,
+                    committed_at,
                     is_fix,
                     hash: commit_hash,
                 }
@@ -227,6 +230,11 @@ struct StoredCommit {
     diff: db::Diff,
 }
 
+struct StoredFileAnalysis {
+    file: db::File,
+    metrics: FileMetrics,
+}
+
 async fn store_commit_snapshot(
     pool: &PgPool,
     state: &State,
@@ -244,7 +252,7 @@ async fn store_commit_snapshot(
         &commit_info.message,
         &commit_info.author_name,
         &commit_info.author_email,
-        None,
+        commit_info.committed_at,
         Some(commit_info.is_fix),
         Some(&pretty_diff),
         &json!({}),
@@ -279,6 +287,8 @@ async fn store_diff_file_changes(
     diff: &db::Diff,
     commit_diff: &CommitDiff,
 ) -> Result<()> {
+    db::delete_file_changes_by_diff(pool, diff.id).await?;
+
     for file_change in commit_diff.file_changes() {
         let old_path = file_change
             .old_file()
@@ -310,6 +320,8 @@ async fn store_diff_line_changes(
     diff: &db::Diff,
     commit_diff: &CommitDiff,
 ) -> Result<()> {
+    db::delete_changes_by_diff(pool, diff.id).await?;
+
     for change in commit_diff.changes() {
         let old_span = change.old_line_span();
         let new_span = change.new_line_span();
@@ -346,7 +358,8 @@ async fn analyze_and_store_changed_files(
     version: &db::Version,
     commit_diff: &CommitDiff,
 ) -> Result<HashMap<EcoString, FileMetrics>> {
-    let mut join_set: JoinSet<Result<(EcoString, FileMetrics)>> = tokio::task::JoinSet::new();
+    let mut join_set: JoinSet<Result<(EcoString, StoredFileAnalysis)>> =
+        tokio::task::JoinSet::new();
     let paths_to_analyze: Vec<(PathBuf, PathBuf)> = commit_diff
         .files()
         .iter()
@@ -391,7 +404,7 @@ async fn analyze_and_store_changed_files(
             );
 
             let file_path = EcoString::from(relative_path.display().to_string());
-            let file_metrics = store_file_analysis(
+            let file_analysis = store_file_analysis(
                 &pool,
                 &version,
                 &file_path,
@@ -409,20 +422,31 @@ async fn analyze_and_store_changed_files(
                 "finished file analysis task"
             );
 
-            Ok((file_path, file_metrics))
+            Ok((file_path, file_analysis))
         });
     }
 
+    let mut analyses_by_path = HashMap::new();
     let mut metrics_by_path = HashMap::new();
     while let Some(task_result) = join_set.join_next().await {
-        let (path, metrics) = task_result??;
+        let (path, analysis) = task_result??;
         debug!(
             commit = %commit_info.hash,
             file = %path,
             "collected analyzed file metrics"
         );
-        metrics_by_path.insert(path, metrics);
+        metrics_by_path.insert(path.clone(), analysis.metrics);
+        analyses_by_path.insert(path, analysis);
     }
+
+    store_file_states(
+        pool,
+        &state.codebase,
+        version,
+        commit_diff,
+        &analyses_by_path,
+    )
+    .await?;
 
     Ok(metrics_by_path)
 }
@@ -435,7 +459,7 @@ async fn store_file_analysis(
     analysis: &Analysis,
     source: &str,
     newline_map: &NewLineMap,
-) -> Result<FileMetrics> {
+) -> Result<StoredFileAnalysis> {
     let language_name = format!("{language:?}").to_ascii_lowercase();
     let file_metrics = FileMetrics {
         lines_of_code: analysis.lines_of_code,
@@ -449,9 +473,10 @@ async fn store_file_analysis(
         version.id,
         file_path,
         Some(&language_name),
-        &file_metrics_json(file_metrics),
+        &file_metrics_json(&file_metrics),
     )
     .await?;
+    db::delete_functions_by_file(pool, file.id).await?;
 
     for func in &analysis.functions {
         let functions_called: Vec<String> = func
@@ -525,7 +550,68 @@ async fn store_file_analysis(
         .await?;
     }
 
-    Ok(file_metrics)
+    Ok(StoredFileAnalysis {
+        file,
+        metrics: file_metrics,
+    })
+}
+
+async fn store_file_states(
+    pool: &PgPool,
+    codebase: &Codebase,
+    version: &db::Version,
+    commit_diff: &CommitDiff,
+    analyses_by_path: &HashMap<EcoString, StoredFileAnalysis>,
+) -> Result<()> {
+    for file_change in commit_diff.file_changes() {
+        let old_path = file_change
+            .old_file()
+            .map(|path| path.display().to_string());
+        let new_path = file_change
+            .new_file()
+            .map(|path| path.display().to_string());
+        let status = file_change.status();
+
+        if let Some(path) = old_path.as_deref() {
+            let path_removed = matches!(status, "deleted" | "renamed") || new_path.is_none();
+            let path_replaced = new_path.as_deref().is_some_and(|new_path| new_path != path);
+            if path_removed || path_replaced {
+                db::upsert_file_state(
+                    pool,
+                    codebase.id,
+                    version.id,
+                    path,
+                    None,
+                    status,
+                    false,
+                    None,
+                    &json!({}),
+                )
+                .await?;
+            }
+        }
+
+        let Some(path) = new_path.as_deref() else {
+            continue;
+        };
+        let Some(analysis) = analyses_by_path.get(path) else {
+            continue;
+        };
+        db::upsert_file_state(
+            pool,
+            codebase.id,
+            version.id,
+            path,
+            Some(analysis.file.id),
+            status,
+            true,
+            old_path.as_deref().filter(|old_path| *old_path != path),
+            &file_metrics_json(&analysis.metrics),
+        )
+        .await?;
+    }
+
+    Ok(())
 }
 
 async fn update_version_metrics(
@@ -554,7 +640,7 @@ async fn update_version_metrics(
     Ok(())
 }
 
-fn file_metrics_json(metrics: FileMetrics) -> serde_json::Value {
+fn file_metrics_json(metrics: &FileMetrics) -> serde_json::Value {
     json!({
         "lines_of_code": metrics.lines_of_code,
         "effective_lines_of_code": metrics.effective_lines_of_code,

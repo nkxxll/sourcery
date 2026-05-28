@@ -4,6 +4,7 @@ use std::{
 };
 
 use anyhow::{Result, anyhow};
+use chrono::{DateTime, Utc};
 use ecow::EcoString;
 use git2::{BranchType, Commit, Oid, Repository, Revwalk, Sort};
 
@@ -14,6 +15,7 @@ pub struct CommitInfo {
     pub author_name: String,
     pub author_email: String,
     pub message: String,
+    pub committed_at: Option<DateTime<Utc>>,
     pub is_fix: bool,
     pub hash: String,
 }

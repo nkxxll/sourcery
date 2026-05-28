@@ -94,6 +94,33 @@ pub struct FileChange {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FileState {
+    pub id: Uuid,
+    pub codebase_id: Uuid,
+    pub version_id: Uuid,
+    pub path: String,
+    pub file_id: Option<Uuid>,
+    pub status: String,
+    pub exists: bool,
+    pub source_path: Option<String>,
+    pub metrics: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct CurrentFunction {
+    pub file_state_id: Uuid,
+    pub file_id: Uuid,
+    pub file_path: String,
+    pub file_language: Option<String>,
+    pub function_id: Uuid,
+    pub name: String,
+    pub start_line: i32,
+    pub end_line: i32,
+    pub metrics: serde_json::Value,
+}
+
 // Connection
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
@@ -394,6 +421,14 @@ pub async fn insert_file_change(
     Ok(row)
 }
 
+pub async fn delete_file_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<u64> {
+    let result = sqlx::query("DELETE FROM file_changes WHERE diff_id = $1")
+        .bind(diff_id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
 pub async fn list_file_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<Vec<FileChange>> {
     let rows = sqlx::query_as::<_, FileChange>(
         "SELECT * FROM file_changes
@@ -507,6 +542,14 @@ pub async fn delete_function(pool: &PgPool, id: Uuid) -> Result<bool> {
     Ok(result.rows_affected() > 0)
 }
 
+pub async fn delete_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<u64> {
+    let result = sqlx::query("DELETE FROM functions WHERE file_id = $1")
+        .bind(file_id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
 // Changes
 
 #[allow(clippy::too_many_arguments)]
@@ -539,6 +582,14 @@ pub async fn insert_change(
     Ok(row)
 }
 
+pub async fn delete_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<u64> {
+    let result = sqlx::query("DELETE FROM changes WHERE diff_id = $1")
+        .bind(diff_id)
+        .execute(pool)
+        .await?;
+    Ok(result.rows_affected())
+}
+
 pub async fn get_change_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Change>> {
     let row = sqlx::query_as::<_, Change>("SELECT * FROM changes WHERE id = $1")
         .bind(id)
@@ -565,4 +616,154 @@ pub async fn delete_change(pool: &PgPool, id: Uuid) -> Result<bool> {
         .execute(pool)
         .await?;
     Ok(result.rows_affected() > 0)
+}
+
+// File states
+
+#[allow(clippy::too_many_arguments)]
+pub async fn upsert_file_state(
+    pool: &PgPool,
+    codebase_id: Uuid,
+    version_id: Uuid,
+    path: &str,
+    file_id: Option<Uuid>,
+    status: &str,
+    exists: bool,
+    source_path: Option<&str>,
+    metrics: &serde_json::Value,
+) -> Result<FileState> {
+    let row = sqlx::query_as::<_, FileState>(
+        "INSERT INTO file_states (codebase_id, version_id, path, file_id, status, exists, source_path, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         ON CONFLICT (version_id, path) DO UPDATE SET
+             codebase_id = EXCLUDED.codebase_id,
+             file_id = EXCLUDED.file_id,
+             status = EXCLUDED.status,
+             exists = EXCLUDED.exists,
+             source_path = EXCLUDED.source_path,
+             metrics = EXCLUDED.metrics
+         RETURNING *",
+    )
+    .bind(codebase_id)
+    .bind(version_id)
+    .bind(path)
+    .bind(file_id)
+    .bind(status)
+    .bind(exists)
+    .bind(source_path)
+    .bind(metrics)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
+pub async fn list_file_states_by_version(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Vec<FileState>> {
+    let rows = sqlx::query_as::<_, FileState>(
+        "SELECT * FROM file_states
+         WHERE version_id = $1
+         ORDER BY path",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_current_file_states(
+    pool: &PgPool,
+    codebase_id: Uuid,
+    version_id: Uuid,
+) -> Result<Vec<FileState>> {
+    let rows = sqlx::query_as::<_, FileState>(
+        "WITH target AS (
+             SELECT id, created_at
+             FROM versions
+             WHERE id = $2 AND codebase_id = $1
+         ),
+         ranked AS (
+             SELECT
+                 fs.*,
+                 row_number() OVER (
+                     PARTITION BY fs.path
+                     ORDER BY v.created_at DESC, v.id DESC
+                 ) AS rank
+             FROM file_states fs
+             JOIN versions v ON v.id = fs.version_id
+             JOIN target t ON TRUE
+             WHERE fs.codebase_id = $1
+               AND (
+                   v.created_at < t.created_at
+                   OR (v.created_at = t.created_at AND v.id <= t.id)
+               )
+         )
+         SELECT id, codebase_id, version_id, path, file_id, status, exists, source_path, metrics, created_at
+         FROM ranked
+         WHERE rank = 1 AND exists
+         ORDER BY path",
+    )
+    .bind(codebase_id)
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_current_functions(
+    pool: &PgPool,
+    codebase_id: Uuid,
+    version_id: Uuid,
+    path: Option<&str>,
+    name: Option<&str>,
+) -> Result<Vec<CurrentFunction>> {
+    let rows = sqlx::query_as::<_, CurrentFunction>(
+        "WITH target AS (
+             SELECT id, created_at
+             FROM versions
+             WHERE id = $2 AND codebase_id = $1
+         ),
+         ranked_file_states AS (
+             SELECT
+                 fs.*,
+                 row_number() OVER (
+                     PARTITION BY fs.path
+                     ORDER BY v.created_at DESC, v.id DESC
+                 ) AS rank
+             FROM file_states fs
+             JOIN versions v ON v.id = fs.version_id
+             JOIN target t ON TRUE
+             WHERE fs.codebase_id = $1
+               AND (
+                   v.created_at < t.created_at
+                   OR (v.created_at = t.created_at AND v.id <= t.id)
+               )
+         )
+         SELECT
+             fs.id AS file_state_id,
+             f.id AS file_id,
+             fs.path AS file_path,
+             f.language AS file_language,
+             fn.id AS function_id,
+             fn.name,
+             fn.start_line,
+             fn.end_line,
+             fn.metrics
+         FROM ranked_file_states fs
+         JOIN files f ON f.id = fs.file_id
+         JOIN functions fn ON fn.file_id = f.id
+         WHERE fs.rank = 1
+           AND fs.exists
+           AND ($3::TEXT IS NULL OR fs.path = $3)
+           AND ($4::TEXT IS NULL OR fn.name = $4)
+         ORDER BY fs.path, fn.start_line, fn.name",
+    )
+    .bind(codebase_id)
+    .bind(version_id)
+    .bind(path)
+    .bind(name)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
 }

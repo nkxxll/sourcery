@@ -1620,6 +1620,7 @@ name = "sourcery-analyzer"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "dotenvy",
  "ecow",
