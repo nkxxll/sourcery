@@ -6,7 +6,7 @@ use axum::{
     routing::get,
 };
 use clap::Parser;
-use sourcery_db::{Codebase, Diff, PgPool};
+use sourcery_db::{Codebase, Diff, PgPool, Version};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
@@ -96,11 +96,14 @@ async fn list_diffs_by_codebase(
     Ok(Json(diffs))
 }
 
-async fn list_codebase_metrics() -> Result<Json<Vec>> {
-    let metrics = sourcery_db::list_codebase_metrics(&state.pool, id)
+async fn list_codebase_metrics(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<Version>>, (StatusCode, String)> {
+    let versions = sourcery_db::list_versions_by_codebase(&state.pool, id)
         .await
         .map_err(internal_error)?;
-    Ok(Json(metrics))
+    Ok(Json(versions))
 }
 
 fn internal_error(error: anyhow::Error) -> (StatusCode, String) {

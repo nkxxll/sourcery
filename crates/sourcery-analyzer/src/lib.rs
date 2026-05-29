@@ -211,6 +211,7 @@ pub async fn analyze_git_repository_with_database(
             &mut state,
             &stored_commit.version,
             &commit_diff,
+            &stored_commit.diff.id.to_string(),
             old_metrics,
             new_metrics_by_path,
         )
@@ -252,7 +253,6 @@ async fn store_commit_snapshot(
         &commit_info.author_email,
         commit_info.committed_at,
         Some(commit_info.is_fix),
-        Some(&pretty_diff),
         &json!({}),
     )
     .await?;
@@ -262,20 +262,21 @@ async fn store_commit_snapshot(
         old_commit_hash = ?old_commit_hash,
         "stored commit version"
     );
-
     let diff = db::insert_diff(
-        pool,
-        version.id,
-        old_commit_hash.as_deref(),
-        &new_commit_hash,
-        usize_to_i32(commit_diff.files_changed(), "files_changed")?,
-        usize_to_i32(commit_diff.insertions(), "insertions")?,
-        usize_to_i32(commit_diff.deletions(), "deletions")?,
-        usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
-        Some(&pretty_diff),
-        &json!({}),
-    )
-    .await?;
+           pool,
+           version.id,
+           old_commit_hash.as_deref(),
+           &new_commit_hash,
+           usize_to_i32(commit_diff.files_changed(), "files_changed")?,
+           usize_to_i32(commit_diff.insertions(), "insertions")?,
+           usize_to_i32(commit_diff.deletions(), "deletions")?,
+           usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
+           Some(&pretty_diff),
+           &json!({}),
+       )
+       .await?;
+
+
 
     Ok(StoredCommit { version, diff })
 }
@@ -634,13 +635,14 @@ async fn update_version_metrics(
     state: &mut State,
     version: &db::Version,
     commit_diff: &CommitDiff,
+    diff_id: &str,
     old_metrics: AggregatedFileMetrics,
     new_metrics_by_path: HashMap<EcoString, FileMetrics>,
 ) -> Result<()> {
     let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
     let version_metrics =
         AggregatedFileMetrics::reconcile(state.current_aggregate, old_metrics, new_metrics);
-    db::update_version_metrics(pool, version.id, &version_metrics.to_json()).await?;
+    db::update_version_metrics(pool, version.id, &version_metrics.to_json(), diff_id).await?;
 
     for changed_path in commit_diff.files() {
         state

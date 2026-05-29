@@ -226,12 +226,11 @@ pub async fn insert_version(
     author_email: &str,
     committed_at: Option<DateTime<Utc>>,
     is_fix: Option<bool>,
-    diff: Option<&str>,
     metrics: &serde_json::Value,
 ) -> Result<Version> {
     let row = sqlx::query_as::<_, Version>(
-        "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, is_fix, diff, metrics)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, is_fix, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (codebase_id, commit_hash) DO UPDATE SET
              message = EXCLUDED.message,
              author_name = EXCLUDED.author_name,
@@ -249,7 +248,6 @@ pub async fn insert_version(
     .bind(author_email)
     .bind(committed_at)
     .bind(is_fix)
-    .bind(diff)
     .bind(metrics)
     .fetch_one(pool)
     .await?;
@@ -281,19 +279,9 @@ pub async fn get_version_by_commit(
 
 pub async fn list_versions_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Result<Vec<Version>> {
     let rows = sqlx::query_as::<_, Version>(
-        "SELECT * FROM versions WHERE codebase_id = $1 ORDER BY created_at",
+        "SELECT * FROM versions WHERE codebase_id = $1 ORDER BY committed_at",
     )
     .bind(codebase_id)
-    .fetch_all(pool)
-    .await?;
-    Ok(rows)
-}
-
-pub async fn list_codebase_metrics(pool: &PgPool, id: Uuid) -> Result<Vec<VersionMetrics>> {
-    let rows = sqlx::query_as::<_, VersionMetrics>(
-        "SELECT metrics FROM versions WHERE codebase_id = $1 ORDER BY created_at",
-    )
-    .bind(id)
     .fetch_all(pool)
     .await?;
     Ok(rows)
@@ -311,15 +299,17 @@ pub async fn update_version_metrics(
     pool: &PgPool,
     version_id: Uuid,
     metrics: &serde_json::Value,
+    diff: &str,
 ) -> Result<Version> {
     let row = sqlx::query_as::<_, Version>(
         "UPDATE versions
-         SET metrics = $2
+         SET metrics = $2, diff = $3
          WHERE id = $1
          RETURNING *",
     )
     .bind(version_id)
     .bind(metrics)
+    .bind(diff)
     .fetch_one(pool)
     .await?;
     Ok(row)

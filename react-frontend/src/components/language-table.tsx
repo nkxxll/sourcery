@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
@@ -37,9 +38,11 @@ export function LanguageTable({ rows }: { rows: LanguageRows }) {
             <ul className="m-0 flex list-none flex-col gap-2 p-4">
               {codebases.map((codebase) => (
                 <li key={codebase.id}>
-                  <Button className="align-middle" size="lg">
-                    {codebase.name}
-                  </Button>
+                  <Link to="/codebase/$id" params={{ id: codebase.id }}>
+                    <Button className="align-middle" size="lg">
+                      {codebase.name}
+                    </Button>
+                  </Link>
                 </li>
               ))}
             </ul>
