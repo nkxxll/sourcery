@@ -140,16 +140,16 @@ impl Server {
             let mut router = Router::new(());
             router
                 .notification::<Progress>(|_, prog| {
-                    tracing::info!("{:?} {:?}", prog.token, prog.value);
+                    tracing::debug!("{:?} {:?}", prog.token, prog.value);
                     ControlFlow::Continue(())
                 })
                 .notification::<PublishDiagnostics>(|_, _| ControlFlow::Continue(()))
                 .notification::<ShowMessage>(|_, params| {
-                    tracing::info!("Message {:?}: {}", params.typ, params.message);
+                    tracing::debug!("Message {:?}: {}", params.typ, params.message);
                     ControlFlow::Continue(())
                 })
                 .notification::<LogMessage>(|_, params| {
-                    tracing::info!("Log {:?}: {}", params.typ, params.message);
+                    tracing::debug!("Log {:?}: {}", params.typ, params.message);
                     ControlFlow::Continue(())
                 })
                 .event(|_, _: Stop| ControlFlow::Break(Ok(())));

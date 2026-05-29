@@ -1135,7 +1135,7 @@ impl<'processor> AstProcessor<'processor> {
                     .collect(),
             ),
             None => {
-                tracing::info!(
+                tracing::debug!(
                     "function: {} at {}:{}:{}\nis not used in the codebase",
                     name,
                     line,

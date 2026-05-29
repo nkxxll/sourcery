@@ -184,7 +184,7 @@ impl SourceRepository {
         let object = repo.find_object(*oid, None)?;
         repo.checkout_tree(&object, None)?;
         repo.set_head_detached(*oid)?;
-        tracing::info!("Checked out commit {}", oid);
+        tracing::debug!("Checked out commit {}", oid);
         Ok(())
     }
 

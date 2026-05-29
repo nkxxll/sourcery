@@ -174,11 +174,6 @@ pub async fn analyze_git_repository_with_database(
         state.progress.next();
         state.sr.checkout_commit(&oid)?;
         let commit_info = state.commit_info(&oid);
-        if commit_info.is_fix {
-            debug!(?oid, "fix commit");
-        } else {
-            debug!(?oid, "non-fix commit");
-        }
 
         let commit_diff = state.sr.commit_diff(previous_oid.as_ref(), &oid)?;
         let stored_commit =
@@ -386,49 +381,17 @@ async fn analyze_and_store_changed_files(
         let relative_path_clone = relative_path.clone();
         join_set.spawn(async move {
             let _permit = permit;
-            info!(
+            debug!(
                 version_id = %version.id,
                 file = %relative_path.display(),
-                "TASK_START: starting file analysis task"
+                "starting file analysis task"
             );
 
-            info!(
-                version_id = %version.id,
-                file = %relative_path.display(),
-                "TASK_CHECKPOINT: about to call open_document"
-            );
             let uri = socket.open_document(&absolute_path).await;
-            info!(
-                version_id = %version.id,
-                file = %relative_path.display(),
-                "TASK_CHECKPOINT: open_document completed"
-            );
-
             let mut processor = Processor::new(&lc, &absolute_path, socket, uri)?;
-            info!(
-                version_id = %version.id,
-                file = %relative_path.display(),
-                "TASK_CHECKPOINT: Processor created"
-            );
-
-            info!(
-                version_id = %version.id,
-                file = %relative_path.display(),
-                "TASK_CHECKPOINT: about to run processor analyze"
-            );
             let analysis = processor.analyze_with_enrichted_stats().await?;
-            info!(
-                version_id = %version.id,
-                file = %relative_path.display(),
-                "TASK_CHECKPOINT: processor analyze completed"
-            );
 
             let file_path = EcoString::from(relative_path_clone.display().to_string());
-            info!(
-                version_id = %version.id,
-                file = %file_path,
-                "TASK_CHECKPOINT: about to store file analysis"
-            );
             let file_analysis = store_file_analysis(
                 &pool,
                 &version,
@@ -439,22 +402,12 @@ async fn analyze_and_store_changed_files(
                 processor.new_line_map(),
             )
             .await?;
-            info!(
-                version_id = %version.id,
-                file = %file_path,
-                "TASK_CHECKPOINT: file analysis stored"
-            );
 
-            info!(
-                version_id = %version.id,
-                file = %file_path,
-                "TASK_CHECKPOINT: about to close language server file"
-            );
             processor.close_language_server_file().await;
-            info!(
+            debug!(
                 version_id = %version.id,
                 file = %file_path,
-                "TASK_END: finished file analysis task"
+                "finished file analysis task"
             );
 
             Ok((file_path, file_analysis))
@@ -471,12 +424,9 @@ async fn analyze_and_store_changed_files(
             "collected analyzed file metrics"
         );
         metrics_by_path.insert(path.clone(), analysis.metrics);
-        debug!("after metrics by path");
         analyses_by_path.insert(path, analysis);
-        debug!("after analysis by path");
     }
 
-    debug!("before store");
     store_file_states(
         pool,
         &state.codebase,
