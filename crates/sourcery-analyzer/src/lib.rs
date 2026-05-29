@@ -263,20 +263,18 @@ async fn store_commit_snapshot(
         "stored commit version"
     );
     let diff = db::insert_diff(
-           pool,
-           version.id,
-           old_commit_hash.as_deref(),
-           &new_commit_hash,
-           usize_to_i32(commit_diff.files_changed(), "files_changed")?,
-           usize_to_i32(commit_diff.insertions(), "insertions")?,
-           usize_to_i32(commit_diff.deletions(), "deletions")?,
-           usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
-           Some(&pretty_diff),
-           &json!({}),
-       )
-       .await?;
-
-
+        pool,
+        version.id,
+        old_commit_hash.as_deref(),
+        &new_commit_hash,
+        usize_to_i32(commit_diff.files_changed(), "files_changed")?,
+        usize_to_i32(commit_diff.insertions(), "insertions")?,
+        usize_to_i32(commit_diff.deletions(), "deletions")?,
+        usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
+        Some(&pretty_diff),
+        &json!({}),
+    )
+    .await?;
 
     Ok(StoredCommit { version, diff })
 }

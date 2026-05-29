@@ -73,6 +73,19 @@ pub struct Function {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct VersionFunction {
+    pub function_id: Uuid,
+    pub file_id: Uuid,
+    pub file_path: String,
+    pub file_language: Option<String>,
+    pub name: String,
+    pub start_line: i32,
+    pub end_line: i32,
+    pub metrics: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Change {
     pub id: Uuid,
     pub diff_id: Uuid,
@@ -84,6 +97,12 @@ pub struct Change {
     pub new_end_line: i32,
     pub metrics: serde_json::Value,
     pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DiffWithChanges {
+    pub diff: Diff,
+    pub changes: Vec<Change>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -254,7 +273,15 @@ pub async fn insert_version(
     Ok(row)
 }
 
-pub async fn get_version_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Version>> {
+pub async fn get_version_by_id(pool: &PgPool, id: Uuid) -> Result<Version> {
+    let row = sqlx::query_as::<_, Version>("SELECT * FROM versions WHERE id = $1")
+        .bind(id)
+        .fetch_one(pool)
+        .await?;
+    Ok(row)
+}
+
+pub async fn get_version_by_id_optional(pool: &PgPool, id: Uuid) -> Result<Option<Version>> {
     let row = sqlx::query_as::<_, Version>("SELECT * FROM versions WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
@@ -374,6 +401,17 @@ pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Opti
     Ok(row)
 }
 
+pub async fn get_diff_with_changes_by_version(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Option<DiffWithChanges>> {
+    let Some(diff) = get_diff_by_version(pool, version_id).await? else {
+        return Ok(None);
+    };
+    let changes = list_changes_by_diff(pool, diff.id).await?;
+    Ok(Some(DiffWithChanges { diff, changes }))
+}
+
 pub async fn list_diffs_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Result<Vec<Diff>> {
     let rows = sqlx::query_as::<_, Diff>(
         "SELECT d.*
@@ -488,6 +526,26 @@ pub async fn list_files_by_version(pool: &PgPool, version_id: Uuid) -> Result<Ve
     Ok(rows)
 }
 
+pub async fn list_files_by_version_paginated(
+    pool: &PgPool,
+    version_id: Uuid,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<File>> {
+    let rows = sqlx::query_as::<_, File>(
+        "SELECT * FROM files
+         WHERE version_id = $1
+         ORDER BY path
+         LIMIT $2 OFFSET $3",
+    )
+    .bind(version_id)
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn delete_file(pool: &PgPool, id: Uuid) -> Result<bool> {
     let result = sqlx::query("DELETE FROM files WHERE id = $1")
         .bind(id)
@@ -534,6 +592,37 @@ pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<
         "SELECT * FROM functions WHERE file_id = $1 ORDER BY start_line",
     )
     .bind(file_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_functions_by_version(
+    pool: &PgPool,
+    version_id: Uuid,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<VersionFunction>> {
+    let rows = sqlx::query_as::<_, VersionFunction>(
+        "SELECT
+             fn.id AS function_id,
+             fn.file_id,
+             f.path AS file_path,
+             f.language AS file_language,
+             fn.name,
+             fn.start_line,
+             fn.end_line,
+             fn.metrics,
+             fn.created_at
+         FROM functions fn
+         JOIN files f ON f.id = fn.file_id
+         WHERE f.version_id = $1
+         ORDER BY f.path, fn.start_line, fn.name
+         LIMIT $2 OFFSET $3",
+    )
+    .bind(version_id)
+    .bind(limit)
+    .bind(offset)
     .fetch_all(pool)
     .await?;
     Ok(rows)
@@ -607,7 +696,7 @@ pub async fn list_changes_by_diff(pool: &PgPool, diff_id: Uuid) -> Result<Vec<Ch
     let rows = sqlx::query_as::<_, Change>(
         "SELECT * FROM changes
          WHERE diff_id = $1
-         ORDER BY created_at, old_start_line, new_start_line",
+         ORDER BY COALESCE(new_path, old_path), old_start_line, new_start_line",
     )
     .bind(diff_id)
     .fetch_all(pool)
@@ -673,16 +762,13 @@ pub struct FileStateInsert {
     pub metrics: serde_json::Value,
 }
 
-pub async fn batch_upsert_file_states(
-    pool: &PgPool,
-    states: Vec<FileStateInsert>,
-) -> Result<u64> {
+pub async fn batch_upsert_file_states(pool: &PgPool, states: Vec<FileStateInsert>) -> Result<u64> {
     if states.is_empty() {
         return Ok(0);
     }
 
     let mut query_builder = sqlx::query_builder::QueryBuilder::new(
-        "INSERT INTO file_states (codebase_id, version_id, path, file_id, status, exists, source_path, metrics)"
+        "INSERT INTO file_states (codebase_id, version_id, path, file_id, status, exists, source_path, metrics)",
     );
 
     query_builder.push(" VALUES ");
@@ -691,7 +777,8 @@ pub async fn batch_upsert_file_states(
         if i > 0 {
             query_builder.push(", ");
         }
-        query_builder.push("(")
+        query_builder
+            .push("(")
             .push_bind(state.codebase_id)
             .push(", ")
             .push_bind(state.version_id)
@@ -720,11 +807,7 @@ pub async fn batch_upsert_file_states(
             metrics = EXCLUDED.metrics",
     );
 
-    let rows_affected = query_builder
-        .build()
-        .execute(pool)
-        .await?
-        .rows_affected();
+    let rows_affected = query_builder.build().execute(pool).await?.rows_affected();
 
     Ok(rows_affected)
 }

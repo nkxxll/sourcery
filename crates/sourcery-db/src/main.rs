@@ -1,6 +1,8 @@
 /// this is just a command line application that fires the sql queries so I can look at the results
 use clap::{Parser, Subcommand};
-use sourcery_db::{connect, get_codebase_by_id, list_codebases, list_versions_by_codebase};
+use sourcery_db::{
+    connect, get_codebase_by_id, get_version_by_id, list_codebases, list_versions_by_codebase,
+};
 use uuid::Uuid;
 
 #[derive(Parser)]
@@ -12,11 +14,18 @@ pub struct CommandLine {
 #[derive(Debug, Subcommand)]
 pub enum SubCommand {
     /// data about one codebase
-    Codebase { id: String },
+    Codebase {
+        id: String,
+    },
     /// list of all codebases
     Codebases,
     /// list of metrics for one codebase
-    CodebaseMetrics { id: String },
+    CodebaseMetrics {
+        id: String,
+    },
+    Version {
+        version_id: String,
+    },
 }
 
 #[tokio::main]
@@ -39,6 +48,11 @@ async fn main() -> anyhow::Result<()> {
         SubCommand::CodebaseMetrics { id } => {
             let codebase_id = Uuid::parse_str(&id)?;
             let metrics = list_versions_by_codebase(&pool, codebase_id).await?;
+            println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::Version { version_id } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let metrics = get_version_by_id(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&metrics)?);
         }
     }
