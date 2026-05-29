@@ -26,9 +26,23 @@ const METRIC_OPTIONS = [
   { key: 'total_lines_of_code', label: 'Total LOC' },
   { key: 'total_effective_lines_of_code', label: 'Effective LOC' },
   { key: 'total_comment_lines_of_code', label: 'Comment LOC' },
+  { key: 'total_bracket_lines_of_code', label: 'Bracket LOC' },
   { key: 'total_cyclomatic', label: 'Cyclomatic' },
   { key: 'files', label: 'Files' },
+  { key: 'mean_lines_of_code_per_file', label: 'Mean LOC/File' },
+  { key: 'mean_effective_lines_of_code_per_file', label: 'Mean Effective LOC/File' },
+  { key: 'mean_comment_lines_of_code_per_file', label: 'Mean Comment LOC/File' },
+  { key: 'mean_bracket_lines_of_code_per_file', label: 'Mean Bracket LOC/File' },
+  { key: 'mean_cyclomatic_complexity_per_file', label: 'Mean Cyclomatic/File' },
 ]
+
+const DEFAULT_VISIBLE_METRICS = new Set([
+  'total_lines_of_code',
+  'total_effective_lines_of_code',
+  'total_comment_lines_of_code',
+  'total_cyclomatic',
+  'files',
+])
 
 const toMetricsRecord = (value: unknown): Record<string, unknown> => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -53,7 +67,7 @@ function CodebasePage() {
   const { isPending, error, data } = useQuery({
     queryKey: ['codebase', id],
     queryFn: async () => {
-      const res = await fetch(`/api/codebases/${id}`)
+      const res = await fetch(`/api/codebase/${id}`)
       if (!res.ok) {
         throw new Error(`Failed to fetch codebase (${res.status})`)
       }
@@ -64,7 +78,7 @@ function CodebasePage() {
   const metricsQuery = useQuery({
     queryKey: ['codebase-metrics', id],
     queryFn: async () => {
-      const res = await fetch(`/api/codebases/${id}/metrics`)
+      const res = await fetch(`/api/codebase/${id}/metrics`)
       if (!res.ok) {
         throw new Error(`Failed to fetch codebase metrics (${res.status})`)
       }
@@ -137,7 +151,13 @@ function CodebasePage() {
               : 'Unknown error'}
           </p>
         ) : (
-          <CodebaseMetricsChart versions={metricsQuery.data} />
+          <>
+            <CodebaseMetricsChart versions={metricsQuery.data} />
+            <CodebaseMetricsTable
+              codebaseId={id}
+              versions={metricsQuery.data}
+            />
+          </>
         )}
       </section>
       <Outlet />
@@ -151,14 +171,10 @@ function CodebaseMetricsChart({
   versions: CodebaseMetricsVersion[]
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
   const [visibleMetrics, setVisibleMetrics] = useState<Set<string>>(() => {
-    return new Set(METRIC_OPTIONS.map(({ key }) => key))
+    return new Set(DEFAULT_VISIBLE_METRICS)
   })
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null)
-  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(
-    null,
-  )
 
   const timeline = useMemo(() => {
     return versions
@@ -288,6 +304,25 @@ function CodebaseMetricsChart({
         .attr('stroke', colorScale(metric.key))
         .attr('d', line)
     })
+
+    svg
+      .on('mousemove', (event) => {
+        const [mouseX] = d3.pointer(event, svg.node())
+        const hoverDate = xScale.invert(mouseX)
+
+        const closestEntry = timeline.reduce((closest, entry) => {
+          const dist = Math.abs(entry.date.getTime() - hoverDate.getTime())
+          const closestDist = Math.abs(
+            closest.date.getTime() - hoverDate.getTime(),
+          )
+          return dist < closestDist ? entry : closest
+        })
+
+        setHoveredDate(closestEntry.date)
+      })
+      .on('mouseleave', () => {
+        setHoveredDate(null)
+      })
   }, [timeline, series, colorScale, visibleMetrics])
 
   if (versions.length === 0) {
@@ -304,12 +339,43 @@ function CodebaseMetricsChart({
 
   return (
     <div className="flex flex-col gap-4">
-      <svg
-        ref={svgRef}
-        className="h-96 w-full"
-        role="img"
-        aria-label="Codebase metrics timeline"
-      />
+      <div className="relative">
+        <svg
+          ref={svgRef}
+          className="h-96 w-full cursor-crosshair"
+          role="img"
+          aria-label="Codebase metrics timeline"
+        />
+        {hoveredDate && (
+          <div className="pointer-events-none absolute right-4 top-4 rounded border border-[#d0d7de] bg-white p-3 text-xs shadow-md">
+            <div className="mb-2 font-semibold text-[#0f3f88]">
+              {hoveredDate.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })}
+            </div>
+            {series
+              .filter((metric) => visibleMetrics.has(metric.key))
+              .map((metric) => {
+                const entry = metric.values.find(
+                  (v) => v.date.getTime() === hoveredDate.getTime(),
+                )
+                return (
+                  <div key={metric.key} className="flex items-center gap-2">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ backgroundColor: colorScale(metric.key) }}
+                    />
+                    <span className="text-[#4d4f53]">
+                      {metric.label}: {entry?.value ?? 'N/A'}
+                    </span>
+                  </div>
+                )
+              })}
+          </div>
+        )}
+      </div>
       <div className="flex flex-wrap gap-4 text-sm text-[#4d4f53]">
         {series.map((metric) => (
           <label
@@ -332,5 +398,129 @@ function CodebaseMetricsChart({
         ))}
       </div>
     </div>
+  )
+}
+
+function CodebaseMetricsTable({
+  codebaseId,
+  versions,
+}: {
+  codebaseId: string
+  versions: CodebaseMetricsVersion[]
+}) {
+  const [sortConfig, setSortConfig] = useState<{
+    key: string | null
+    direction: 'desc' | 'asc' | 'default'
+  }>({ key: null, direction: 'default' })
+
+  if (versions.length === 0) {
+    return null
+  }
+
+  let sortedVersions = [...versions]
+
+  if (sortConfig.direction === 'default') {
+    sortedVersions.sort(
+      (a, b) =>
+        new Date(b.committed_at ?? b.created_at).getTime() -
+        new Date(a.committed_at ?? a.created_at).getTime(),
+    )
+  } else if (sortConfig.key) {
+    sortedVersions.sort((a, b) => {
+      const aMetrics = toMetricsRecord(a.metrics)
+      const bMetrics = toMetricsRecord(b.metrics)
+      const aValue = toNumber(aMetrics[sortConfig.key!]) ?? 0
+      const bValue = toNumber(bMetrics[sortConfig.key!]) ?? 0
+
+      return sortConfig.direction === 'desc' ? bValue - aValue : aValue - bValue
+    })
+  }
+
+  const metricsToDisplay = METRIC_OPTIONS.filter(({ key }) =>
+    sortedVersions.some((v) => toNumber(toMetricsRecord(v.metrics)[key]) !== null),
+  )
+
+  const handleHeaderClick = (key: string) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        if (prev.direction === 'desc') {
+          return { key, direction: 'asc' }
+        } else if (prev.direction === 'asc') {
+          return { key: null, direction: 'default' }
+        }
+      }
+      return { key, direction: 'desc' }
+    })
+  }
+
+  const getSortIndicator = (key: string) => {
+    if (sortConfig.key !== key) return null
+    if (sortConfig.direction === 'desc') return ' ↓'
+    if (sortConfig.direction === 'asc') return ' ↑'
+    return null
+  }
+
+  return (
+    <table className="w-full border-collapse rounded border border-[#d0d7de]">
+      <thead className="sticky top-16 z-10 bg-[#f6f8fa]">
+        <tr className="border-b border-[#d0d7de]">
+          <th
+            className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-[#6b6e73] cursor-pointer hover:bg-[#eaeef2] transition-colors"
+            onClick={() => setSortConfig({ key: null, direction: 'default' })}
+          >
+            Version Date
+            {sortConfig.key === null && sortConfig.direction === 'default'
+              ? ' ↕'
+              : ''}
+          </th>
+          {metricsToDisplay.map(({ key, label }) => (
+            <th
+              key={key}
+              className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-[#6b6e73] cursor-pointer hover:bg-[#eaeef2] transition-colors select-none"
+              onClick={() => handleHeaderClick(key)}
+            >
+              {label}
+              {getSortIndicator(key)}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {sortedVersions.map((version) => {
+          const date = new Date(version.committed_at ?? version.created_at)
+          const metrics = toMetricsRecord(version.metrics)
+          return (
+            <tr
+              key={version.id}
+              className="border-b border-[#d0d7de] hover:bg-[#f6f8fa] cursor-pointer transition-colors"
+              onClick={() => {
+                window.location.href = `/codebase/${codebaseId}/version/${version.id}`
+              }}
+            >
+              <td className="px-4 py-3 text-sm text-[#0f3f88] font-medium whitespace-nowrap">
+                {date.toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </td>
+              {metricsToDisplay.map(({ key }) => {
+                const value = toNumber(metrics[key])
+                return (
+                  <td
+                    key={key}
+                    className="px-4 py-3 text-sm text-right text-[#4d4f53] font-mono"
+                  >
+                    {value !== null ? value.toLocaleString() : '—'}
+                  </td>
+                )
+              })}
+            </tr>
+          )
+        })}
+      </tbody>
+    </table>
   )
 }
