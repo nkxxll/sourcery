@@ -6,7 +6,9 @@ use axum::{
     routing::get,
 };
 use clap::Parser;
-use sourcery_db::{Codebase, Diff, DiffWithChanges, File, FileState, PgPool, Version, VersionFunction};
+use sourcery_db::{
+    Codebase, Diff, DiffWithChanges, File, FileState, PgPool, Version, VersionFunction,
+};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 

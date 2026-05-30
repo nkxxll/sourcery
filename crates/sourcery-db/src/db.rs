@@ -827,39 +827,37 @@ pub async fn list_file_states_by_version(
     Ok(rows)
 }
 
-pub async fn list_current_file_states(
-    pool: &PgPool,
-    codebase_id: Uuid,
-    version_id: Uuid,
-) -> Result<Vec<FileState>> {
+pub async fn list_current_file_states(pool: &PgPool, version_id: Uuid) -> Result<Vec<FileState>> {
     let rows = sqlx::query_as::<_, FileState>(
-        "WITH target AS (
-             SELECT id, created_at
-             FROM versions
-             WHERE id = $2 AND codebase_id = $1
-         ),
-         ranked AS (
-             SELECT
-                 fs.*,
-                 row_number() OVER (
-                     PARTITION BY fs.path
-                     ORDER BY v.created_at DESC, v.id DESC
-                 ) AS rank
-             FROM file_states fs
-             JOIN versions v ON v.id = fs.version_id
-             JOIN target t ON TRUE
-             WHERE fs.codebase_id = $1
-               AND (
-                   v.created_at < t.created_at
-                   OR (v.created_at = t.created_at AND v.id <= t.id)
-               )
-         )
-         SELECT id, codebase_id, version_id, path, file_id, status, exists, source_path, metrics, created_at
-         FROM ranked
-         WHERE rank = 1 AND exists
-         ORDER BY path",
+        "WITH base AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            CROSS JOIN base b
+            WHERE fs.codebase_id = b.codebase_id
+              AND (
+                  v.created_at < b.created_at
+                  OR (v.created_at = b.created_at AND v.id <= b.id)
+              )
+        )
+        SELECT
+            id, codebase_id, version_id, path, file_id,
+            status, exists, source_path, metrics, created_at
+        FROM ranked
+        WHERE rank = 1
+          AND exists
+        ORDER BY path;",
     )
-    .bind(codebase_id)
     .bind(version_id)
     .fetch_all(pool)
     .await?;
