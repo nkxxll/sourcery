@@ -58,7 +58,7 @@ if [ -z "${codebases}" ]; then
 fi
 
 # extract first Golang codebase id
-codebase_id="$(printf '%s' "$codebases" | jq -r '.Golang[0].id // empty')"
+codebase_id="$(printf '%s' "$codebases" | jq -r '.[0].id // empty')"
 if [ -z "${codebase_id}" ]; then
   err "No Golang codebase found in codebases output"
   exit 1

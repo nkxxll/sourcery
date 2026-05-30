@@ -6,7 +6,7 @@ use axum::{
     routing::get,
 };
 use clap::Parser;
-use sourcery_db::{Codebase, Diff, DiffWithChanges, File, PgPool, Version, VersionFunction};
+use sourcery_db::{Codebase, Diff, DiffWithChanges, File, FileState, PgPool, Version, VersionFunction};
 use std::collections::BTreeMap;
 use uuid::Uuid;
 
@@ -51,7 +51,8 @@ async fn main() -> anyhow::Result<()> {
         .route("/codebase/{id}/metrics", get(list_codebase_metrics))
         .route("/version/{id}", get(get_version))
         .route("/version/{id}/diff", get(get_version_diff))
-        .route("/version/{id}/files", get(list_version_files))
+        .route("/version/{id}/changed_files", get(list_version_files))
+        .route("/version/{id}/files", get(list_all_version_files))
         .route("/version/{id}/functions", get(list_version_functions))
         .with_state(AppState { pool });
 
@@ -179,6 +180,16 @@ async fn list_version_files(
     )
     .await
     .map_err(internal_error)?;
+    Ok(Json(files))
+}
+
+async fn list_all_version_files(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FileState>>, (StatusCode, String)> {
+    let files = sourcery_db::list_current_file_states(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
     Ok(Json(files))
 }
 
