@@ -42,6 +42,9 @@ pub enum SubCommand {
     DiffChange {
         version_id: String,
     },
+    Functions {
+        version_id: String,
+    },
 }
 
 #[tokio::main]
@@ -97,6 +100,11 @@ async fn main() -> anyhow::Result<()> {
         SubCommand::DiffChange { version_id } => {
             let id = Uuid::parse_str(&version_id)?;
             let metrics = get_diff_with_changes_by_version(&pool, id).await?;
+            println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::Functions { version_id } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let metrics = list_functions_by_version(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&metrics)?);
         }
     }

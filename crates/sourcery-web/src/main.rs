@@ -55,6 +55,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/version/{id}/changed_files", get(list_version_files))
         .route("/version/{id}/files", get(list_all_version_files))
         .route("/version/{id}/diff", get(get_version_diff))
+        .route("/version/{id}/diffchange", get(get_version_diff_change))
         .route("/version/{id}/functions", get(list_version_functions))
         .with_state(AppState { pool });
 
@@ -154,18 +155,12 @@ async fn get_version(
 async fn get_version_diff(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<DiffWithChanges>, (StatusCode, String)> {
+) -> Result<Json<Diff>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
-    let diff = sourcery_db::get_diff_with_changes_by_version(&state.pool, id)
+    let diff = sourcery_db::get_diff_by_version(&state.pool, id)
         .await
         .map_err(internal_error)?;
-    match diff {
-        Some(diff) => Ok(Json(diff)),
-        None => Err((
-            StatusCode::NOT_FOUND,
-            format!("diff for version {id} not found"),
-        )),
-    }
+    Ok(Json(diff))
 }
 
 async fn list_version_files(
@@ -201,7 +196,7 @@ async fn list_version_functions(
     State(state): State<AppState>,
 ) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
-    let functions = sourcery_db::list_functions_by_version(
+    let functions = sourcery_db::list_functions_by_version_paginated(
         &state.pool,
         id,
         i64::from(query.limit),
@@ -210,4 +205,15 @@ async fn list_version_functions(
     .await
     .map_err(internal_error)?;
     Ok(Json(functions))
+}
+
+async fn get_version_diff_change(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<DiffWithChanges>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let diffchange = sourcery_db::get_diff_with_changes_by_version(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(diffchange))
 }
