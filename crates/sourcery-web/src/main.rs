@@ -52,9 +52,9 @@ async fn main() -> anyhow::Result<()> {
         .route("/codebase/{id}/diff", get(list_diffs_by_codebase))
         .route("/codebase/{id}/metrics", get(list_codebase_metrics))
         .route("/version/{id}", get(get_version))
-        .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/changed_files", get(list_version_files))
         .route("/version/{id}/files", get(list_all_version_files))
+        .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/functions", get(list_version_functions))
         .with_state(AppState { pool });
 

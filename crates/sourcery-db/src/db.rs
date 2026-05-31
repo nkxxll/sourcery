@@ -393,10 +393,10 @@ pub async fn get_diff_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Diff>> {
     Ok(row)
 }
 
-pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Option<Diff>> {
+pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Diff> {
     let row = sqlx::query_as::<_, Diff>("SELECT * FROM diffs WHERE version_id = $1")
         .bind(version_id)
-        .fetch_optional(pool)
+        .fetch_one(pool)
         .await?;
     Ok(row)
 }
@@ -404,12 +404,10 @@ pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Opti
 pub async fn get_diff_with_changes_by_version(
     pool: &PgPool,
     version_id: Uuid,
-) -> Result<Option<DiffWithChanges>> {
-    let Some(diff) = get_diff_by_version(pool, version_id).await? else {
-        return Ok(None);
-    };
+) -> Result<DiffWithChanges> {
+    let diff = get_diff_by_version(pool, version_id).await?;
     let changes = list_changes_by_diff(pool, diff.id).await?;
-    Ok(Some(DiffWithChanges { diff, changes }))
+    Ok(DiffWithChanges { diff, changes })
 }
 
 pub async fn list_diffs_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Result<Vec<Diff>> {

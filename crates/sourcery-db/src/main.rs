@@ -1,8 +1,7 @@
 /// this is just a command line application that fires the sql queries so I can look at the results
 use clap::{Parser, Subcommand};
 use sourcery_db::{
-    connect, get_codebase_by_id, get_version_by_commit, get_version_by_id, list_codebases,
-    list_current_file_states, list_files_by_version, list_versions_by_codebase,
+    connect, get_codebase_by_id, get_diff_by_version, get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id, list_codebases, list_current_file_states, list_files_by_version, list_versions_by_codebase
 };
 use uuid::Uuid;
 
@@ -35,6 +34,12 @@ pub enum SubCommand {
         commit_hash: String,
     },
     CurrentFiles {
+        version_id: String,
+    },
+    Diff {
+        version_id: String,
+    },
+    DiffChange {
         version_id: String,
     },
 }
@@ -71,9 +76,7 @@ async fn main() -> anyhow::Result<()> {
             let files = list_files_by_version(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&files)?);
         }
-        SubCommand::CurrentFiles {
-            version_id,
-        } => {
+        SubCommand::CurrentFiles { version_id } => {
             let version_id = Uuid::parse_str(&version_id)?;
             let files = list_current_file_states(&pool, version_id).await?;
             println!("{}", serde_json::to_string_pretty(&files)?);
@@ -84,6 +87,16 @@ async fn main() -> anyhow::Result<()> {
         } => {
             let id = Uuid::parse_str(&codebase_id)?;
             let metrics = get_version_by_commit(&pool, id, &commit_hash).await?;
+            println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::Diff { version_id } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let metrics = get_diff_by_version(&pool, id).await?;
+            println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::DiffChange { version_id } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let metrics = get_diff_with_changes_by_version(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&metrics)?);
         }
     }
