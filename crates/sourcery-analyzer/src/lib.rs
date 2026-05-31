@@ -272,6 +272,7 @@ async fn store_commit_snapshot(
         usize_to_i32(commit_diff.deletions(), "deletions")?,
         usize_to_i32(commit_diff.number_of_changes(), "changed_lines")?,
         Some(&pretty_diff),
+        commit_diff.patch(),
         &json!({}),
     )
     .await?;

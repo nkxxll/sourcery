@@ -88,6 +88,7 @@ pub struct CommitDiff {
     files: Vec<PathBuf>,
     file_changes: Vec<FileChange>,
     changes: Vec<Change>,
+    patch: Vec<u8>,
     files_changed: usize,
     number_of_changes: usize,
     insertions: usize,
@@ -113,6 +114,11 @@ impl CommitDiff {
         let insertions = stats.insertions();
         let deletions = stats.deletions();
         let files_changed = stats.files_changed();
+        let mut patch = Vec::new();
+        diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
+            patch.extend_from_slice(line.content());
+            true
+        })?;
         let mut files = BTreeSet::new();
         let mut file_changes = Vec::new();
         for delta in diff.deltas() {
@@ -169,6 +175,7 @@ impl CommitDiff {
             files: files.into_iter().collect(),
             file_changes,
             changes,
+            patch,
             files_changed,
             number_of_changes: insertions + deletions,
             insertions,
@@ -186,6 +193,10 @@ impl CommitDiff {
 
     pub fn changes(&self) -> &[Change] {
         &self.changes
+    }
+
+    pub fn patch(&self) -> &[u8] {
+        &self.patch
     }
 
     pub fn files_changed(&self) -> usize {

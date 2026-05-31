@@ -1,7 +1,7 @@
 /// this is just a command line application that fires the sql queries so I can look at the results
 use clap::{Parser, Subcommand};
 use sourcery_db::{
-    connect, get_codebase_by_id, get_diff_by_version, get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id, list_codebases, list_current_file_states, list_files_by_version, list_versions_by_codebase
+    connect, get_codebase_by_id, get_diff_by_version, get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id, list_all_files_states, list_all_functions, list_codebases, list_files_by_version, list_functions_by_version, list_versions_by_codebase
 };
 use uuid::Uuid;
 
@@ -45,6 +45,9 @@ pub enum SubCommand {
     Functions {
         version_id: String,
     },
+    AllFunctions {
+        version_id: String,
+    },
 }
 
 #[tokio::main]
@@ -81,7 +84,7 @@ async fn main() -> anyhow::Result<()> {
         }
         SubCommand::CurrentFiles { version_id } => {
             let version_id = Uuid::parse_str(&version_id)?;
-            let files = list_current_file_states(&pool, version_id).await?;
+            let files = list_all_files_states(&pool, version_id).await?;
             println!("{}", serde_json::to_string_pretty(&files)?);
         }
         SubCommand::VersionByCommit {
@@ -105,6 +108,11 @@ async fn main() -> anyhow::Result<()> {
         SubCommand::Functions { version_id } => {
             let id = Uuid::parse_str(&version_id)?;
             let metrics = list_functions_by_version(&pool, id).await?;
+            println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::AllFunctions { version_id } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let metrics = list_all_functions(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&metrics)?);
         }
     }

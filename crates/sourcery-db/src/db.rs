@@ -47,6 +47,7 @@ pub struct Diff {
     pub deletions: i32,
     pub changed_lines: i32,
     pub summary: Option<String>,
+    pub patch: Option<Vec<u8>>,
     pub metrics: serde_json::Value,
     pub created_at: DateTime<Utc>,
 }
@@ -355,11 +356,12 @@ pub async fn insert_diff(
     deletions: i32,
     changed_lines: i32,
     summary: Option<&str>,
+    patch: &[u8],
     metrics: &serde_json::Value,
 ) -> Result<Diff> {
     let row = sqlx::query_as::<_, Diff>(
-        "INSERT INTO diffs (version_id, old_commit_hash, new_commit_hash, files_changed, insertions, deletions, changed_lines, summary, metrics)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        "INSERT INTO diffs (version_id, old_commit_hash, new_commit_hash, files_changed, insertions, deletions, changed_lines, summary, patch, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
          ON CONFLICT (version_id) DO UPDATE SET
              old_commit_hash = EXCLUDED.old_commit_hash,
              new_commit_hash = EXCLUDED.new_commit_hash,
@@ -368,8 +370,12 @@ pub async fn insert_diff(
              deletions = EXCLUDED.deletions,
              changed_lines = EXCLUDED.changed_lines,
              summary = EXCLUDED.summary,
+             patch = EXCLUDED.patch,
              metrics = EXCLUDED.metrics
-         RETURNING *",
+         RETURNING
+             id, version_id, new_commit_hash, old_commit_hash,
+             files_changed, insertions, deletions, changed_lines,
+             summary, patch, metrics, created_at",
     )
     .bind(version_id)
     .bind(old_commit_hash)
@@ -379,6 +385,7 @@ pub async fn insert_diff(
     .bind(deletions)
     .bind(changed_lines)
     .bind(summary)
+    .bind(patch)
     .bind(metrics)
     .fetch_one(pool)
     .await?;
@@ -386,18 +393,32 @@ pub async fn insert_diff(
 }
 
 pub async fn get_diff_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Diff>> {
-    let row = sqlx::query_as::<_, Diff>("SELECT * FROM diffs WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool)
-        .await?;
+    let row = sqlx::query_as::<_, Diff>(
+        "SELECT
+             id, version_id, new_commit_hash, old_commit_hash,
+             files_changed, insertions, deletions, changed_lines,
+             summary, patch, metrics, created_at
+         FROM diffs
+         WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
     Ok(row)
 }
 
 pub async fn get_diff_by_version(pool: &PgPool, version_id: Uuid) -> Result<Diff> {
-    let row = sqlx::query_as::<_, Diff>("SELECT * FROM diffs WHERE version_id = $1")
-        .bind(version_id)
-        .fetch_one(pool)
-        .await?;
+    let row = sqlx::query_as::<_, Diff>(
+        "SELECT
+             id, version_id, new_commit_hash, old_commit_hash,
+             files_changed, insertions, deletions, changed_lines,
+             summary, patch, metrics, created_at
+         FROM diffs
+         WHERE version_id = $1",
+    )
+    .bind(version_id)
+    .fetch_one(pool)
+    .await?;
     Ok(row)
 }
 
@@ -412,7 +433,10 @@ pub async fn get_diff_with_changes_by_version(
 
 pub async fn list_diffs_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Result<Vec<Diff>> {
     let rows = sqlx::query_as::<_, Diff>(
-        "SELECT d.*
+        "SELECT
+             d.id, d.version_id, d.new_commit_hash, d.old_commit_hash,
+             d.files_changed, d.insertions, d.deletions, d.changed_lines,
+             d.summary, d.patch, d.metrics, d.created_at
          FROM diffs d
          JOIN versions v ON v.id = d.version_id
          WHERE v.codebase_id = $1
@@ -595,7 +619,82 @@ pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<
     Ok(rows)
 }
 
+pub async fn list_all_functions(pool: &PgPool, version_id: Uuid) -> Result<Vec<VersionFunction>> {
+    let rows = sqlx::query_as::<_, VersionFunction>(
+        "WITH base AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            CROSS JOIN base b
+            WHERE fs.codebase_id = b.codebase_id
+              AND (
+                  v.created_at < b.created_at
+                  OR (v.created_at = b.created_at AND v.id <= b.id)
+              )
+        ),
+        f_stat AS (SELECT
+            f.id, f.version_id, f.path, file_id, language
+        FROM ranked
+        JOIN files f ON f.id = ranked.file_id
+        WHERE rank = 1
+          AND exists)
+        SELECT fn.id AS function_id,
+               fn.file_id,
+               f.path AS file_path,
+               f.language AS file_language,
+               fn.name,
+               fn.start_line,
+               fn.end_line,
+               fn.metrics,
+               fn.created_at
+        FROM functions fn
+        JOIN f_stat f ON f.file_id = fn.file_id
+        ORDER BY f.path, fn.start_line, fn.name
+        ;",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn list_functions_by_version(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Vec<VersionFunction>> {
+    let rows = sqlx::query_as::<_, VersionFunction>(
+        "SELECT
+             fn.id AS function_id,
+             fn.file_id,
+             f.path AS file_path,
+             f.language AS file_language,
+             fn.name,
+             fn.start_line,
+             fn.end_line,
+             fn.metrics,
+             fn.created_at
+         FROM functions fn
+         JOIN files f ON f.id = fn.file_id
+         WHERE f.version_id = $1
+         ORDER BY f.path, fn.start_line, fn.name",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_functions_by_version_paginated(
     pool: &PgPool,
     version_id: Uuid,
     limit: i64,
@@ -825,7 +924,7 @@ pub async fn list_file_states_by_version(
     Ok(rows)
 }
 
-pub async fn list_current_file_states(pool: &PgPool, version_id: Uuid) -> Result<Vec<FileState>> {
+pub async fn list_all_files_states(pool: &PgPool, version_id: Uuid) -> Result<Vec<FileState>> {
     let rows = sqlx::query_as::<_, FileState>(
         "WITH base AS (
             SELECT id, created_at, codebase_id

@@ -184,7 +184,7 @@ async fn list_all_version_files(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FileState>>, (StatusCode, String)> {
-    let files = sourcery_db::list_current_file_states(&state.pool, id)
+    let files = sourcery_db::list_all_files_states(&state.pool, id)
         .await
         .map_err(internal_error)?;
     Ok(Json(files))
