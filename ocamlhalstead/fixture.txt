@@ -1,4 +1,4 @@
-/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml
+~/git/sourcery/test_fixtures/random_tests/test.ml
 func_x:4:7
 func_bang:9:9
 func_y:11:14

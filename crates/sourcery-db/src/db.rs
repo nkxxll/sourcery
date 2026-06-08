@@ -146,6 +146,27 @@ pub struct CurrentFunction {
     pub metrics: serde_json::Value,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FilenameSearchResult {
+    pub file_state_id: Uuid,
+    pub file_id: Option<Uuid>,
+    pub path: String,
+    pub status: String,
+    pub score: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FunctionSearchResult {
+    pub function_id: Uuid,
+    pub file_id: Uuid,
+    pub file_path: String,
+    pub file_language: Option<String>,
+    pub name: String,
+    pub start_line: i32,
+    pub end_line: i32,
+    pub score: f32,
+}
+
 // Connection
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
@@ -956,6 +977,40 @@ pub async fn list_all_files_states(pool: &PgPool, version_id: Uuid) -> Result<Ve
         ORDER BY path;",
     )
     .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn search_version_filenames(
+    pool: &PgPool,
+    version_id: Uuid,
+    query: &str,
+    limit: i32,
+) -> Result<Vec<FilenameSearchResult>> {
+    let rows = sqlx::query_as::<_, FilenameSearchResult>(
+        "SELECT * FROM search_version_filenames($1, $2, $3)",
+    )
+    .bind(version_id)
+    .bind(query)
+    .bind(limit)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn search_version_functions(
+    pool: &PgPool,
+    version_id: Uuid,
+    query: &str,
+    limit: i32,
+) -> Result<Vec<FunctionSearchResult>> {
+    let rows = sqlx::query_as::<_, FunctionSearchResult>(
+        "SELECT * FROM search_version_functions($1, $2, $3)",
+    )
+    .bind(version_id)
+    .bind(query)
+    .bind(limit)
     .fetch_all(pool)
     .await?;
     Ok(rows)

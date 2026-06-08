@@ -12,7 +12,7 @@ gohalstead:
 	cd $(GO_DIR) && go build -o $(BIN_DIR)/gohalstead .
 
 ocamlhalstead:
-	cd $(OCAML_DIR) && dune build
+	cd $(OCAML_DIR) && dune build -p ocamlhalstead -j auto @install
 	@if [ -f _build/default/bin/ocamlhalstead.exe ]; then \
 		cp _build/default/bin/ocamlhalstead.exe $(BIN_DIR)/ocamlhalstead; \
 	elif [ -f _build/default/bin/main.exe ]; then \

@@ -1,7 +1,10 @@
 /// this is just a command line application that fires the sql queries so I can look at the results
 use clap::{Parser, Subcommand};
 use sourcery_db::{
-    connect, get_codebase_by_id, get_diff_by_version, get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id, list_all_files_states, list_all_functions, list_codebases, list_files_by_version, list_functions_by_version, list_versions_by_codebase
+    connect, get_codebase_by_id, get_diff_by_version, get_diff_with_changes_by_version,
+    get_version_by_commit, get_version_by_id, list_all_files_states, list_all_functions,
+    list_codebases, list_files_by_version, list_functions_by_version, list_versions_by_codebase,
+    search_version_filenames, search_version_functions,
 };
 use uuid::Uuid;
 
@@ -47,6 +50,18 @@ pub enum SubCommand {
     },
     AllFunctions {
         version_id: String,
+    },
+    SearchFilenames {
+        version_id: String,
+        query: String,
+        #[arg(long, default_value_t = 50)]
+        limit: i32,
+    },
+    SearchFunctions {
+        version_id: String,
+        query: String,
+        #[arg(long, default_value_t = 50)]
+        limit: i32,
     },
 }
 
@@ -114,6 +129,24 @@ async fn main() -> anyhow::Result<()> {
             let id = Uuid::parse_str(&version_id)?;
             let metrics = list_all_functions(&pool, id).await?;
             println!("{}", serde_json::to_string_pretty(&metrics)?);
+        }
+        SubCommand::SearchFilenames {
+            version_id,
+            query,
+            limit,
+        } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let results = search_version_filenames(&pool, id, &query, limit).await?;
+            println!("{}", serde_json::to_string_pretty(&results)?);
+        }
+        SubCommand::SearchFunctions {
+            version_id,
+            query,
+            limit,
+        } => {
+            let id = Uuid::parse_str(&version_id)?;
+            let results = search_version_functions(&pool, id, &query, limit).await?;
+            println!("{}", serde_json::to_string_pretty(&results)?);
         }
     }
     Ok(())

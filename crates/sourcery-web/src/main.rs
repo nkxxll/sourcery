@@ -7,7 +7,8 @@ use axum::{
 };
 use clap::Parser;
 use sourcery_db::{
-    Codebase, Diff, DiffWithChanges, File, FileState, PgPool, Version, VersionFunction,
+    Codebase, Diff, DiffWithChanges, File, FileState, FilenameSearchResult, FunctionSearchResult,
+    PgPool, Version, VersionFunction,
 };
 use std::collections::BTreeMap;
 use uuid::Uuid;
@@ -54,9 +55,14 @@ async fn main() -> anyhow::Result<()> {
         .route("/version/{id}", get(get_version))
         .route("/version/{id}/changed_files", get(list_version_files))
         .route("/version/{id}/files", get(list_all_version_files))
+        .route("/version/{id}/files/search", get(search_version_filenames))
         .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/diffchange", get(get_version_diff_change))
         .route("/version/{id}/functions", get(list_version_functions))
+        .route(
+            "/version/{id}/functions/search",
+            get(search_version_functions),
+        )
         .with_state(AppState { pool });
 
     let listener = tokio::net::TcpListener::bind(&args.bind)
@@ -130,8 +136,19 @@ struct PageQuery {
     offset: u32,
 }
 
+#[derive(serde::Deserialize)]
+struct SearchQuery {
+    q: String,
+    #[serde(default = "default_limit")]
+    limit: u32,
+}
+
 fn default_limit() -> u32 {
     50
+}
+
+fn bounded_limit(limit: u32) -> i32 {
+    limit.min(500) as i32
 }
 
 async fn get_version_or_not_found(
@@ -201,6 +218,40 @@ async fn list_version_functions(
         id,
         i64::from(query.limit),
         i64::from(query.offset),
+    )
+    .await
+    .map_err(internal_error)?;
+    Ok(Json(functions))
+}
+
+async fn search_version_filenames(
+    Path(id): Path<Uuid>,
+    Query(query): Query<SearchQuery>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FilenameSearchResult>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let files = sourcery_db::search_version_filenames(
+        &state.pool,
+        id,
+        &query.q,
+        bounded_limit(query.limit),
+    )
+    .await
+    .map_err(internal_error)?;
+    Ok(Json(files))
+}
+
+async fn search_version_functions(
+    Path(id): Path<Uuid>,
+    Query(query): Query<SearchQuery>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FunctionSearchResult>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let functions = sourcery_db::search_version_functions(
+        &state.pool,
+        id,
+        &query.q,
+        bounded_limit(query.limit),
     )
     .await
     .map_err(internal_error)?;
