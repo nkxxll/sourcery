@@ -24,6 +24,7 @@ type FileTreemapItem = {
   id: string
   path: string
   metrics: Metrics
+  total_functions?: number
 }
 
 type FunctionTreemapItem = {
@@ -274,7 +275,13 @@ function mapFileItems(rows: FileTreemapItem[]): TreemapItem[] {
     label: row.path.split('/').at(-1) ?? row.path,
     path: row.path,
     href: `/file/${row.id}`,
-    metrics: row.metrics,
+    metrics: {
+      ...row.metrics,
+      functions:
+        typeof row.total_functions === 'number'
+          ? row.total_functions
+          : row.metrics.functions,
+    },
   }))
 }
 

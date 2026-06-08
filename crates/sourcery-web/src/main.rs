@@ -7,8 +7,8 @@ use axum::{
 };
 use clap::Parser;
 use sourcery_db::{
-    Codebase, Diff, DiffWithChanges, File, FileState, FilenameSearchResult, FunctionSearchResult,
-    PgPool, Version, VersionFunction,
+    Codebase, Diff, DiffWithChanges, File, FileState, FileStateWithFunctionCount,
+    FilenameSearchResult, FunctionSearchResult, PgPool, Version, VersionFunction,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
@@ -30,6 +30,14 @@ struct AppState {
 #[derive(serde::Serialize)]
 struct HealthResponse {
     status: &'static str,
+}
+
+#[derive(serde::Serialize)]
+struct VersionDashboardResponse {
+    #[serde(flatten)]
+    version: Version,
+    total_files: i64,
+    total_functions: i64,
 }
 
 #[tokio::main]
@@ -177,20 +185,39 @@ async fn get_version_or_not_found(
 async fn get_version(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<Version>, (StatusCode, String)> {
+) -> Result<Json<VersionDashboardResponse>, (StatusCode, String)> {
     let version = get_version_or_not_found(&state.pool, id).await?;
-    Ok(Json(version))
+    let counts = sourcery_db::count_version_files_and_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    let total_files = metric_i64(&version.metrics, "files").unwrap_or(counts.total_files);
+    Ok(Json(VersionDashboardResponse {
+        version,
+        total_files,
+        total_functions: counts.total_functions,
+    }))
+}
+
+fn metric_i64(metrics: &serde_json::Value, key: &str) -> Option<i64> {
+    let value = metrics.get(key)?;
+    if let Some(value) = value.as_i64() {
+        return Some(value);
+    }
+    if let Some(value) = value.as_u64() {
+        return i64::try_from(value).ok();
+    }
+    value.as_str()?.parse().ok()
 }
 
 async fn get_file(
     Path(file_id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<FileState>, (StatusCode, String)> {
+) -> Result<Json<FileStateWithFunctionCount>, (StatusCode, String)> {
     let file = sourcery_db::get_file_state_by_id(&state.pool, file_id)
         .await
         .map_err(internal_error)?;
     match file {
-        Some(file) => Ok(Json(file)),
+        Some(file) => Ok(Json(file_state_with_function_count(&state.pool, file).await?)),
         None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
     }
 }
@@ -252,13 +279,13 @@ async fn list_all_version_files(
 async fn get_version_file(
     Path((id, file_state_id)): Path<(Uuid, Uuid)>,
     State(state): State<AppState>,
-) -> Result<Json<FileState>, (StatusCode, String)> {
+) -> Result<Json<FileStateWithFunctionCount>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
     let file = sourcery_db::get_file_state_by_id_for_version(&state.pool, id, file_state_id)
         .await
         .map_err(internal_error)?;
     match file {
-        Some(file) => Ok(Json(file)),
+        Some(file) => Ok(Json(file_state_with_function_count(&state.pool, file).await?)),
         None => Err((
             StatusCode::NOT_FOUND,
             format!("file {file_state_id} not found for version {id}"),
@@ -300,12 +327,52 @@ async fn list_version_callgraph(
 async fn list_version_treemap_files(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<Vec<FileState>>, (StatusCode, String)> {
+) -> Result<Json<Vec<FileStateWithFunctionCount>>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
-    let files = sourcery_db::list_all_files_states(&state.pool, id)
+    let mut files = sourcery_db::list_all_file_states_with_function_counts(&state.pool, id)
         .await
         .map_err(internal_error)?;
+    for file in &mut files {
+        add_file_function_count_metric(file);
+    }
     Ok(Json(files))
+}
+
+fn add_file_function_count_metric(file: &mut FileStateWithFunctionCount) {
+    if !file.metrics.is_object() {
+        file.metrics = serde_json::json!({});
+    }
+    let Some(metrics) = file.metrics.as_object_mut() else {
+        return;
+    };
+    metrics.insert("functions".to_string(), file.total_functions.into());
+}
+
+async fn file_state_with_function_count(
+    pool: &PgPool,
+    file: FileState,
+) -> Result<FileStateWithFunctionCount, (StatusCode, String)> {
+    let total_functions = match file.file_id {
+        Some(file_id) => sourcery_db::count_functions_by_file(pool, file_id)
+            .await
+            .map_err(internal_error)?,
+        None => 0,
+    };
+    let mut file = FileStateWithFunctionCount {
+        id: file.id,
+        codebase_id: file.codebase_id,
+        version_id: file.version_id,
+        path: file.path,
+        file_id: file.file_id,
+        status: file.status,
+        exists: file.exists,
+        source_path: file.source_path,
+        metrics: file.metrics,
+        created_at: file.created_at,
+        total_functions,
+    };
+    add_file_function_count_metric(&mut file);
+    Ok(file)
 }
 
 async fn list_version_treemap_functions(

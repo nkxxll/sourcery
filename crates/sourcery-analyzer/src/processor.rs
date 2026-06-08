@@ -316,6 +316,29 @@ impl<'processor> Processor<'processor> {
             warn!("halstead did not run correctly");
         }
 
+        for function in &mut functions {
+            if let Some(halstead) = function.halstead {
+                let comment_lines =
+                    Self::comment_lines_in_span(function.definition_line_span, &syntax.comments);
+                function.maintainability_index = Some(MaintainabilityIndex::new(
+                    halstead.volume,
+                    function.cyclomatic,
+                    function.definition_line_span.line_count() as u64,
+                    comment_lines,
+                ));
+            }
+        }
+
+        let total_halstead = halstead_result.unwrap_or_default().totals;
+        let maintainability_index = (total_halstead.volume > 0.0).then(|| {
+            MaintainabilityIndex::new(
+                total_halstead.volume,
+                syntax.total_cyclomatic,
+                syntax.effective_lines_of_code,
+                syntax.comment_lines_of_code,
+            )
+        });
+
         Analysis {
             file,
             functions,
@@ -326,8 +349,16 @@ impl<'processor> Processor<'processor> {
             comment_lines_of_code: syntax.comment_lines_of_code,
             effective_lines_of_code: syntax.effective_lines_of_code,
             total_cyclomatic: syntax.total_cyclomatic,
-            total_halstead: halstead_result.unwrap_or_default().totals,
+            total_halstead,
+            maintainability_index,
         }
+    }
+
+    fn comment_lines_in_span(function_span: CodeLineSpan, comments: &[CommentAnalysis]) -> u64 {
+        comments
+            .iter()
+            .filter_map(|comment| function_span.overlap_line_count(comment.comment_line_span))
+            .sum::<usize>() as u64
     }
 
     fn bracket_lines(source: &str) -> u64 {
@@ -396,6 +427,55 @@ pub struct FunctionAnalysis {
     pub references: Vec<FunctionCall>,
     pub enriched_calls: Vec<FunctionCall>,
     pub halstead: Option<HalsteadMetrics>,
+    pub maintainability_index: Option<MaintainabilityIndex>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct MaintainabilityIndex {
+    pub three_property: f64,
+    pub four_property: f64,
+    pub visual_studio: f64,
+    pub comment_percentage: f64,
+}
+
+impl MaintainabilityIndex {
+    pub fn new(halstead_volume: f64, cyclomatic: u64, loc: u64, comment_lines: u64) -> Self {
+        let volume = halstead_volume.max(1.0);
+        let loc = loc.max(1);
+        let comment_percentage = (comment_lines as f64 / loc as f64) * 100.0;
+        let three_property =
+            171.0 - (5.2 * volume.ln()) - (0.23 * cyclomatic as f64) - (16.2 * (loc as f64).ln());
+        let four_property = three_property + 50.0 * (2.4 * comment_percentage).sqrt().sin();
+        let visual_studio = (three_property * 100.0 / 171.0).max(0.0);
+
+        Self {
+            three_property,
+            four_property,
+            visual_studio,
+            comment_percentage,
+        }
+    }
+
+    pub fn from_json(metrics: &serde_json::Value) -> Option<Self> {
+        Some(Self {
+            three_property: metrics.get("three_property")?.as_f64()?,
+            four_property: metrics.get("four_property")?.as_f64()?,
+            visual_studio: metrics.get("visual_studio")?.as_f64()?,
+            comment_percentage: metrics
+                .get("comment_percentage")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(0.0),
+        })
+    }
+
+    pub fn to_json(self) -> serde_json::Value {
+        serde_json::json!({
+            "three_property": self.three_property,
+            "four_property": self.four_property,
+            "visual_studio": self.visual_studio,
+            "comment_percentage": self.comment_percentage,
+        })
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -454,6 +534,7 @@ pub struct Analysis {
     pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
     pub total_halstead: HalsteadMetrics,
+    pub maintainability_index: Option<MaintainabilityIndex>,
 }
 impl Analysis {
     pub(crate) fn pretty_print(&self, source: &str) -> String {
@@ -556,6 +637,7 @@ pub struct FileMetrics {
     pub comment_lines_of_code: u64,
     pub bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
+    pub maintainability_index: Option<MaintainabilityIndex>,
 }
 
 impl FileMetrics {
@@ -581,6 +663,9 @@ impl FileMetrics {
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            maintainability_index: metrics
+                .get("maintainability_index")
+                .and_then(MaintainabilityIndex::from_json),
         }
     }
 }
@@ -593,6 +678,10 @@ pub struct AggregatedFileMetrics {
     pub total_comment_lines_of_code: u64,
     pub total_bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
+    pub files_with_maintainability_index: u64,
+    pub total_three_property_maintainability_index: f64,
+    pub total_four_property_maintainability_index: f64,
+    pub total_visual_studio_maintainability_index: f64,
 }
 
 impl AggregatedFileMetrics {
@@ -603,6 +692,12 @@ impl AggregatedFileMetrics {
         self.total_comment_lines_of_code += metrics.comment_lines_of_code;
         self.total_bracket_lines_of_code += metrics.bracket_lines_of_code;
         self.total_cyclomatic += metrics.total_cyclomatic;
+        if let Some(mi) = metrics.maintainability_index {
+            self.files_with_maintainability_index += 1;
+            self.total_three_property_maintainability_index += mi.three_property;
+            self.total_four_property_maintainability_index += mi.four_property;
+            self.total_visual_studio_maintainability_index += mi.visual_studio;
+        }
     }
 
     fn mean(total: u64, files: u64) -> f64 {
@@ -610,6 +705,14 @@ impl AggregatedFileMetrics {
             0.0
         } else {
             total as f64 / files as f64
+        }
+    }
+
+    fn mean_f64(total: f64, files: u64) -> f64 {
+        if files == 0 {
+            0.0
+        } else {
+            total / files as f64
         }
     }
 
@@ -639,6 +742,22 @@ impl AggregatedFileMetrics {
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            files_with_maintainability_index: metrics
+                .get("files_with_maintainability_index")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0),
+            total_three_property_maintainability_index: metrics
+                .get("total_three_property_maintainability_index")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(0.0),
+            total_four_property_maintainability_index: metrics
+                .get("total_four_property_maintainability_index")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(0.0),
+            total_visual_studio_maintainability_index: metrics
+                .get("total_visual_studio_maintainability_index")
+                .and_then(serde_json::Value::as_f64)
+                .unwrap_or(0.0),
         }
     }
 
@@ -650,11 +769,18 @@ impl AggregatedFileMetrics {
             "total_comment_lines_of_code": self.total_comment_lines_of_code,
             "total_bracket_lines_of_code": self.total_bracket_lines_of_code,
             "total_cyclomatic": self.total_cyclomatic,
+            "files_with_maintainability_index": self.files_with_maintainability_index,
+            "total_three_property_maintainability_index": self.total_three_property_maintainability_index,
+            "total_four_property_maintainability_index": self.total_four_property_maintainability_index,
+            "total_visual_studio_maintainability_index": self.total_visual_studio_maintainability_index,
             "mean_lines_of_code_per_file": Self::mean(self.total_lines_of_code, self.files),
             "mean_effective_lines_of_code_per_file": Self::mean(self.total_effective_lines_of_code, self.files),
             "mean_comment_lines_of_code_per_file": Self::mean(self.total_comment_lines_of_code, self.files),
             "mean_bracket_lines_of_code_per_file": Self::mean(self.total_bracket_lines_of_code, self.files),
             "mean_cyclomatic_complexity_per_file": Self::mean(self.total_cyclomatic, self.files),
+            "mean_three_property_maintainability_index_per_file": Self::mean_f64(self.total_three_property_maintainability_index, self.files_with_maintainability_index),
+            "mean_four_property_maintainability_index_per_file": Self::mean_f64(self.total_four_property_maintainability_index, self.files_with_maintainability_index),
+            "mean_visual_studio_maintainability_index_per_file": Self::mean_f64(self.total_visual_studio_maintainability_index, self.files_with_maintainability_index),
         })
     }
 
@@ -696,6 +822,22 @@ impl AggregatedFileMetrics {
                 .total_cyclomatic
                 .saturating_sub(old_metrics.total_cyclomatic)
                 .saturating_add(new_metrics.total_cyclomatic),
+            files_with_maintainability_index: previous
+                .files_with_maintainability_index
+                .saturating_sub(old_metrics.files_with_maintainability_index)
+                .saturating_add(new_metrics.files_with_maintainability_index),
+            total_three_property_maintainability_index: previous
+                .total_three_property_maintainability_index
+                - old_metrics.total_three_property_maintainability_index
+                + new_metrics.total_three_property_maintainability_index,
+            total_four_property_maintainability_index: previous
+                .total_four_property_maintainability_index
+                - old_metrics.total_four_property_maintainability_index
+                + new_metrics.total_four_property_maintainability_index,
+            total_visual_studio_maintainability_index: previous
+                .total_visual_studio_maintainability_index
+                - old_metrics.total_visual_studio_maintainability_index
+                + new_metrics.total_visual_studio_maintainability_index,
         }
     }
 }
@@ -715,6 +857,20 @@ pub struct CodeLineSpan {
 impl CodeLineSpan {
     pub fn line_length(&self) -> usize {
         return self.end_line - self.start_line;
+    }
+
+    pub fn line_count(&self) -> usize {
+        (self.end_line - self.start_line) + 1
+    }
+
+    fn overlap_line_count(&self, other: CodeLineSpan) -> Option<usize> {
+        let start = self.start_line.max(other.start_line);
+        let end = self.end_line.min(other.end_line);
+        if start <= end {
+            Some((end - start) + 1)
+        } else {
+            None
+        }
     }
 }
 
@@ -1272,6 +1428,7 @@ impl<'processor> AstProcessor<'processor> {
                 references: Vec::new(),
                 enriched_calls: Vec::new(),
                 halstead: None,
+                maintainability_index: None,
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
@@ -1365,7 +1522,8 @@ impl<'processor> AstProcessor<'processor> {
 mod tests {
     use super::{
         AggregatedFileMetrics, Analysis, AstProcessor, CodeLineSpan, CodePositionRange,
-        FileMetrics, FunctionAnalysis, HalsteadMetrics, NewLineMap, Processor, ProcessorSource,
+        CommentAnalysis, FileMetrics, FunctionAnalysis, HalsteadMetrics, HalsteadMetricsResponse,
+        MaintainabilityIndex, NewLineMap, Processor, ProcessorSource,
     };
     use crate::language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage};
     use ecow::EcoString;
@@ -1553,6 +1711,87 @@ let run value =
     }
 
     #[test]
+    fn maintainability_index_calculates_three_four_and_visual_studio_scores() {
+        let mi = MaintainabilityIndex::new(100.0, 10, 50, 5);
+        let expected_three =
+            171.0 - (5.2 * 100.0_f64.ln()) - (0.23 * 10.0) - (16.2 * 50.0_f64.ln());
+        let expected_four = expected_three + 50.0 * (2.4 * 10.0_f64).sqrt().sin();
+        let expected_visual_studio = (expected_three * 100.0 / 171.0).max(0.0);
+
+        assert!((mi.three_property - expected_three).abs() < 0.000_001);
+        assert!((mi.four_property - expected_four).abs() < 0.000_001);
+        assert!((mi.visual_studio - expected_visual_studio).abs() < 0.000_001);
+        assert_eq!(mi.comment_percentage, 10.0);
+    }
+
+    #[test]
+    fn comment_lines_in_span_counts_only_comments_inside_function() {
+        let comments = vec![
+            CommentAnalysis {
+                comment_span: CodeByteSpan::new(0, 1),
+                comment_line_span: CodeLineSpan {
+                    start_line: 2,
+                    end_line: 3,
+                },
+                lines: 2,
+            },
+            CommentAnalysis {
+                comment_span: CodeByteSpan::new(2, 3),
+                comment_line_span: CodeLineSpan {
+                    start_line: 8,
+                    end_line: 9,
+                },
+                lines: 2,
+            },
+            CommentAnalysis {
+                comment_span: CodeByteSpan::new(4, 5),
+                comment_line_span: CodeLineSpan {
+                    start_line: 12,
+                    end_line: 12,
+                },
+                lines: 1,
+            },
+        ];
+        let function_span = CodeLineSpan {
+            start_line: 3,
+            end_line: 8,
+        };
+
+        let comment_lines = Processor::comment_lines_in_span(function_span, &comments);
+
+        assert_eq!(comment_lines, 2);
+    }
+
+    #[test]
+    fn combine_analysis_populates_file_maintainability_index_from_halstead_totals() {
+        let source = r#"package main
+
+// Module comment
+func main() {
+    println("hello")
+}
+"#;
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let source_input = ProcessorSource::from_text(source, file.clone());
+        let processor = Processor::from_source_input(&profile, source_input);
+        let ast_processor = AstProcessor::new(&profile, source, file.clone(), uri);
+        let syntax = processor.compute_syntax_analysis(&ast_processor).unwrap();
+        let total_halstead = HalsteadMetrics::from_counts(2, 4, 6, 8);
+        let halstead = HalsteadMetricsResponse {
+            totals: total_halstead,
+            functions: vec![],
+        };
+
+        let analysis = Processor::combine_analysis(file, syntax, None, Some(halstead));
+        let mi = analysis.maintainability_index.expect("file MI");
+
+        assert!(mi.three_property.is_finite());
+        assert_eq!(mi.comment_percentage, 25.0);
+    }
+
+    #[test]
     fn aggregated_file_metrics_sums_file_metrics_map() {
         let old_metrics = HashMap::from([
             (
@@ -1563,6 +1802,7 @@ let run value =
                     comment_lines_of_code: 2,
                     bracket_lines_of_code: 1,
                     total_cyclomatic: 3,
+                    maintainability_index: Some(MaintainabilityIndex::new(100.0, 3, 8, 2)),
                 },
             ),
             (
@@ -1573,6 +1813,7 @@ let run value =
                     comment_lines_of_code: 5,
                     bracket_lines_of_code: 3,
                     total_cyclomatic: 7,
+                    maintainability_index: None,
                 },
             ),
         ]);
@@ -1585,6 +1826,7 @@ let run value =
         assert_eq!(aggregated.total_comment_lines_of_code, 7);
         assert_eq!(aggregated.total_bracket_lines_of_code, 4);
         assert_eq!(aggregated.total_cyclomatic, 10);
+        assert_eq!(aggregated.files_with_maintainability_index, 1);
     }
 
     #[test]
@@ -1596,6 +1838,10 @@ let run value =
             total_comment_lines_of_code: 12,
             total_bracket_lines_of_code: 9,
             total_cyclomatic: 18,
+            files_with_maintainability_index: 2,
+            total_three_property_maintainability_index: 150.0,
+            total_four_property_maintainability_index: 160.0,
+            total_visual_studio_maintainability_index: 90.0,
         };
         let old_metrics = AggregatedFileMetrics {
             files: 2,
@@ -1604,6 +1850,10 @@ let run value =
             total_comment_lines_of_code: 7,
             total_bracket_lines_of_code: 6,
             total_cyclomatic: 10,
+            files_with_maintainability_index: 1,
+            total_three_property_maintainability_index: 70.0,
+            total_four_property_maintainability_index: 75.0,
+            total_visual_studio_maintainability_index: 40.0,
         };
         let new_metrics = AggregatedFileMetrics {
             files: 2,
@@ -1612,6 +1862,10 @@ let run value =
             total_comment_lines_of_code: 4,
             total_bracket_lines_of_code: 5,
             total_cyclomatic: 9,
+            files_with_maintainability_index: 2,
+            total_three_property_maintainability_index: 130.0,
+            total_four_property_maintainability_index: 135.0,
+            total_visual_studio_maintainability_index: 80.0,
         };
 
         let reconciled = AggregatedFileMetrics::reconcile(previous, old_metrics, new_metrics);
@@ -1622,6 +1876,10 @@ let run value =
         assert_eq!(reconciled.total_comment_lines_of_code, 9);
         assert_eq!(reconciled.total_bracket_lines_of_code, 8);
         assert_eq!(reconciled.total_cyclomatic, 17);
+        assert_eq!(reconciled.files_with_maintainability_index, 3);
+        assert_eq!(reconciled.total_three_property_maintainability_index, 210.0);
+        assert_eq!(reconciled.total_four_property_maintainability_index, 220.0);
+        assert_eq!(reconciled.total_visual_studio_maintainability_index, 130.0);
     }
 
     #[test]
@@ -1739,6 +1997,7 @@ func main() {
                 references: vec![],
                 enriched_calls: vec![],
                 halstead: Some(HalsteadMetrics::from_counts(1, 2, 3, 4)),
+                maintainability_index: None,
             }],
             comments: vec![],
             lines_of_code: 1,
@@ -1748,6 +2007,7 @@ func main() {
             effective_lines_of_code: 1,
             total_cyclomatic: 1,
             total_halstead: HalsteadMetrics::from_counts(1, 2, 3, 4),
+            maintainability_index: None,
         };
 
         let pretty = analysis.pretty_print("");

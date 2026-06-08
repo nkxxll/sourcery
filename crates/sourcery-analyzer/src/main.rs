@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use sourcery_analyzer::{
-    analyze_git_repository_with_database, analyze_repo_version, analyze_single_file, language::ProgrammingLanguage
+    analyze_git_repository_with_database, analyze_repo_version, analyze_single_file,
+    language::ProgrammingLanguage,
 };
 
 #[derive(Parser, Debug)]

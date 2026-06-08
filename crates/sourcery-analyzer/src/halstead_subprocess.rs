@@ -265,6 +265,7 @@ mod tests {
             references: vec![],
             enriched_calls: vec![],
             halstead: None,
+            maintainability_index: None,
         }];
 
         let file = Path::new("myfile.go");

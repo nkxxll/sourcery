@@ -17,6 +17,8 @@ type Version = {
   author_email: string
   committed_at: string | null
   created_at: string
+  total_files: number
+  total_functions: number
 }
 
 type FilenameSearchResult = {
@@ -172,6 +174,18 @@ function VersionDashboardPage() {
           </div>
         </div>
         <dl className="grid gap-4 text-sm text-[#4d4f53] sm:grid-cols-2">
+          <div>
+            <dt className="font-medium text-[#0f3f88]">Files</dt>
+            <dd className="font-mono text-xs">
+              {formatNumber(version.total_files)}
+            </dd>
+          </div>
+          <div>
+            <dt className="font-medium text-[#0f3f88]">Functions</dt>
+            <dd className="font-mono text-xs">
+              {formatNumber(version.total_functions)}
+            </dd>
+          </div>
           <div>
             <dt className="font-medium text-[#0f3f88]">Committed</dt>
             <dd>{committedAt ?? 'Unknown'}</dd>
@@ -381,4 +395,8 @@ function FunctionResults({ rows }: { rows: FunctionSearchResult[] }) {
       </table>
     </div>
   )
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('en-US').format(value)
 }

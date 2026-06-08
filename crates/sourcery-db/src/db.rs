@@ -135,6 +135,27 @@ pub struct FileState {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct FileStateWithFunctionCount {
+    pub id: Uuid,
+    pub codebase_id: Uuid,
+    pub version_id: Uuid,
+    pub path: String,
+    pub file_id: Option<Uuid>,
+    pub status: String,
+    pub exists: bool,
+    pub source_path: Option<String>,
+    pub metrics: serde_json::Value,
+    pub created_at: DateTime<Utc>,
+    pub total_functions: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct VersionCounts {
+    pub total_files: i64,
+    pub total_functions: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct CurrentFunction {
     pub file_state_id: Uuid,
     pub file_id: Uuid,
@@ -309,6 +330,52 @@ pub async fn get_version_by_id_optional(pool: &PgPool, id: Uuid) -> Result<Optio
         .bind(id)
         .fetch_optional(pool)
         .await?;
+    Ok(row)
+}
+
+pub async fn count_version_files_and_functions(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<VersionCounts> {
+    let row = sqlx::query_as::<_, VersionCounts>(
+        "WITH base AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            CROSS JOIN base b
+            WHERE fs.codebase_id = b.codebase_id
+              AND (
+                  v.created_at < b.created_at
+                  OR (v.created_at = b.created_at AND v.id <= b.id)
+              )
+        ),
+        current_file_states AS (
+            SELECT
+                id AS file_state_id,
+                file_id
+            FROM ranked
+            WHERE rank = 1
+              AND exists
+        )
+        SELECT
+            (SELECT COUNT(*) FROM current_file_states)::bigint AS total_files,
+            (SELECT COUNT(fn.id)::bigint
+             FROM current_file_states fs
+             JOIN functions fn ON fn.file_id = fs.file_id) AS total_functions;",
+    )
+    .bind(version_id)
+    .fetch_one(pool)
+    .await?;
     Ok(row)
 }
 
@@ -665,6 +732,15 @@ pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<
     .fetch_all(pool)
     .await?;
     Ok(rows)
+}
+
+pub async fn count_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<i64> {
+    let (count,) =
+        sqlx::query_as::<_, (i64,)>("SELECT count(*)::bigint FROM functions WHERE file_id = $1")
+            .bind(file_id)
+            .fetch_one(pool)
+            .await?;
+    Ok(count)
 }
 
 pub async fn get_file_state_by_id_for_version(
@@ -1107,6 +1183,67 @@ pub async fn list_all_files_states(pool: &PgPool, version_id: Uuid) -> Result<Ve
         WHERE rank = 1
           AND exists
         ORDER BY path;",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_all_file_states_with_function_counts(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Vec<FileStateWithFunctionCount>> {
+    let rows = sqlx::query_as::<_, FileStateWithFunctionCount>(
+        "WITH base AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            CROSS JOIN base b
+            WHERE fs.codebase_id = b.codebase_id
+              AND (
+                  v.created_at < b.created_at
+                  OR (v.created_at = b.created_at AND v.id <= b.id)
+              )
+        )
+        SELECT
+            fs.id,
+            fs.codebase_id,
+            fs.version_id,
+            fs.path,
+            fs.file_id,
+            fs.status,
+            fs.exists,
+            fs.source_path,
+            fs.metrics,
+            fs.created_at,
+            count(fn.id)::bigint AS total_functions
+        FROM ranked fs
+        LEFT JOIN functions fn ON fn.file_id = fs.file_id
+        WHERE fs.rank = 1
+          AND fs.exists
+        GROUP BY
+            fs.id,
+            fs.codebase_id,
+            fs.version_id,
+            fs.path,
+            fs.file_id,
+            fs.status,
+            fs.exists,
+            fs.source_path,
+            fs.metrics,
+            fs.created_at
+        ORDER BY fs.path;",
     )
     .bind(version_id)
     .fetch_all(pool)

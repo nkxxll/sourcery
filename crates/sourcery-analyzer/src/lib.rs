@@ -99,7 +99,9 @@ impl State {
         let sr = SourceRepository::new(url)?;
         let codebase_name = SourceRepository::get_repo_base_name(url);
         println!("programming lang {:?}", programming_language);
-        let pl = programming_language.unwrap_or_else(|| guess_repo_language(url).expect("the language could not be determined"));
+        let pl = programming_language.unwrap_or_else(|| {
+            guess_repo_language(url).expect("the language could not be determined")
+        });
         let codebase = db::insert_codebase(&pool, &codebase_name, url, &pl.to_string()).await?;
         let commits = Self::gather_commits(&sr);
         let number_of_commits = commits.len();
@@ -168,7 +170,9 @@ pub async fn analyze_repo_version(
     path: String,
     programming_language: Option<ProgrammingLanguage>,
 ) -> Result<()> {
-    let pl = programming_language.unwrap_or_else(|| guess_repo_language(&path).expect("the language could not be determined"));
+    let pl = programming_language.unwrap_or_else(|| {
+        guess_repo_language(&path).expect("the language could not be determined")
+    });
     let lc = LanguageConfig::new(pl);
     let (binary, args) = pl.lsp();
     let mut server = Server::new(&path, binary, args);
@@ -522,6 +526,7 @@ async fn store_file_analysis(
         comment_lines_of_code: analysis.comment_lines_of_code,
         bracket_lines_of_code: analysis.bracket_lines_of_code,
         total_cyclomatic: analysis.total_cyclomatic,
+        maintainability_index: analysis.maintainability_index,
     };
     let file = db::insert_file(
         pool,
@@ -565,6 +570,7 @@ async fn store_file_analysis(
                 })
             })
             .collect();
+        // @TODO
         let outdegree = u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
 
         let references: Vec<serde_json::Value> = analysis
@@ -620,6 +626,7 @@ async fn store_file_analysis(
             "references": references,
             "indegree": indegree,
             "outdegree": outdegree,
+            "maintainability_index": func.maintainability_index.map(|mi| mi.to_json()),
         });
 
         db::insert_function(
@@ -811,6 +818,7 @@ fn file_metrics_json(metrics: &FileMetrics) -> serde_json::Value {
         "comment_lines_of_code": metrics.comment_lines_of_code,
         "bracket_lines_of_code": metrics.bracket_lines_of_code,
         "total_cyclomatic": metrics.total_cyclomatic,
+        "maintainability_index": metrics.maintainability_index.map(|mi| mi.to_json()),
     })
 }
 

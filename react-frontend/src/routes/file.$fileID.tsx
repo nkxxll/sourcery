@@ -16,6 +16,7 @@ type FileState = {
   source_path: string | null
   metrics: Record<string, unknown>
   created_at: string
+  total_functions: number
 }
 
 function VersionFilePage() {
@@ -71,6 +72,7 @@ function VersionFilePage() {
         <dl className="grid gap-4 text-sm text-[#4d4f53] sm:grid-cols-2">
           <Detail label="Status" value={file.status} />
           <Detail label="Exists" value={file.exists ? 'Yes' : 'No'} />
+          <Detail label="Functions" value={file.total_functions.toString()} />
           <Detail label="Source Path" value={file.source_path ?? 'None'} />
           <Detail label="File ID" value={file.file_id ?? 'None'} />
         </dl>
