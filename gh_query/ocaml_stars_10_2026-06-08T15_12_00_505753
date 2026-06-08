@@ -1,0 +1,212 @@
+[
+  {
+    "createdAt": "2015-01-26T11:19:13Z",
+    "description": "A static analyzer for Java, C, C++, and Objective-C",
+    "forksCount": 2093,
+    "fullName": "facebook/infer",
+    "id": "MDEwOlJlcG9zaXRvcnkyOTg1Nzc5OQ==",
+    "language": "OCaml",
+    "name": "infer",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjY5NjMx",
+      "is_bot": false,
+      "login": "facebook",
+      "type": "Organization",
+      "url": "https://github.com/facebook"
+    },
+    "size": 250390,
+    "stargazersCount": 15637,
+    "updatedAt": "2026-06-08T02:23:36Z",
+    "url": "https://github.com/facebook/infer",
+    "watchersCount": 15637
+  },
+  {
+    "createdAt": "2019-12-13T09:29:54Z",
+    "description": "Lightweight static analysis for many languages. Find bug variants with patterns that look like source code.",
+    "forksCount": 955,
+    "fullName": "semgrep/semgrep",
+    "id": "MDEwOlJlcG9zaXRvcnkyMjc4MDM4MTU=",
+    "language": "OCaml",
+    "name": "semgrep",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjI5NzYwOTM3",
+      "is_bot": false,
+      "login": "semgrep",
+      "type": "Organization",
+      "url": "https://github.com/semgrep"
+    },
+    "size": 97970,
+    "stargazersCount": 15436,
+    "updatedAt": "2026-06-08T12:10:07Z",
+    "url": "https://github.com/semgrep/semgrep",
+    "watchersCount": 15436
+  },
+  {
+    "createdAt": "2015-11-16T08:22:32Z",
+    "description": "Simple, fast & type safe code that leverages the JavaScript & OCaml ecosystems",
+    "forksCount": 434,
+    "fullName": "reasonml/reason",
+    "id": "MDEwOlJlcG9zaXRvcnk0NjI2MTQwNA==",
+    "language": "OCaml",
+    "name": "reason",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjIwNDE0NTI1",
+      "is_bot": false,
+      "login": "reasonml",
+      "type": "Organization",
+      "url": "https://github.com/reasonml"
+    },
+    "size": 25632,
+    "stargazersCount": 10312,
+    "updatedAt": "2026-06-06T08:39:15Z",
+    "url": "https://github.com/reasonml/reason",
+    "watchersCount": 10312
+  },
+  {
+    "createdAt": "2017-11-10T17:31:36Z",
+    "description": "Performant type-checking for python.",
+    "forksCount": 452,
+    "fullName": "facebook/pyre-check",
+    "id": "MDEwOlJlcG9zaXRvcnkxMTAyNzQ0ODg=",
+    "language": "OCaml",
+    "name": "pyre-check",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjY5NjMx",
+      "is_bot": false,
+      "login": "facebook",
+      "type": "Organization",
+      "url": "https://github.com/facebook"
+    },
+    "size": 589685,
+    "stargazersCount": 7165,
+    "updatedAt": "2026-06-07T19:27:13Z",
+    "url": "https://github.com/facebook/pyre-check",
+    "watchersCount": 7165
+  },
+  {
+    "createdAt": "2012-11-20T22:18:22Z",
+    "description": "The core OCaml system: compilers, runtime system, base libraries",
+    "forksCount": 1237,
+    "fullName": "ocaml/ocaml",
+    "id": "MDEwOlJlcG9zaXRvcnk2Nzg2MTY2",
+    "language": "OCaml",
+    "name": "ocaml",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjE4NDE0ODM=",
+      "is_bot": false,
+      "login": "ocaml",
+      "type": "Organization",
+      "url": "https://github.com/ocaml"
+    },
+    "size": 401737,
+    "stargazersCount": 6413,
+    "updatedAt": "2026-06-08T02:13:32Z",
+    "url": "https://github.com/ocaml/ocaml",
+    "watchersCount": 6413
+  },
+  {
+    "createdAt": "2022-01-26T20:41:33Z",
+    "description": "magic-trace collects and displays high-resolution traces of what a process is doing",
+    "forksCount": 191,
+    "fullName": "janestreet/magic-trace",
+    "id": "R_kgDOGveWPA",
+    "language": "OCaml",
+    "name": "magic-trace",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjMzODQ3MTI=",
+      "is_bot": false,
+      "login": "janestreet",
+      "type": "Organization",
+      "url": "https://github.com/janestreet"
+    },
+    "size": 37030,
+    "stargazersCount": 6083,
+    "updatedAt": "2026-06-08T12:35:08Z",
+    "url": "https://github.com/janestreet/magic-trace",
+    "watchersCount": 6083
+  },
+  {
+    "createdAt": "2012-06-19T21:37:09Z",
+    "description": "FUSE filesystem over Google Drive",
+    "forksCount": 368,
+    "fullName": "astrada/google-drive-ocamlfuse",
+    "id": "MDEwOlJlcG9zaXRvcnk0NzE5NTIz",
+    "language": "OCaml",
+    "name": "google-drive-ocamlfuse",
+    "owner": {
+      "id": "MDQ6VXNlcjExOTA0MTY=",
+      "is_bot": false,
+      "login": "astrada",
+      "type": "User",
+      "url": "https://github.com/astrada"
+    },
+    "size": 2063,
+    "stargazersCount": 5941,
+    "updatedAt": "2026-06-07T16:03:30Z",
+    "url": "https://github.com/astrada/google-drive-ocamlfuse",
+    "watchersCount": 5941
+  },
+  {
+    "createdAt": "2011-02-17T05:49:37Z",
+    "description": "The Rocq Prover is an interactive theorem prover, or proof assistant. It provides a formal language to write mathematical definitions, executable algorithms and theorems together with an environment for semi-interactive development of machine-checked proofs.",
+    "forksCount": 734,
+    "fullName": "rocq-prover/rocq",
+    "id": "MDEwOlJlcG9zaXRvcnkxMzc3MTU5",
+    "language": "OCaml",
+    "name": "rocq",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjYyMTE5OA==",
+      "is_bot": false,
+      "login": "rocq-prover",
+      "type": "Organization",
+      "url": "https://github.com/rocq-prover"
+    },
+    "size": 214534,
+    "stargazersCount": 5473,
+    "updatedAt": "2026-06-08T09:41:10Z",
+    "url": "https://github.com/rocq-prover/rocq",
+    "watchersCount": 5473
+  },
+  {
+    "createdAt": "2016-02-24T17:00:05Z",
+    "description": "Unison file synchronizer",
+    "forksCount": 271,
+    "fullName": "bcpierce00/unison",
+    "id": "MDEwOlJlcG9zaXRvcnk1MjQ1OTIxMw==",
+    "language": "OCaml",
+    "name": "unison",
+    "owner": {
+      "id": "MDQ6VXNlcjcwMTQ0MTE=",
+      "is_bot": false,
+      "login": "bcpierce00",
+      "type": "User",
+      "url": "https://github.com/bcpierce00"
+    },
+    "size": 19786,
+    "stargazersCount": 5349,
+    "updatedAt": "2026-06-08T11:12:08Z",
+    "url": "https://github.com/bcpierce00/unison",
+    "watchersCount": 5349
+  },
+  {
+    "createdAt": "2013-09-02T10:45:45Z",
+    "description": "A language that compiles to Bash and Windows Batch",
+    "forksCount": 168,
+    "fullName": "batsh-dev-team/Batsh",
+    "id": "MDEwOlJlcG9zaXRvcnkxMjUzNzg5OA==",
+    "language": "OCaml",
+    "name": "Batsh",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjYwMDk5MzE4",
+      "is_bot": false,
+      "login": "batsh-dev-team",
+      "type": "Organization",
+      "url": "https://github.com/batsh-dev-team"
+    },
+    "size": 531,
+    "stargazersCount": 4352,
+    "updatedAt": "2026-06-04T12:08:25Z",
+    "url": "https://github.com/batsh-dev-team/Batsh",
+    "watchersCount": 4352
+  }
+]

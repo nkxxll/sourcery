@@ -1,0 +1,212 @@
+[
+  {
+    "createdAt": "2014-06-06T22:56:04Z",
+    "description": "Production-Grade Container Scheduling and Management",
+    "forksCount": 43272,
+    "fullName": "kubernetes/kubernetes",
+    "id": "MDEwOlJlcG9zaXRvcnkyMDU4MDQ5OA==",
+    "language": "Go",
+    "name": "kubernetes",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjEzNjI5NDA4",
+      "is_bot": false,
+      "login": "kubernetes",
+      "type": "Organization",
+      "url": "https://github.com/kubernetes"
+    },
+    "size": 1477131,
+    "stargazersCount": 122883,
+    "updatedAt": "2026-06-08T12:59:52Z",
+    "url": "https://github.com/kubernetes/kubernetes",
+    "watchersCount": 122883
+  },
+  {
+    "createdAt": "2019-08-09T22:06:16Z",
+    "description": "A comprehensive, up-to-date collection of information about several thousands (!) of crypto tokens.",
+    "forksCount": 27123,
+    "fullName": "trustwallet/assets",
+    "id": "MDEwOlJlcG9zaXRvcnkyMDE1NDY0NDM=",
+    "language": "Go",
+    "name": "assets",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjMyMTc5ODg5",
+      "is_bot": false,
+      "login": "trustwallet",
+      "type": "Organization",
+      "url": "https://github.com/trustwallet"
+    },
+    "size": 702492,
+    "stargazersCount": 5330,
+    "updatedAt": "2026-06-08T09:30:43Z",
+    "url": "https://github.com/trustwallet/assets",
+    "watchersCount": 5330
+  },
+  {
+    "createdAt": "2013-12-26T13:05:46Z",
+    "description": "Go implementation of the Ethereum protocol",
+    "forksCount": 21925,
+    "fullName": "ethereum/go-ethereum",
+    "id": "MDEwOlJlcG9zaXRvcnkxNTQ1MjkxOQ==",
+    "language": "Go",
+    "name": "go-ethereum",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjYyNTA3NTQ=",
+      "is_bot": false,
+      "login": "ethereum",
+      "type": "Organization",
+      "url": "https://github.com/ethereum"
+    },
+    "size": 236772,
+    "stargazersCount": 51116,
+    "updatedAt": "2026-06-08T12:14:40Z",
+    "url": "https://github.com/ethereum/go-ethereum",
+    "watchersCount": 51116
+  },
+  {
+    "createdAt": "2014-08-19T04:33:40Z",
+    "description": "The Go programming language",
+    "forksCount": 19093,
+    "fullName": "golang/go",
+    "id": "MDEwOlJlcG9zaXRvcnkyMzA5Njk1OQ==",
+    "language": "Go",
+    "name": "go",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjQzMTQwOTI=",
+      "is_bot": false,
+      "login": "golang",
+      "type": "Organization",
+      "url": "https://github.com/golang"
+    },
+    "size": 441829,
+    "stargazersCount": 134612,
+    "updatedAt": "2026-06-08T12:40:10Z",
+    "url": "https://github.com/golang/go",
+    "watchersCount": 134612
+  },
+  {
+    "createdAt": "2013-01-18T18:10:57Z",
+    "description": "The Moby Project - a collaborative project for the container ecosystem to assemble container-based systems",
+    "forksCount": 18959,
+    "fullName": "moby/moby",
+    "id": "MDEwOlJlcG9zaXRvcnk3NjkxNjMx",
+    "language": "Go",
+    "name": "moby",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjI3MjU5MTk3",
+      "is_bot": false,
+      "login": "moby",
+      "type": "Organization",
+      "url": "https://github.com/moby"
+    },
+    "size": 261929,
+    "stargazersCount": 71640,
+    "updatedAt": "2026-06-08T12:59:20Z",
+    "url": "https://github.com/moby/moby",
+    "watchersCount": 71640
+  },
+  {
+    "createdAt": "2023-06-26T19:39:32Z",
+    "description": "Get up and running with Kimi-K2.6, GLM-5.1, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
+    "forksCount": 16511,
+    "fullName": "ollama/ollama",
+    "id": "R_kgDOJ0Z1Pg",
+    "language": "Go",
+    "name": "ollama",
+    "owner": {
+      "id": "O_kgDOCQpc8w",
+      "is_bot": false,
+      "login": "ollama",
+      "type": "Organization",
+      "url": "https://github.com/ollama"
+    },
+    "size": 84968,
+    "stargazersCount": 173573,
+    "updatedAt": "2026-06-08T13:07:00Z",
+    "url": "https://github.com/ollama/ollama",
+    "watchersCount": 173573
+  },
+  {
+    "createdAt": "2015-11-24T17:05:28Z",
+    "description": "⚠️(OBSOLETE) Curated applications for Kubernetes",
+    "forksCount": 16370,
+    "fullName": "helm/charts",
+    "id": "MDEwOlJlcG9zaXRvcnk0NjgwNjE4NA==",
+    "language": "Go",
+    "name": "charts",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjE1ODU5ODg4",
+      "is_bot": false,
+      "login": "helm",
+      "type": "Organization",
+      "url": "https://github.com/helm"
+    },
+    "size": 291410,
+    "stargazersCount": 15427,
+    "updatedAt": "2026-06-07T19:46:01Z",
+    "url": "https://github.com/helm/charts",
+    "watchersCount": 15427
+  },
+  {
+    "createdAt": "2015-12-21T15:24:59Z",
+    "description": "A fast reverse proxy to help you expose a local server behind a NAT or firewall to the internet.",
+    "forksCount": 15060,
+    "fullName": "fatedier/frp",
+    "id": "MDEwOlJlcG9zaXRvcnk0ODM3ODk0Nw==",
+    "language": "Go",
+    "name": "frp",
+    "owner": {
+      "id": "MDQ6VXNlcjczNDY2NjE=",
+      "is_bot": false,
+      "login": "fatedier",
+      "type": "User",
+      "url": "https://github.com/fatedier"
+    },
+    "size": 32199,
+    "stargazersCount": 107179,
+    "updatedAt": "2026-06-08T13:00:21Z",
+    "url": "https://github.com/fatedier/frp",
+    "watchersCount": 107179
+  },
+  {
+    "createdAt": "2020-11-06T15:19:27Z",
+    "description": "The community maintained Solana token registry",
+    "forksCount": 15015,
+    "fullName": "solana-labs/token-list",
+    "id": "MDEwOlJlcG9zaXRvcnkzMTA2MzIxMzM=",
+    "language": "Go",
+    "name": "token-list",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjM1NjA4MjU5",
+      "is_bot": false,
+      "login": "solana-labs",
+      "type": "Organization",
+      "url": "https://github.com/solana-labs"
+    },
+    "size": 1566982,
+    "stargazersCount": 1664,
+    "updatedAt": "2026-06-06T22:06:55Z",
+    "url": "https://github.com/solana-labs/token-list",
+    "watchersCount": 1664
+  },
+  {
+    "createdAt": "2024-10-30T11:39:07Z",
+    "description": "The official go implementation of the Canopy Network protocol",
+    "forksCount": 14135,
+    "fullName": "canopy-network/canopy",
+    "id": "R_kgDONH_zJQ",
+    "language": "Go",
+    "name": "canopy",
+    "owner": {
+      "id": "O_kgDOCvDOew",
+      "is_bot": false,
+      "login": "canopy-network",
+      "type": "Organization",
+      "url": "https://github.com/canopy-network"
+    },
+    "size": 38306,
+    "stargazersCount": 11126,
+    "updatedAt": "2026-06-08T11:26:04Z",
+    "url": "https://github.com/canopy-network/canopy",
+    "watchersCount": 11126
+  }
+]

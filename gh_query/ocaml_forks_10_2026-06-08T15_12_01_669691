@@ -1,0 +1,212 @@
+[
+  {
+    "createdAt": "2015-01-26T11:19:13Z",
+    "description": "A static analyzer for Java, C, C++, and Objective-C",
+    "forksCount": 2093,
+    "fullName": "facebook/infer",
+    "id": "MDEwOlJlcG9zaXRvcnkyOTg1Nzc5OQ==",
+    "language": "OCaml",
+    "name": "infer",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjY5NjMx",
+      "is_bot": false,
+      "login": "facebook",
+      "type": "Organization",
+      "url": "https://github.com/facebook"
+    },
+    "size": 250390,
+    "stargazersCount": 15637,
+    "updatedAt": "2026-06-08T02:23:36Z",
+    "url": "https://github.com/facebook/infer",
+    "watchersCount": 15637
+  },
+  {
+    "createdAt": "2012-11-20T22:18:22Z",
+    "description": "The core OCaml system: compilers, runtime system, base libraries",
+    "forksCount": 1237,
+    "fullName": "ocaml/ocaml",
+    "id": "MDEwOlJlcG9zaXRvcnk2Nzg2MTY2",
+    "language": "OCaml",
+    "name": "ocaml",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjE4NDE0ODM=",
+      "is_bot": false,
+      "login": "ocaml",
+      "type": "Organization",
+      "url": "https://github.com/ocaml"
+    },
+    "size": 401737,
+    "stargazersCount": 6413,
+    "updatedAt": "2026-06-08T02:13:32Z",
+    "url": "https://github.com/ocaml/ocaml",
+    "watchersCount": 6413
+  },
+  {
+    "createdAt": "2019-12-13T09:29:54Z",
+    "description": "Lightweight static analysis for many languages. Find bug variants with patterns that look like source code.",
+    "forksCount": 955,
+    "fullName": "semgrep/semgrep",
+    "id": "MDEwOlJlcG9zaXRvcnkyMjc4MDM4MTU=",
+    "language": "OCaml",
+    "name": "semgrep",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjI5NzYwOTM3",
+      "is_bot": false,
+      "login": "semgrep",
+      "type": "Organization",
+      "url": "https://github.com/semgrep"
+    },
+    "size": 97970,
+    "stargazersCount": 15436,
+    "updatedAt": "2026-06-08T12:10:07Z",
+    "url": "https://github.com/semgrep/semgrep",
+    "watchersCount": 15436
+  },
+  {
+    "createdAt": "2011-02-17T05:49:37Z",
+    "description": "The Rocq Prover is an interactive theorem prover, or proof assistant. It provides a formal language to write mathematical definitions, executable algorithms and theorems together with an environment for semi-interactive development of machine-checked proofs.",
+    "forksCount": 734,
+    "fullName": "rocq-prover/rocq",
+    "id": "MDEwOlJlcG9zaXRvcnkxMzc3MTU5",
+    "language": "OCaml",
+    "name": "rocq",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjYyMTE5OA==",
+      "is_bot": false,
+      "login": "rocq-prover",
+      "type": "Organization",
+      "url": "https://github.com/rocq-prover"
+    },
+    "size": 214534,
+    "stargazersCount": 5473,
+    "updatedAt": "2026-06-08T09:41:10Z",
+    "url": "https://github.com/rocq-prover/rocq",
+    "watchersCount": 5473
+  },
+  {
+    "createdAt": "2017-12-18T01:10:17Z",
+    "description": "Mina is a cryptocurrency protocol with a constant size blockchain, improving scaling while maintaining decentralization and security.",
+    "forksCount": 586,
+    "fullName": "MinaProtocol/mina",
+    "id": "MDEwOlJlcG9zaXRvcnkxMTQ1ODEzMjY=",
+    "language": "OCaml",
+    "name": "mina",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjM5MTAzOTIy",
+      "is_bot": false,
+      "login": "MinaProtocol",
+      "type": "Organization",
+      "url": "https://github.com/MinaProtocol"
+    },
+    "size": 1313081,
+    "stargazersCount": 2118,
+    "updatedAt": "2026-06-08T10:21:31Z",
+    "url": "https://github.com/MinaProtocol/mina",
+    "watchersCount": 2118
+  },
+  {
+    "createdAt": "2016-10-30T18:42:23Z",
+    "description": "A composable build system for OCaml.",
+    "forksCount": 480,
+    "fullName": "ocaml/dune",
+    "id": "MDEwOlJlcG9zaXRvcnk3MjM2ODA1MA==",
+    "language": "OCaml",
+    "name": "dune",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjE4NDE0ODM=",
+      "is_bot": false,
+      "login": "ocaml",
+      "type": "Organization",
+      "url": "https://github.com/ocaml"
+    },
+    "size": 173066,
+    "stargazersCount": 1883,
+    "updatedAt": "2026-06-08T11:04:12Z",
+    "url": "https://github.com/ocaml/dune",
+    "watchersCount": 1883
+  },
+  {
+    "createdAt": "2020-12-06T17:52:42Z",
+    "description": "Notes and source code for a semester-long course introducing Programming Language fundamentals",
+    "forksCount": 459,
+    "fullName": "ebonelli/PLaF",
+    "id": "MDEwOlJlcG9zaXRvcnkzMTkwOTU1NjY=",
+    "language": "OCaml",
+    "name": "PLaF",
+    "owner": {
+      "id": "MDQ6VXNlcjk3NDk2OQ==",
+      "is_bot": false,
+      "login": "ebonelli",
+      "type": "User",
+      "url": "https://github.com/ebonelli"
+    },
+    "size": 22230,
+    "stargazersCount": 47,
+    "updatedAt": "2026-05-28T22:37:29Z",
+    "url": "https://github.com/ebonelli/PLaF",
+    "watchersCount": 47
+  },
+  {
+    "createdAt": "2017-11-10T17:31:36Z",
+    "description": "Performant type-checking for python.",
+    "forksCount": 452,
+    "fullName": "facebook/pyre-check",
+    "id": "MDEwOlJlcG9zaXRvcnkxMTAyNzQ0ODg=",
+    "language": "OCaml",
+    "name": "pyre-check",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjY5NjMx",
+      "is_bot": false,
+      "login": "facebook",
+      "type": "Organization",
+      "url": "https://github.com/facebook"
+    },
+    "size": 589685,
+    "stargazersCount": 7165,
+    "updatedAt": "2026-06-07T19:27:13Z",
+    "url": "https://github.com/facebook/pyre-check",
+    "watchersCount": 7165
+  },
+  {
+    "createdAt": "2015-11-16T08:22:32Z",
+    "description": "Simple, fast & type safe code that leverages the JavaScript & OCaml ecosystems",
+    "forksCount": 434,
+    "fullName": "reasonml/reason",
+    "id": "MDEwOlJlcG9zaXRvcnk0NjI2MTQwNA==",
+    "language": "OCaml",
+    "name": "reason",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjIwNDE0NTI1",
+      "is_bot": false,
+      "login": "reasonml",
+      "type": "Organization",
+      "url": "https://github.com/reasonml"
+    },
+    "size": 25632,
+    "stargazersCount": 10312,
+    "updatedAt": "2026-06-06T08:39:15Z",
+    "url": "https://github.com/reasonml/reason",
+    "watchersCount": 10312
+  },
+  {
+    "createdAt": "2012-02-17T20:55:44Z",
+    "description": "opam is a source-based package manager. It supports multiple simultaneous compiler installations, flexible package constraints, and a Git-friendly development workflow.",
+    "forksCount": 398,
+    "fullName": "ocaml/opam",
+    "id": "MDEwOlJlcG9zaXRvcnkzNDczNzY3",
+    "language": "OCaml",
+    "name": "opam",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjE4NDE0ODM=",
+      "is_bot": false,
+      "login": "ocaml",
+      "type": "Organization",
+      "url": "https://github.com/ocaml"
+    },
+    "size": 42438,
+    "stargazersCount": 1365,
+    "updatedAt": "2026-06-08T11:34:59Z",
+    "url": "https://github.com/ocaml/opam",
+    "watchersCount": 1365
+  }
+]
