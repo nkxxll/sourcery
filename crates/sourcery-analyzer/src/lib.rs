@@ -21,7 +21,10 @@ use crate::{
     diff::CommitDiff,
     git_handler::{CommitInfo, SourceRepository},
     language::{LanguageConfig, ProgrammingLanguage},
-    processor::{AggregatedFileMetrics, Analysis, FileMetrics, NewLineMap, Processor},
+    processor::{
+        AggregatedFileMetrics, Analysis, FileMetrics, FunctionAnalysis, FunctionCall, NewLineMap,
+        Processor,
+    },
     progress::Progress,
 };
 
@@ -531,14 +534,26 @@ async fn store_file_analysis(
     db::delete_functions_by_file(pool, file.id).await?;
 
     for func in &analysis.functions {
-        let functions_called: Vec<String> = func
-            .functions_called
+        let calls = graph_function_calls(func);
+        let functions_called: Vec<String> = calls
             .iter()
-            .map(|call| call.name.to_string())
+            .map(|call| call.name.clone())
             .collect::<BTreeSet<_>>()
             .into_iter()
             .collect();
-        let function_calls: Vec<serde_json::Value> = func
+        let function_calls: Vec<serde_json::Value> = calls
+            .iter()
+            .map(|call| {
+                json!({
+                    "name": call.name,
+                    "file": call.file,
+                    "line": call.line,
+                    "column": call.column,
+                    "definition_found": call.definition_found,
+                })
+            })
+            .collect();
+        let syntax_function_calls: Vec<serde_json::Value> = func
             .functions_called
             .iter()
             .map(|call| {
@@ -557,9 +572,8 @@ async fn store_file_analysis(
             .iter()
             .filter(|candidate| candidate.function_name != func.function_name)
             .filter(|candidate| {
-                candidate
-                    .functions_called
-                    .iter()
+                graph_function_calls(candidate)
+                    .into_iter()
                     .any(|called| called.name == func.function_name)
             })
             .map(|candidate| {
@@ -602,6 +616,7 @@ async fn store_file_analysis(
             },
             "functions_called": functions_called,
             "function_calls": function_calls,
+            "syntax_function_calls": syntax_function_calls,
             "references": references,
             "indegree": indegree,
             "outdegree": outdegree,
@@ -622,6 +637,59 @@ async fn store_file_analysis(
         file,
         metrics: file_metrics,
     })
+}
+
+struct GraphFunctionCall {
+    name: String,
+    file: String,
+    line: usize,
+    column: usize,
+    definition_found: bool,
+}
+
+fn graph_function_calls(function: &FunctionAnalysis) -> Vec<GraphFunctionCall> {
+    let mut calls = Vec::new();
+    let mut seen_definitions = BTreeSet::new();
+    let mut enhanced_names = BTreeSet::new();
+
+    for call in &function.enriched_calls {
+        enhanced_names.insert(call.name.to_string());
+        if seen_definitions.insert(function_call_key(call)) {
+            calls.push(GraphFunctionCall {
+                name: call.name.to_string(),
+                file: call.file.display().to_string(),
+                line: call.pos.line,
+                column: call.pos.column,
+                definition_found: true,
+            });
+        }
+    }
+
+    let mut unresolved_names = BTreeSet::new();
+    for call in &function.functions_called {
+        let name = call.name.to_string();
+        if enhanced_names.contains(&name) || !unresolved_names.insert(name.clone()) {
+            continue;
+        }
+        calls.push(GraphFunctionCall {
+            name,
+            file: String::new(),
+            line: 0,
+            column: 0,
+            definition_found: false,
+        });
+    }
+
+    calls
+}
+
+fn function_call_key(call: &FunctionCall) -> (String, String, usize, usize) {
+    (
+        call.name.to_string(),
+        call.file.display().to_string(),
+        call.pos.line,
+        call.pos.column,
+    )
 }
 
 async fn store_file_states(

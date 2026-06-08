@@ -11,6 +11,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
+    "fmt": "prettier --write .",
     "format": "prettier --write . && eslint --fix",
     "check": "prettier --check ."
   },

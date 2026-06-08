@@ -10,7 +10,7 @@ use sourcery_db::{
     Codebase, Diff, DiffWithChanges, File, FileState, FilenameSearchResult, FunctionSearchResult,
     PgPool, Version, VersionFunction,
 };
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
 
 #[derive(Parser, Debug)]
@@ -61,6 +61,12 @@ async fn main() -> anyhow::Result<()> {
         .route("/version/{id}/files/search", get(search_version_filenames))
         .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/diffchange", get(get_version_diff_change))
+        .route("/version/{id}/callgraph", get(list_version_callgraph))
+        .route("/version/{id}/treemap/files", get(list_version_treemap_files))
+        .route(
+            "/version/{id}/treemap/functions",
+            get(list_version_treemap_functions),
+        )
         .route("/version/{id}/functions", get(list_version_functions))
         .route(
             "/version/{id}/functions/{function_id}",
@@ -275,6 +281,125 @@ async fn list_version_functions(
     .await
     .map_err(internal_error)?;
     Ok(Json(functions))
+}
+
+async fn list_version_callgraph(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let mut functions = sourcery_db::list_all_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    for function in &mut functions {
+        normalize_callgraph_metrics(function);
+    }
+    Ok(Json(functions))
+}
+
+async fn list_version_treemap_files(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FileState>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let files = sourcery_db::list_all_files_states(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(files))
+}
+
+async fn list_version_treemap_functions(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let functions = sourcery_db::list_all_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(functions))
+}
+
+fn normalize_callgraph_metrics(function: &mut VersionFunction) {
+    let Some(metrics) = function.metrics.as_object_mut() else {
+        return;
+    };
+
+    let mut normalized = Vec::new();
+    let mut seen_keys = BTreeSet::new();
+    let mut resolved_names = BTreeSet::new();
+    let mut unresolved_names = BTreeSet::new();
+
+    if let Some(calls) = metrics
+        .get("function_calls")
+        .and_then(serde_json::Value::as_array)
+    {
+        for call in calls {
+            let name = call.get("name").and_then(serde_json::Value::as_str);
+            let Some(name) = name else {
+                continue;
+            };
+            let file = call
+                .get("file")
+                .and_then(serde_json::Value::as_str)
+                .unwrap_or_default();
+            let line = call
+                .get("line")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_default();
+            let column = call
+                .get("column")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_default();
+            let definition_found = call
+                .get("definition_found")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(false);
+
+            if !definition_found || file.is_empty() || line == 0 || column == 0 {
+                unresolved_names.insert(name.to_string());
+                continue;
+            }
+
+            let key = format!("{file}:{name}:{line}:{column}");
+            if !seen_keys.insert(key.clone()) {
+                continue;
+            }
+            resolved_names.insert(name.to_string());
+            normalized.push(serde_json::json!({
+                "key": key,
+                "name": name,
+                "file": file,
+                "line": line,
+                "column": column,
+                "definition_found": true,
+            }));
+        }
+    }
+
+    if let Some(names) = metrics
+        .get("functions_called")
+        .and_then(serde_json::Value::as_array)
+    {
+        for name in names.iter().filter_map(serde_json::Value::as_str) {
+            unresolved_names.insert(name.to_string());
+        }
+    }
+
+    for name in unresolved_names {
+        if resolved_names.contains(&name) || !seen_keys.insert(name.clone()) {
+            continue;
+        }
+        normalized.push(serde_json::json!({
+            "key": name,
+            "name": name,
+            "file": "",
+            "line": 0,
+            "column": 0,
+            "definition_found": false,
+        }));
+    }
+
+    metrics.insert("function_calls".to_string(), normalized.into());
 }
 
 async fn get_version_function(

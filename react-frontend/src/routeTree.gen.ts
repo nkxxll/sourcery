@@ -15,6 +15,7 @@ import { Route as FunctionFunctionIDRouteImport } from './routes/function.$funct
 import { Route as FileFileIDRouteImport } from './routes/file.$fileID'
 import { Route as CodebaseIdRouteImport } from './routes/codebase.$id'
 import { Route as CallgraphVersionIDRouteImport } from './routes/callgraph.$versionID'
+import { Route as TreemapVersionIDKindRouteImport } from './routes/treemap.$versionID.$kind'
 import { Route as CodebaseIdStatsRouteImport } from './routes/codebase.$id.stats'
 import { Route as CodebaseIdDiffRouteImport } from './routes/codebase.$id.diff'
 
@@ -48,6 +49,11 @@ const CallgraphVersionIDRoute = CallgraphVersionIDRouteImport.update({
   path: '/callgraph/$versionID',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TreemapVersionIDKindRoute = TreemapVersionIDKindRouteImport.update({
+  id: '/treemap/$versionID/$kind',
+  path: '/treemap/$versionID/$kind',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CodebaseIdStatsRoute = CodebaseIdStatsRouteImport.update({
   id: '/stats',
   path: '/stats',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
+  '/treemap/$versionID/$kind': typeof TreemapVersionIDKindRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
+  '/treemap/$versionID/$kind': typeof TreemapVersionIDKindRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
+  '/treemap/$versionID/$kind': typeof TreemapVersionIDKindRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
+    | '/treemap/$versionID/$kind'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
+    | '/treemap/$versionID/$kind'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
+    | '/treemap/$versionID/$kind'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   FileFileIDRoute: typeof FileFileIDRoute
   FunctionFunctionIDRoute: typeof FunctionFunctionIDRoute
   VersionVersionIdRoute: typeof VersionVersionIdRoute
+  TreemapVersionIDKindRoute: typeof TreemapVersionIDKindRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -176,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CallgraphVersionIDRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/treemap/$versionID/$kind': {
+      id: '/treemap/$versionID/$kind'
+      path: '/treemap/$versionID/$kind'
+      fullPath: '/treemap/$versionID/$kind'
+      preLoaderRoute: typeof TreemapVersionIDKindRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/codebase/$id/stats': {
       id: '/codebase/$id/stats'
       path: '/stats'
@@ -214,6 +234,7 @@ const rootRouteChildren: RootRouteChildren = {
   FileFileIDRoute: FileFileIDRoute,
   FunctionFunctionIDRoute: FunctionFunctionIDRoute,
   VersionVersionIdRoute: VersionVersionIdRoute,
+  TreemapVersionIDKindRoute: TreemapVersionIDKindRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -142,6 +142,20 @@ function VersionDashboardPage() {
           </div>
           <div className="flex items-center gap-4">
             <Link
+              to="/treemap/$versionID/$kind"
+              params={{ versionID: versionId, kind: 'files' }}
+              className="text-sm font-medium text-[#0f3f88] underline"
+            >
+              Treemap files
+            </Link>
+            <Link
+              to="/treemap/$versionID/$kind"
+              params={{ versionID: versionId, kind: 'functions' }}
+              className="text-sm font-medium text-[#0f3f88] underline"
+            >
+              Treemap functions
+            </Link>
+            <Link
               to="/callgraph/$versionID"
               params={{ versionID: versionId }}
               className="text-sm font-medium text-[#0f3f88] underline"
