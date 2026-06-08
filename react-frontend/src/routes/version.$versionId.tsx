@@ -140,18 +140,18 @@ function VersionDashboardPage() {
               {version.commit_hash}
             </h2>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Link
               to="/treemap/$versionID/$kind"
               params={{ versionID: versionId, kind: 'files' }}
-              className="text-sm font-medium text-[#0f3f88] underline"
+              className="rounded border-2 border-[#f59e0b] px-3 py-1.5 text-sm font-medium text-[#0f3f88] hover:bg-[#fff7ed]"
             >
               Treemap files
             </Link>
             <Link
               to="/treemap/$versionID/$kind"
               params={{ versionID: versionId, kind: 'functions' }}
-              className="text-sm font-medium text-[#0f3f88] underline"
+              className="rounded border border-[#d0d7de] px-3 py-1.5 text-sm font-medium text-[#0f3f88] hover:bg-[#f6f8fa]"
             >
               Treemap functions
             </Link>
