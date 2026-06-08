@@ -10,19 +10,42 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as VersionVersionIdRouteImport } from './routes/version.$versionId'
+import { Route as FunctionFunctionIDRouteImport } from './routes/function.$functionID'
+import { Route as FileFileIDRouteImport } from './routes/file.$fileID'
 import { Route as CodebaseIdRouteImport } from './routes/codebase.$id'
+import { Route as CallgraphVersionIDRouteImport } from './routes/callgraph.$versionID'
 import { Route as CodebaseIdStatsRouteImport } from './routes/codebase.$id.stats'
 import { Route as CodebaseIdDiffRouteImport } from './routes/codebase.$id.diff'
-import { Route as CodebaseIdVersionVersionIdRouteImport } from './routes/codebase.$id.version.$versionId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VersionVersionIdRoute = VersionVersionIdRouteImport.update({
+  id: '/version/$versionId',
+  path: '/version/$versionId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FunctionFunctionIDRoute = FunctionFunctionIDRouteImport.update({
+  id: '/function/$functionID',
+  path: '/function/$functionID',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FileFileIDRoute = FileFileIDRouteImport.update({
+  id: '/file/$fileID',
+  path: '/file/$fileID',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CodebaseIdRoute = CodebaseIdRouteImport.update({
   id: '/codebase/$id',
   path: '/codebase/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallgraphVersionIDRoute = CallgraphVersionIDRouteImport.update({
+  id: '/callgraph/$versionID',
+  path: '/callgraph/$versionID',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CodebaseIdStatsRoute = CodebaseIdStatsRouteImport.update({
@@ -35,62 +58,78 @@ const CodebaseIdDiffRoute = CodebaseIdDiffRouteImport.update({
   path: '/diff',
   getParentRoute: () => CodebaseIdRoute,
 } as any)
-const CodebaseIdVersionVersionIdRoute =
-  CodebaseIdVersionVersionIdRouteImport.update({
-    id: '/version/$versionId',
-    path: '/version/$versionId',
-    getParentRoute: () => CodebaseIdRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/file/$fileID': typeof FileFileIDRoute
+  '/function/$functionID': typeof FunctionFunctionIDRoute
+  '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
-  '/codebase/$id/version/$versionId': typeof CodebaseIdVersionVersionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/file/$fileID': typeof FileFileIDRoute
+  '/function/$functionID': typeof FunctionFunctionIDRoute
+  '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
-  '/codebase/$id/version/$versionId': typeof CodebaseIdVersionVersionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
+  '/file/$fileID': typeof FileFileIDRoute
+  '/function/$functionID': typeof FunctionFunctionIDRoute
+  '/version/$versionId': typeof VersionVersionIdRoute
   '/codebase/$id/diff': typeof CodebaseIdDiffRoute
   '/codebase/$id/stats': typeof CodebaseIdStatsRoute
-  '/codebase/$id/version/$versionId': typeof CodebaseIdVersionVersionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/callgraph/$versionID'
     | '/codebase/$id'
+    | '/file/$fileID'
+    | '/function/$functionID'
+    | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
-    | '/codebase/$id/version/$versionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/callgraph/$versionID'
     | '/codebase/$id'
+    | '/file/$fileID'
+    | '/function/$functionID'
+    | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
-    | '/codebase/$id/version/$versionId'
   id:
     | '__root__'
     | '/'
+    | '/callgraph/$versionID'
     | '/codebase/$id'
+    | '/file/$fileID'
+    | '/function/$functionID'
+    | '/version/$versionId'
     | '/codebase/$id/diff'
     | '/codebase/$id/stats'
-    | '/codebase/$id/version/$versionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CallgraphVersionIDRoute: typeof CallgraphVersionIDRoute
   CodebaseIdRoute: typeof CodebaseIdRouteWithChildren
+  FileFileIDRoute: typeof FileFileIDRoute
+  FunctionFunctionIDRoute: typeof FunctionFunctionIDRoute
+  VersionVersionIdRoute: typeof VersionVersionIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,11 +141,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/version/$versionId': {
+      id: '/version/$versionId'
+      path: '/version/$versionId'
+      fullPath: '/version/$versionId'
+      preLoaderRoute: typeof VersionVersionIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/function/$functionID': {
+      id: '/function/$functionID'
+      path: '/function/$functionID'
+      fullPath: '/function/$functionID'
+      preLoaderRoute: typeof FunctionFunctionIDRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/file/$fileID': {
+      id: '/file/$fileID'
+      path: '/file/$fileID'
+      fullPath: '/file/$fileID'
+      preLoaderRoute: typeof FileFileIDRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/codebase/$id': {
       id: '/codebase/$id'
       path: '/codebase/$id'
       fullPath: '/codebase/$id'
       preLoaderRoute: typeof CodebaseIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callgraph/$versionID': {
+      id: '/callgraph/$versionID'
+      path: '/callgraph/$versionID'
+      fullPath: '/callgraph/$versionID'
+      preLoaderRoute: typeof CallgraphVersionIDRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/codebase/$id/stats': {
@@ -123,26 +190,17 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CodebaseIdDiffRouteImport
       parentRoute: typeof CodebaseIdRoute
     }
-    '/codebase/$id/version/$versionId': {
-      id: '/codebase/$id/version/$versionId'
-      path: '/version/$versionId'
-      fullPath: '/codebase/$id/version/$versionId'
-      preLoaderRoute: typeof CodebaseIdVersionVersionIdRouteImport
-      parentRoute: typeof CodebaseIdRoute
-    }
   }
 }
 
 interface CodebaseIdRouteChildren {
   CodebaseIdDiffRoute: typeof CodebaseIdDiffRoute
   CodebaseIdStatsRoute: typeof CodebaseIdStatsRoute
-  CodebaseIdVersionVersionIdRoute: typeof CodebaseIdVersionVersionIdRoute
 }
 
 const CodebaseIdRouteChildren: CodebaseIdRouteChildren = {
   CodebaseIdDiffRoute: CodebaseIdDiffRoute,
   CodebaseIdStatsRoute: CodebaseIdStatsRoute,
-  CodebaseIdVersionVersionIdRoute: CodebaseIdVersionVersionIdRoute,
 }
 
 const CodebaseIdRouteWithChildren = CodebaseIdRoute._addFileChildren(
@@ -151,7 +209,11 @@ const CodebaseIdRouteWithChildren = CodebaseIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CallgraphVersionIDRoute: CallgraphVersionIDRoute,
   CodebaseIdRoute: CodebaseIdRouteWithChildren,
+  FileFileIDRoute: FileFileIDRoute,
+  FunctionFunctionIDRoute: FunctionFunctionIDRoute,
+  VersionVersionIdRoute: VersionVersionIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -4,7 +4,7 @@ import { Search } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 
-export const Route = createFileRoute('/codebase/$id/version/$versionId')({
+export const Route = createFileRoute('/version/$versionId')({
   component: VersionDashboardPage,
 })
 
@@ -39,7 +39,7 @@ type FunctionSearchResult = {
 }
 
 function VersionDashboardPage() {
-  const { id, versionId } = Route.useParams()
+  const { versionId } = Route.useParams()
   const [filenameQuery, setFilenameQuery] = useState('')
   const [functionQuery, setFunctionQuery] = useState('')
 
@@ -140,13 +140,22 @@ function VersionDashboardPage() {
               {version.commit_hash}
             </h2>
           </div>
-          <Link
-            to="/codebase/$id"
-            params={{ id }}
-            className="text-sm font-medium text-[#0f3f88] underline"
-          >
-            Back to codebase
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              to="/callgraph/$versionID"
+              params={{ versionID: versionId }}
+              className="text-sm font-medium text-[#0f3f88] underline"
+            >
+              Callgraph
+            </Link>
+            <Link
+              to="/codebase/$id"
+              params={{ id: version.codebase_id }}
+              className="text-sm font-medium text-[#0f3f88] underline"
+            >
+              Back to codebase
+            </Link>
+          </div>
         </div>
         <dl className="grid gap-4 text-sm text-[#4d4f53] sm:grid-cols-2">
           <div>
@@ -277,8 +286,14 @@ function FilenameResults({ rows }: { rows: FilenameSearchResult[] }) {
               key={row.file_state_id}
               className="border-b border-[#d0d7de] last:border-0"
             >
-              <td className="max-w-[28rem] break-all px-3 py-2 font-mono text-xs text-[#24292f]">
-                {row.path}
+              <td className="max-w-[28rem] break-all px-3 py-2 font-mono text-xs">
+                <Link
+                  to="/file/$fileID"
+                  params={{ fileID: row.file_state_id }}
+                  className="font-semibold text-[#0f3f88] underline"
+                >
+                  {row.path}
+                </Link>
               </td>
               <td className="whitespace-nowrap px-3 py-2 text-[#4d4f53]">
                 {row.status}
@@ -322,9 +337,13 @@ function FunctionResults({ rows }: { rows: FunctionSearchResult[] }) {
               className="border-b border-[#d0d7de] last:border-0"
             >
               <td className="whitespace-nowrap px-3 py-2">
-                <div className="font-mono text-xs font-semibold text-[#24292f]">
+                <Link
+                  to="/function/$functionID"
+                  params={{ functionID: row.function_id }}
+                  className="font-mono text-xs font-semibold text-[#0f3f88] underline"
+                >
                   {row.name}
-                </div>
+                </Link>
                 <div className="text-xs text-[#6b6e73]">
                   {row.start_line}-{row.end_line}
                 </div>

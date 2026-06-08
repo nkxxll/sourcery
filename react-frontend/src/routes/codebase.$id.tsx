@@ -29,9 +29,18 @@ const METRIC_OPTIONS = [
   { key: 'total_cyclomatic', label: 'Cyclomatic' },
   { key: 'files', label: 'Files' },
   { key: 'mean_lines_of_code_per_file', label: 'Mean LOC/File' },
-  { key: 'mean_effective_lines_of_code_per_file', label: 'Mean Effective LOC/File' },
-  { key: 'mean_comment_lines_of_code_per_file', label: 'Mean Comment LOC/File' },
-  { key: 'mean_bracket_lines_of_code_per_file', label: 'Mean Bracket LOC/File' },
+  {
+    key: 'mean_effective_lines_of_code_per_file',
+    label: 'Mean Effective LOC/File',
+  },
+  {
+    key: 'mean_comment_lines_of_code_per_file',
+    label: 'Mean Comment LOC/File',
+  },
+  {
+    key: 'mean_bracket_lines_of_code_per_file',
+    label: 'Mean Bracket LOC/File',
+  },
   { key: 'mean_cyclomatic_complexity_per_file', label: 'Mean Cyclomatic/File' },
 ]
 
@@ -159,7 +168,6 @@ function CodebasePage() {
           </>
         )}
       </section>
-      <Outlet />
     </div>
   )
 }
@@ -436,7 +444,9 @@ function CodebaseMetricsTable({
   }
 
   const metricsToDisplay = METRIC_OPTIONS.filter(({ key }) =>
-    sortedVersions.some((v) => toNumber(toMetricsRecord(v.metrics)[key]) !== null),
+    sortedVersions.some(
+      (v) => toNumber(toMetricsRecord(v.metrics)[key]) !== null,
+    ),
   )
 
   const handleHeaderClick = (key: string) => {
@@ -493,7 +503,7 @@ function CodebaseMetricsTable({
               key={version.id}
               className="border-b border-[#d0d7de] hover:bg-[#f6f8fa] cursor-pointer transition-colors"
               onClick={() => {
-                window.location.href = `/codebase/${codebaseId}/version/${version.id}`
+                window.location.href = `/version/${version.id}`
               }}
             >
               <td className="px-4 py-3 text-sm text-[#0f3f88] font-medium whitespace-nowrap">
