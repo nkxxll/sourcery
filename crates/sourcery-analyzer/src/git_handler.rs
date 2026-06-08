@@ -192,6 +192,12 @@ impl SourceRepository {
         if self.is_path_ignored(path)? {
             return Ok(true);
         }
+
+        // @waring: this is just a test remove
+        // if path.to_string_lossy().contains("test") {
+        //     return Ok(true);
+        // }
+
         // and some other options
         match path.extension() {
             Some(ex) => {

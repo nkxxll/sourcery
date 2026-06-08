@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use ecow::EcoString;
 use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket};
 use tracing::{debug, info, warn};
@@ -234,7 +234,14 @@ impl<'processor> Processor<'processor> {
                 match ast_processor
                     .enricht_analysis(syntax.functions.clone(), &mut sock)
                     .await
-                {
+                    .with_context(|| {
+                        format!(
+                            "lsp enrichment failed for {} functions in {} ({})",
+                            syntax.functions.len(),
+                            self.source.file().display(),
+                            self.uri
+                        )
+                    }) {
                     Ok(enriched) => {
                         debug!(file = %self.source.file().display(), "finished lsp enrichment");
                         Some(enriched)
@@ -1018,14 +1025,36 @@ impl<'processor> AstProcessor<'processor> {
                 .functions_called
                 .iter()
                 .map(|f| (f.name.clone(), f.pos.to_lsp_position()));
+            let function_line = range.start.line + 1;
+            let function_character = range.start.character + 1;
             info!(uri = %self.uri, "before refereneces");
             let references = self
                 .find_references((function_name.clone(), range.start), &mut ref_socket)
-                .await?;
+                .await
+                .with_context(|| {
+                    format!(
+                        "lsp find_references failed while enriching function `{}` at {}:{} in {} ({})",
+                        function_name,
+                        function_line,
+                        function_character,
+                        self.file.display(),
+                        self.uri
+                    )
+                })?;
             info!(uri = %self.uri, "before definitions");
             let calls = self
                 .get_enriched_calls(call_positions.collect(), socket)
-                .await?;
+                .await
+                .with_context(|| {
+                    format!(
+                        "lsp goto_definition failed while enriching calls from function `{}` at {}:{} in {} ({})",
+                        function_name,
+                        function_line,
+                        function_character,
+                        self.file.display(),
+                        self.uri
+                    )
+                })?;
             debug!(
                 file = %self.file.display(),
                 function = %function_name,
@@ -1053,15 +1082,31 @@ impl<'processor> AstProcessor<'processor> {
         let mut res_vec = Vec::new();
         for (name, call) in call_posisions {
             let uri = self.uri.clone();
+            let call_line = call.line;
+            let call_character = call.character;
             // todo this needs to be async for better perf
             debug!(
                 file = %self.file.display(),
                 function = %name,
-                line = call.line,
-                character = call.character + 2,
+                line = call_line,
+                character = call_character + 2,
                 "requesting goto_definition"
             );
-            let res = socket.goto_definition(uri, call).await?;
+            let res = socket
+                .goto_definition(uri.clone(), call)
+                .await
+                .with_context(|| {
+                    format!(
+                        "lsp goto_definition failed for call `{}` at {}:{} (lsp {}:{}) in {} ({})",
+                        name,
+                        call_line + 1,
+                        call_character + 1,
+                        call_line,
+                        call_character,
+                        self.file.display(),
+                        uri
+                    )
+                })?;
             debug!(
                 file = %self.file.display(),
                 function = %name,
@@ -1091,7 +1136,16 @@ impl<'processor> AstProcessor<'processor> {
                 }
                 res_vec.push(func_call);
             } else {
-                warn!(func_name=%name, "function name without definition");
+                warn!(
+                    file = %self.file.display(),
+                    uri = %self.uri,
+                    function = %name,
+                    line = call_line + 1,
+                    character = call_character + 1,
+                    lsp_line = call_line,
+                    lsp_character = call_character,
+                    "function name without definition"
+                );
             }
         }
         Ok(res_vec)
@@ -1104,6 +1158,7 @@ impl<'processor> AstProcessor<'processor> {
     ) -> Result<Option<Vec<FunctionCall>>> {
         let (name, call) = func;
         let line = call.line;
+        let lsp_character = call.character;
         let character = call.character + 2;
         let uri = SharedSocket::project_path_to_uri(&self.file)?;
         debug!(
@@ -1113,7 +1168,21 @@ impl<'processor> AstProcessor<'processor> {
             character,
             "requesting find_references"
         );
-        let res = socket.find_references(uri, call).await?;
+        let res = socket
+            .find_references(uri.clone(), call)
+            .await
+            .with_context(|| {
+                format!(
+                    "lsp find_references failed for function `{}` at {}:{} (lsp {}:{}) in {} ({})",
+                    name,
+                    line + 1,
+                    lsp_character + 1,
+                    line,
+                    lsp_character,
+                    self.file.display(),
+                    uri
+                )
+            })?;
         debug!(
             file = %self.file.display(),
             function = %name,
@@ -1227,8 +1296,9 @@ impl<'processor> AstProcessor<'processor> {
                 .cyclomatic_counts
                 .add_from_node(node, self.profile, classifier);
             if classifier.function_call.contains(kind) {
-                let name = self.get_function_call(node, self.source, &self.file)?;
-                frame.function_calls.push(name);
+                if let Some(name) = self.get_function_call(node, self.source, &self.file)? {
+                    frame.function_calls.push(name);
+                }
             }
         }
 
@@ -1251,12 +1321,24 @@ impl<'processor> AstProcessor<'processor> {
         Ok(())
     }
 
-    fn get_function_call(&self, node: Node, source: &str, file: &PathBuf) -> Result<FunctionCall> {
+    fn get_function_call(
+        &self,
+        node: Node,
+        source: &str,
+        file: &PathBuf,
+    ) -> Result<Option<FunctionCall>> {
         if let Some(field) = node.child_by_field_name("function") {
             // Some grammars (notably OCaml) wrap the callable in a parenthesized expression.
             // Use the wrapped callable node so byte/column mapping targets the symbol itself.
             let call_target = if field.kind() == "parenthesized_expression" {
                 CyclomaticCounts::first_named_child(field).unwrap_or(field)
+            } else if field.kind() == "func_literal" {
+                // filter out func literals like this
+                // func() {
+                //    fmt.Println("hello")
+                // }
+                // that are called immediately
+                return Ok(None);
             } else {
                 field
             };
@@ -1273,7 +1355,7 @@ impl<'processor> AstProcessor<'processor> {
                 },
                 file: file.clone(),
             };
-            return Ok(func_call);
+            return Ok(Some(func_call));
         }
         Err(anyhow::anyhow!("field not found"))
     }

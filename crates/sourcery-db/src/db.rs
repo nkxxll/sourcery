@@ -77,6 +77,7 @@ pub struct Function {
 pub struct VersionFunction {
     pub function_id: Uuid,
     pub file_id: Uuid,
+    pub version_id: Uuid,
     pub file_path: String,
     pub file_language: Option<String>,
     pub name: String,
@@ -630,6 +631,32 @@ pub async fn get_function_by_id(pool: &PgPool, id: Uuid) -> Result<Option<Functi
     Ok(row)
 }
 
+pub async fn get_version_function_by_id(
+    pool: &PgPool,
+    function_id: Uuid,
+) -> Result<Option<VersionFunction>> {
+    let row = sqlx::query_as::<_, VersionFunction>(
+        "SELECT
+             fn.id AS function_id,
+             fn.file_id,
+             f.version_id,
+             f.path AS file_path,
+             f.language AS file_language,
+             fn.name,
+             fn.start_line,
+             fn.end_line,
+             fn.metrics,
+             fn.created_at
+         FROM functions fn
+         JOIN files f ON f.id = fn.file_id
+         WHERE fn.id = $1",
+    )
+    .bind(function_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
 pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<Function>> {
     let rows = sqlx::query_as::<_, Function>(
         "SELECT * FROM functions WHERE file_id = $1 ORDER BY start_line",
@@ -638,6 +665,108 @@ pub async fn list_functions_by_file(pool: &PgPool, file_id: Uuid) -> Result<Vec<
     .fetch_all(pool)
     .await?;
     Ok(rows)
+}
+
+pub async fn get_file_state_by_id_for_version(
+    pool: &PgPool,
+    version_id: Uuid,
+    file_state_id: Uuid,
+) -> Result<Option<FileState>> {
+    let row = sqlx::query_as::<_, FileState>(
+        "WITH target AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            JOIN target t ON TRUE
+            WHERE fs.codebase_id = t.codebase_id
+              AND (
+                  v.created_at < t.created_at
+                  OR (v.created_at = t.created_at AND v.id <= t.id)
+              )
+        )
+        SELECT
+            id, codebase_id, version_id, path, file_id,
+            status, exists, source_path, metrics, created_at
+        FROM ranked
+        WHERE rank = 1
+          AND exists
+          AND id = $2",
+    )
+    .bind(version_id)
+    .bind(file_state_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
+}
+
+pub async fn get_file_state_by_id(pool: &PgPool, file_state_id: Uuid) -> Result<Option<FileState>> {
+    let row = sqlx::query_as::<_, FileState>("SELECT * FROM file_states WHERE id = $1")
+        .bind(file_state_id)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row)
+}
+
+pub async fn get_version_function_by_id_for_version(
+    pool: &PgPool,
+    version_id: Uuid,
+    function_id: Uuid,
+) -> Result<Option<VersionFunction>> {
+    let row = sqlx::query_as::<_, VersionFunction>(
+        "WITH target AS (
+            SELECT id, created_at, codebase_id
+            FROM versions
+            WHERE id = $1
+        ),
+        ranked_file_states AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            JOIN target t ON TRUE
+            WHERE fs.codebase_id = t.codebase_id
+              AND (
+                  v.created_at < t.created_at
+                  OR (v.created_at = t.created_at AND v.id <= t.id)
+              )
+        )
+        SELECT
+            fn.id AS function_id,
+            f.id AS file_id,
+            f.version_id,
+            fs.path AS file_path,
+            f.language AS file_language,
+            fn.name,
+            fn.start_line,
+            fn.end_line,
+            fn.metrics,
+            fn.created_at
+        FROM ranked_file_states fs
+        JOIN files f ON f.id = fs.file_id
+        JOIN functions fn ON fn.file_id = f.id
+        WHERE fs.rank = 1
+          AND fs.exists
+          AND fn.id = $2",
+    )
+    .bind(version_id)
+    .bind(function_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row)
 }
 
 pub async fn list_all_functions(pool: &PgPool, version_id: Uuid) -> Result<Vec<VersionFunction>> {
@@ -671,6 +800,7 @@ pub async fn list_all_functions(pool: &PgPool, version_id: Uuid) -> Result<Vec<V
           AND exists)
         SELECT fn.id AS function_id,
                fn.file_id,
+               f.version_id,
                f.path AS file_path,
                f.language AS file_language,
                fn.name,
@@ -697,6 +827,7 @@ pub async fn list_functions_by_version(
         "SELECT
              fn.id AS function_id,
              fn.file_id,
+             f.version_id,
              f.path AS file_path,
              f.language AS file_language,
              fn.name,
@@ -725,6 +856,7 @@ pub async fn list_functions_by_version_paginated(
         "SELECT
              fn.id AS function_id,
              fn.file_id,
+             f.version_id,
              f.path AS file_path,
              f.language AS file_language,
              fn.name,

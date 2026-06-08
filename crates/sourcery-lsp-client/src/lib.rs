@@ -8,11 +8,12 @@ use anyhow::{Result, anyhow};
 use async_lsp::concurrency::{Concurrency, ConcurrencyLayer};
 use async_lsp::lsp_types::notification::{LogMessage, Progress, PublishDiagnostics, ShowMessage};
 use async_lsp::lsp_types::{
-    self, ClientCapabilities, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
-    DocumentSymbolParams, DocumentSymbolResponse, GotoDefinitionParams, GotoDefinitionResponse,
-    InitializeParams, InitializedParams, Location, PartialResultParams, ReferenceContext,
-    ReferenceParams, TextDocumentIdentifier, TextDocumentItem, TextDocumentPositionParams, Url,
-    WindowClientCapabilities, WorkDoneProgressParams, WorkspaceFolder,
+    self, ClientCapabilities, DidChangeWatchedFilesParams, DidCloseTextDocumentParams,
+    DidOpenTextDocumentParams, DocumentSymbolParams, DocumentSymbolResponse, FileChangeType,
+    FileEvent, GotoDefinitionParams, GotoDefinitionResponse, InitializeParams, InitializedParams,
+    Location, PartialResultParams, ReferenceContext, ReferenceParams, TextDocumentIdentifier,
+    TextDocumentItem, TextDocumentPositionParams, Url, WindowClientCapabilities,
+    WorkDoneProgressParams, WorkspaceFolder,
 };
 use async_lsp::panic::{CatchUnwind, CatchUnwindLayer};
 use async_lsp::router::Router;
@@ -59,6 +60,15 @@ impl From<lsp_types::Range> for Range {
             start: value.start.into(),
             end: value.end.into(),
         }
+    }
+}
+
+fn file_change_type_from_usize(value: usize) -> FileChangeType {
+    match value {
+        0 => FileChangeType::CREATED,
+        1 => FileChangeType::CHANGED,
+        2 => FileChangeType::DELETED,
+        _ => panic!("cannot happen conversion usize filechange type"),
     }
 }
 
@@ -274,6 +284,35 @@ impl SharedSocket {
             .unwrap();
         debug!(file = %path.display(), "sent did_open");
         file_uri
+    }
+
+    pub fn did_change_files(&mut self, files: Vec<(PathBuf, usize)>) -> Result<()> {
+        let file_events = files
+            .iter()
+            .map(|(f, t)| {
+                let uri = Url::from_file_path(&f.canonicalize().expect(&format!(
+                    "could not canonicalize in did change file. the file is: {}",
+                    f.display()
+                )))
+                .expect("could not build uri in did change file");
+                FileEvent {
+                    uri,
+                    typ: file_change_type_from_usize(*t),
+                }
+            })
+            .collect();
+        let res = self
+            .socket
+            .did_change_watched_files(DidChangeWatchedFilesParams {
+                changes: file_events,
+            });
+        if res.is_err() {
+            return Err(anyhow!(
+                "error sending did change files notification: {}",
+                res.err().unwrap()
+            ));
+        }
+        Ok(())
     }
 
     pub async fn find_references(

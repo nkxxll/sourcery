@@ -53,12 +53,19 @@ async fn main() -> anyhow::Result<()> {
         .route("/codebase/{id}/diff", get(list_diffs_by_codebase))
         .route("/codebase/{id}/metrics", get(list_codebase_metrics))
         .route("/version/{id}", get(get_version))
+        .route("/file/{file_id}", get(get_file))
+        .route("/function/{function_id}", get(get_function))
         .route("/version/{id}/changed_files", get(list_version_files))
         .route("/version/{id}/files", get(list_all_version_files))
+        .route("/version/{id}/files/{file_state_id}", get(get_version_file))
         .route("/version/{id}/files/search", get(search_version_filenames))
         .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/diffchange", get(get_version_diff_change))
         .route("/version/{id}/functions", get(list_version_functions))
+        .route(
+            "/version/{id}/functions/{function_id}",
+            get(get_version_function),
+        )
         .route(
             "/version/{id}/functions/search",
             get(search_version_functions),
@@ -169,6 +176,35 @@ async fn get_version(
     Ok(Json(version))
 }
 
+async fn get_file(
+    Path(file_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<FileState>, (StatusCode, String)> {
+    let file = sourcery_db::get_file_state_by_id(&state.pool, file_id)
+        .await
+        .map_err(internal_error)?;
+    match file {
+        Some(file) => Ok(Json(file)),
+        None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
+    }
+}
+
+async fn get_function(
+    Path(function_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<VersionFunction>, (StatusCode, String)> {
+    let function = sourcery_db::get_version_function_by_id(&state.pool, function_id)
+        .await
+        .map_err(internal_error)?;
+    match function {
+        Some(function) => Ok(Json(function)),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            format!("function {function_id} not found"),
+        )),
+    }
+}
+
 async fn get_version_diff(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
@@ -207,6 +243,23 @@ async fn list_all_version_files(
     Ok(Json(files))
 }
 
+async fn get_version_file(
+    Path((id, file_state_id)): Path<(Uuid, Uuid)>,
+    State(state): State<AppState>,
+) -> Result<Json<FileState>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let file = sourcery_db::get_file_state_by_id_for_version(&state.pool, id, file_state_id)
+        .await
+        .map_err(internal_error)?;
+    match file {
+        Some(file) => Ok(Json(file)),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            format!("file {file_state_id} not found for version {id}"),
+        )),
+    }
+}
+
 async fn list_version_functions(
     Path(id): Path<Uuid>,
     Query(query): Query<PageQuery>,
@@ -222,6 +275,24 @@ async fn list_version_functions(
     .await
     .map_err(internal_error)?;
     Ok(Json(functions))
+}
+
+async fn get_version_function(
+    Path((id, function_id)): Path<(Uuid, Uuid)>,
+    State(state): State<AppState>,
+) -> Result<Json<VersionFunction>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let function =
+        sourcery_db::get_version_function_by_id_for_version(&state.pool, id, function_id)
+            .await
+            .map_err(internal_error)?;
+    match function {
+        Some(function) => Ok(Json(function)),
+        None => Err((
+            StatusCode::NOT_FOUND,
+            format!("function {function_id} not found for version {id}"),
+        )),
+    }
 }
 
 async fn search_version_filenames(

@@ -1,5 +1,5 @@
 use std::{
-    collections::{BTreeSet, HashMap, HashSet},
+    collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fs,
     path::PathBuf,
     sync::Arc,
@@ -36,6 +36,22 @@ pub mod processor;
 pub mod progress;
 pub use sourcery_db as db;
 
+pub enum FileChangeType {
+    CREATED,
+    MODIFIED,
+    DELETED,
+}
+
+impl From<FileChangeType> for usize {
+    fn from(value: FileChangeType) -> Self {
+        match value {
+            FileChangeType::CREATED => 0,
+            FileChangeType::MODIFIED => 1,
+            FileChangeType::DELETED => 2,
+        }
+    }
+}
+
 pub async fn analyze_git_repository(
     url: &str,
     programming_language: Option<ProgrammingLanguage>,
@@ -68,6 +84,7 @@ struct State {
     pub commits: Vec<Oid>,
     pub current_aggregate: AggregatedFileMetrics,
     pub current_file_metrics_by_path: HashMap<EcoString, FileMetrics>,
+    pub programming_language: ProgrammingLanguage,
 }
 
 impl State {
@@ -78,13 +95,9 @@ impl State {
     ) -> Result<Self> {
         let sr = SourceRepository::new(url)?;
         let codebase_name = SourceRepository::get_repo_base_name(url);
-        let codebase = if let Some(pl) = programming_language {
-            let programming_language_str = pl.to_string();
-            db::insert_codebase(&pool, &codebase_name, url, &programming_language_str).await?
-        } else {
-            let language = guess_repo_language(url)?.to_string();
-            db::insert_codebase(&pool, &codebase_name, url, &language).await?
-        };
+        println!("programming lang {:?}", programming_language);
+        let pl = programming_language.unwrap_or_else(|| guess_repo_language(url).expect("the language could not be determined"));
+        let codebase = db::insert_codebase(&pool, &codebase_name, url, &pl.to_string()).await?;
         let commits = Self::gather_commits(&sr);
         let number_of_commits = commits.len();
         info!("Found {number_of_commits} commits.");
@@ -99,6 +112,7 @@ impl State {
             commits,
             current_aggregate,
             current_file_metrics_by_path,
+            programming_language: pl,
         })
     }
 
@@ -147,6 +161,42 @@ impl State {
     }
 }
 
+pub async fn analyze_repo_version(
+    path: String,
+    programming_language: Option<ProgrammingLanguage>,
+) -> Result<()> {
+    let pl = programming_language.unwrap_or_else(|| guess_repo_language(&path).expect("the language could not be determined"));
+    let lc = LanguageConfig::new(pl);
+    let (binary, args) = pl.lsp();
+    let mut server = Server::new(&path, binary, args);
+    let mainloop = server.run_main_loop();
+    server.initialize().await;
+    let mut socket = server.socket();
+
+    let mut files = Vec::new();
+    let path_buf = PathBuf::from(&path);
+    walkdir::WalkDir::new(&path_buf)
+        .into_iter()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_file())
+        .filter(|entry| entry.path().to_string_lossy().ends_with(".go"))
+        .for_each(|entry| {
+            files.push(entry.path().to_path_buf());
+        });
+
+    println!("files: {}", files.len());
+
+    for file in files {
+        let uri = socket.open_document(&file).await;
+        let mut processor = Processor::new(&lc, &file, socket.clone(), uri)?;
+        let analysis = processor.analyze_with_enrichted_stats().await?;
+        println!("{}", analysis.functions.len());
+    }
+
+    server.shutdown(mainloop).await;
+    Ok(())
+}
+
 pub async fn analyze_git_repository_with_database(
     url: &str,
     programming_language: Option<ProgrammingLanguage>,
@@ -156,21 +206,20 @@ pub async fn analyze_git_repository_with_database(
     let pool = db::connect(database_url).await?;
 
     let mut state = State::new(url, &pool, programming_language).await?;
-    let pl = programming_language.expect("should be determined by now");
-    let (binary, args) = pl.lsp();
-    let mut server = Server::new(&state.sr.dest_dir, binary, args);
-    let mainloop = server.run_main_loop();
-    server.initialize().await;
-    info!(
-        repository = url,
-        lsp_binary = binary,
-        commits = state.commits.len(),
-        "starting repository analysis"
-    );
 
     let mut previous_oid = None;
     let commits = state.commits.clone();
     for oid in commits {
+        let (binary, args) = state.programming_language.lsp();
+        let mut server = Server::new(&state.sr.dest_dir, binary, args);
+        let mainloop = server.run_main_loop();
+        server.initialize().await;
+        info!(
+            repository = url,
+            lsp_binary = binary,
+            commits = state.commits.len(),
+            "starting repository analysis"
+        );
         state.progress.next();
         state.sr.checkout_commit(&oid)?;
         let commit_info = state.commit_info(&oid);
@@ -195,6 +244,21 @@ pub async fn analyze_git_repository_with_database(
 
         store_diff_line_changes(&pool, &stored_commit.diff, &commit_diff).await?;
 
+        // // we need to tell the lsp what files changed in the checkout to clear the cache
+        // let files: Vec<(PathBuf, usize)> = commit_diff.file_changes().iter().flat_map(|file_change| {
+        //     match file_change.status() {
+        //         "modified" => vec![(state.sr.dest_dir.join(file_change.new_file().unwrap()), FileChangeType::MODIFIED.into())],
+        //         "deleted" => vec![(state.sr.dest_dir.join(file_change.old_file().unwrap()), FileChangeType::DELETED.into())],
+        //         "added" => vec![(state.sr.dest_dir.join(file_change.new_file().unwrap()), FileChangeType::CREATED.into())], // for simplicity treat renamed files as modified
+        //         "renamed" => vec![
+        //             (state.sr.dest_dir.join(file_change.old_file().unwrap()), FileChangeType::DELETED.into()),
+        //             (state.sr.dest_dir.join(file_change.new_file().unwrap()), FileChangeType::CREATED.into())
+        //         ],
+        //         _ => vec![],
+        //     }
+        // }).collect();
+        // server.socket().did_change_files(files)?;
+
         let new_metrics_by_path = analyze_and_store_changed_files(
             &pool,
             &server,
@@ -218,8 +282,8 @@ pub async fn analyze_git_repository_with_database(
         .await?;
 
         previous_oid = Some(oid);
+        server.shutdown(mainloop).await;
     }
-    server.shutdown(mainloop).await;
     info!(repository = url, "finished repository analysis");
     Ok(())
 }
@@ -488,7 +552,7 @@ async fn store_file_analysis(
             .collect();
         let outdegree = u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
 
-        let references: Vec<String> = analysis
+        let references: Vec<serde_json::Value> = analysis
             .functions
             .iter()
             .filter(|candidate| candidate.function_name != func.function_name)
@@ -498,9 +562,25 @@ async fn store_file_analysis(
                     .iter()
                     .any(|called| called.name == func.function_name)
             })
-            .map(|candidate| candidate.function_name.to_string())
-            .collect::<BTreeSet<_>>()
+            .map(|candidate| {
+                let line = candidate.definition_position_range.start.line;
+                let column = candidate.definition_position_range.start.column;
+                let name = candidate.function_name.to_string();
+                let file = file_path.to_string();
+                let key = format!("{file}:{line}:{column}:{name}");
+                (
+                    key,
+                    json!({
+                        "name": name,
+                        "file": file,
+                        "line": line,
+                        "column": column,
+                    }),
+                )
+            })
+            .collect::<BTreeMap<_, _>>()
             .into_iter()
+            .map(|(_, reference)| reference)
             .collect();
         let indegree = u64::try_from(references.len()).context("indegree exceeds u64")?;
 
