@@ -90,6 +90,15 @@ impl HalsteadMetrics {
             bugs,
         }
     }
+
+    pub fn from_json(metrics: &serde_json::Value) -> Option<Self> {
+        Some(Self::from_counts(
+            usize::try_from(metrics.get("unique_operators")?.as_u64()?).ok()?,
+            usize::try_from(metrics.get("unique_operands")?.as_u64()?).ok()?,
+            usize::try_from(metrics.get("operators")?.as_u64()?).ok()?,
+            usize::try_from(metrics.get("operands")?.as_u64()?).ok()?,
+        ))
+    }
 }
 
 impl<'de> Deserialize<'de> for HalsteadMetrics {

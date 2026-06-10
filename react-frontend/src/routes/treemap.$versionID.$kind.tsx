@@ -275,13 +275,13 @@ function mapFileItems(rows: FileTreemapItem[]): TreemapItem[] {
     label: row.path.split('/').at(-1) ?? row.path,
     path: row.path,
     href: `/file/${row.id}`,
-    metrics: {
+    metrics: flattenNumericMetrics({
       ...row.metrics,
       functions:
         typeof row.total_functions === 'number'
           ? row.total_functions
           : row.metrics.functions,
-    },
+    }),
   }))
 }
 
@@ -291,8 +291,32 @@ function mapFunctionItems(rows: FunctionTreemapItem[]): TreemapItem[] {
     label: `${row.name}:${row.start_line}-${row.end_line}`,
     path: `${row.file_path}/${row.name}:${row.start_line}-${row.end_line}`,
     href: `/function/${row.function_id}`,
-    metrics: row.metrics,
+    metrics: flattenNumericMetrics(row.metrics),
   }))
+}
+
+function flattenNumericMetrics(metrics: Metrics): Metrics {
+  const flat: Metrics = { ...metrics }
+  for (const [key, value] of Object.entries(metrics)) {
+    if (!isMetricObject(value)) {
+      continue
+    }
+    for (const [nestedKey, nestedValue] of Object.entries(value)) {
+      const flatKey = `${key}_${nestedKey}`
+      if (
+        flat[flatKey] === undefined &&
+        typeof nestedValue === 'number' &&
+        Number.isFinite(nestedValue)
+      ) {
+        flat[flatKey] = nestedValue
+      }
+    }
+  }
+  return flat
+}
+
+function isMetricObject(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 
 function getMetricOptions(items: TreemapItem[]) {

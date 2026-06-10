@@ -20,6 +20,7 @@ use tracing::{debug, info, warn};
 use crate::{
     diff::CommitDiff,
     git_handler::{CommitInfo, SourceRepository},
+    halstead_subprocess::HalsteadMetrics,
     language::{LanguageConfig, ProgrammingLanguage},
     processor::{
         AggregatedFileMetrics, Analysis, FileMetrics, FunctionAnalysis, FunctionCall, NewLineMap,
@@ -526,6 +527,7 @@ async fn store_file_analysis(
         comment_lines_of_code: analysis.comment_lines_of_code,
         bracket_lines_of_code: analysis.bracket_lines_of_code,
         total_cyclomatic: analysis.total_cyclomatic,
+        total_halstead: analysis.total_halstead,
         maintainability_index: analysis.maintainability_index,
     };
     let file = db::insert_file(
@@ -606,7 +608,7 @@ async fn store_file_analysis(
 
         // Function names may repeat by namespace, so include location.
         let unique_name = func.name.with_location(source, newline_map)?;
-        let function_metrics = json!({
+        let mut function_metrics = json!({
             "function_length": func.function_length,
             "cyclomatic": func.cyclomatic,
             "cyclomatic_match_as_single_branch": func.cyclomatic_match_as_single_branch,
@@ -628,6 +630,9 @@ async fn store_file_analysis(
             "outdegree": outdegree,
             "maintainability_index": func.maintainability_index.map(|mi| mi.to_json()),
         });
+        if let Some(halstead) = func.halstead {
+            add_halstead_metrics(&mut function_metrics, "halstead", halstead);
+        }
 
         db::insert_function(
             pool,
@@ -812,13 +817,63 @@ async fn update_version_metrics(
 }
 
 fn file_metrics_json(metrics: &FileMetrics) -> serde_json::Value {
-    json!({
+    let mut value = json!({
         "lines_of_code": metrics.lines_of_code,
         "effective_lines_of_code": metrics.effective_lines_of_code,
         "comment_lines_of_code": metrics.comment_lines_of_code,
         "bracket_lines_of_code": metrics.bracket_lines_of_code,
         "total_cyclomatic": metrics.total_cyclomatic,
         "maintainability_index": metrics.maintainability_index.map(|mi| mi.to_json()),
+    });
+    add_halstead_metrics(&mut value, "total_halstead", metrics.total_halstead);
+    value
+}
+
+fn add_halstead_metrics(value: &mut serde_json::Value, prefix: &str, metrics: HalsteadMetrics) {
+    let Some(object) = value.as_object_mut() else {
+        return;
+    };
+    object.insert(prefix.to_string(), halstead_metrics_json(metrics));
+    object.insert(
+        format!("{prefix}_unique_operators"),
+        metrics.unique_operators.into(),
+    );
+    object.insert(
+        format!("{prefix}_unique_operands"),
+        metrics.unique_operands.into(),
+    );
+    object.insert(format!("{prefix}_operators"), metrics.operators.into());
+    object.insert(format!("{prefix}_operands"), metrics.operands.into());
+    object.insert(format!("{prefix}_length"), metrics.length.into());
+    object.insert(format!("{prefix}_vocabulary"), metrics.vocabulary.into());
+    object.insert(
+        format!("{prefix}_calculated_length"),
+        metrics.calculated_length.into(),
+    );
+    object.insert(format!("{prefix}_volume"), metrics.volume.into());
+    object.insert(format!("{prefix}_difficulty"), metrics.difficulty.into());
+    object.insert(format!("{prefix}_effort"), metrics.effort.into());
+    object.insert(
+        format!("{prefix}_time_seconds"),
+        metrics.time_seconds.into(),
+    );
+    object.insert(format!("{prefix}_bugs"), metrics.bugs.into());
+}
+
+fn halstead_metrics_json(metrics: HalsteadMetrics) -> serde_json::Value {
+    json!({
+        "unique_operators": metrics.unique_operators,
+        "unique_operands": metrics.unique_operands,
+        "operators": metrics.operators,
+        "operands": metrics.operands,
+        "length": metrics.length,
+        "vocabulary": metrics.vocabulary,
+        "calculated_length": metrics.calculated_length,
+        "volume": metrics.volume,
+        "difficulty": metrics.difficulty,
+        "effort": metrics.effort,
+        "time_seconds": metrics.time_seconds,
+        "bugs": metrics.bugs,
     })
 }
 

@@ -637,6 +637,7 @@ pub struct FileMetrics {
     pub comment_lines_of_code: u64,
     pub bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
+    pub total_halstead: HalsteadMetrics,
     pub maintainability_index: Option<MaintainabilityIndex>,
 }
 
@@ -663,6 +664,10 @@ impl FileMetrics {
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            total_halstead: metrics
+                .get("total_halstead")
+                .and_then(HalsteadMetrics::from_json)
+                .unwrap_or_default(),
             maintainability_index: metrics
                 .get("maintainability_index")
                 .and_then(MaintainabilityIndex::from_json),
