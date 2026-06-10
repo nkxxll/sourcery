@@ -19,6 +19,8 @@ use crate::{
     language::{CodeByteSpan, LanguageConfig, ProgrammingLanguage},
 };
 
+type Args = Vec<String>;
+
 pub struct ProcessorSource {
     source: EcoString,
     new_line_map: NewLineMap,
@@ -428,6 +430,7 @@ pub struct FunctionAnalysis {
     pub enriched_calls: Vec<FunctionCall>,
     pub halstead: Option<HalsteadMetrics>,
     pub maintainability_index: Option<MaintainabilityIndex>,
+    pub function_arguments: Vec<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -573,6 +576,10 @@ impl Analysis {
             if let Some(halstead) = function.halstead {
                 res.push_str(&format!("    halstead: {halstead}\n"));
             }
+            res.push_str(&format!(
+                "    function_arguments: {:?}\n",
+                function.function_arguments
+            ));
         }
 
         res.push_str("comments:\n");
@@ -1085,6 +1092,7 @@ struct FunctionFrame {
     function_index: usize,
     cyclomatic_counts: CyclomaticCounts,
     function_calls: Vec<FunctionCall>,
+    function_arguments: Args,
 }
 
 #[derive(Default)]
@@ -1434,11 +1442,13 @@ impl<'processor> AstProcessor<'processor> {
                 enriched_calls: Vec::new(),
                 halstead: None,
                 maintainability_index: None,
+                function_arguments: Vec::new(),
             });
             state.function_stack.push(FunctionFrame {
                 function_index,
                 cyclomatic_counts: CyclomaticCounts::default(),
                 function_calls: Vec::new(),
+                function_arguments: Vec::new(),
             });
             entered_function = true;
         }
@@ -1458,8 +1468,13 @@ impl<'processor> AstProcessor<'processor> {
                 .cyclomatic_counts
                 .add_from_node(node, self.profile, classifier);
             if classifier.function_call.contains(kind) {
-                if let Some(name) = self.get_function_call(node, self.source, &self.file)? {
-                    frame.function_calls.push(name);
+                if let Some((function_call, mut args)) =
+                    self.get_function_call(node, self.source, &self.file)?
+                {
+                    frame.function_calls.push(function_call);
+                    debug!("function arguments from find are: {:?}", args);
+                    frame.function_arguments.append(&mut args);
+                    debug!("function arguments are after append are: {:?}", frame.function_arguments);
                 }
             }
         }
@@ -1478,6 +1493,8 @@ impl<'processor> AstProcessor<'processor> {
             function.cyclomatic_match_as_single_branch =
                 frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
             function.functions_called = frame.function_calls;
+            debug!("function arguments are: {:?}", frame.function_arguments);
+            function.function_arguments = frame.function_arguments;
         }
 
         Ok(())
@@ -1488,7 +1505,7 @@ impl<'processor> AstProcessor<'processor> {
         node: Node,
         source: &str,
         file: &PathBuf,
-    ) -> Result<Option<FunctionCall>> {
+    ) -> Result<Option<(FunctionCall, Args)>> {
         if let Some(field) = node.child_by_field_name("function") {
             // Some grammars (notably OCaml) wrap the callable in a parenthesized expression.
             // Use the wrapped callable node so byte/column mapping targets the symbol itself.
@@ -1509,6 +1526,9 @@ impl<'processor> AstProcessor<'processor> {
                 .get_line_and_rest(call_target.start_byte())
                 .ok_or_else(|| anyhow!("could not translate function call position"))?;
             let name = EcoString::from(call_target.utf8_text(source.as_bytes())?);
+            let mut args: Args = Vec::new();
+            find_function_args(&mut args, node, source)?;
+            debug!("args in get function args are: {:?}", args);
             let func_call = FunctionCall {
                 name,
                 pos: CodePosition {
@@ -1517,9 +1537,34 @@ impl<'processor> AstProcessor<'processor> {
                 },
                 file: file.clone(),
             };
-            return Ok(Some(func_call));
+            return Ok(Some((func_call, args)));
         }
         Err(anyhow::anyhow!("field not found"))
+    }
+}
+
+fn find_function_args_go(args: &mut Args, node: Node, source: &str) -> Result<()> {
+    let mut cursor = node.walk();
+    let idents = node.children(&mut cursor).filter(|n| n.kind() == "identifier");
+    for ident in idents {
+        args.push(ident.utf8_text(source.as_bytes())?.to_string());
+    }
+    Ok(())
+}
+fn find_function_args_ocaml(args: &mut Args, node: Node, source: &str) -> Result<()> {
+    let mut cursor = node.walk();
+    let idents = node.children_by_field_name("argument", &mut cursor);
+    for ident in idents.into_iter() {
+        args.push(ident.utf8_text(source.as_bytes())?.to_string());
+    }
+    Ok(())
+}
+
+fn find_function_args(args: &mut Args, node: Node, source: &str) -> Result<()> {
+    if let Some(go_arguments_list) = node.child_by_field_name("arguments") {
+        find_function_args_go(args, go_arguments_list, source)
+    } else {
+        find_function_args_ocaml(args, node, source)
     }
 }
 
@@ -1807,6 +1852,7 @@ func main() {
                     comment_lines_of_code: 2,
                     bracket_lines_of_code: 1,
                     total_cyclomatic: 3,
+                    total_halstead: HalsteadMetrics::default(),
                     maintainability_index: Some(MaintainabilityIndex::new(100.0, 3, 8, 2)),
                 },
             ),
@@ -1818,6 +1864,7 @@ func main() {
                     comment_lines_of_code: 5,
                     bracket_lines_of_code: 3,
                     total_cyclomatic: 7,
+                    total_halstead: HalsteadMetrics::default(),
                     maintainability_index: None,
                 },
             ),
@@ -2003,6 +2050,7 @@ func main() {
                 enriched_calls: vec![],
                 halstead: Some(HalsteadMetrics::from_counts(1, 2, 3, 4)),
                 maintainability_index: None,
+                function_arguments: Vec::new(),
             }],
             comments: vec![],
             lines_of_code: 1,
