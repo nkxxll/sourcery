@@ -1396,6 +1396,16 @@ impl<'processor> AstProcessor<'processor> {
         })
     }
 
+    fn at_least_one_pram_if_ocaml(node: Node) -> bool {
+        // if its a ocaml let binding we have to filter more
+        if node.kind() == "let_binding" {
+            let mut cursor = node.walk();
+            node.children(&mut cursor).any(|n| n.kind() == "parameter")
+        } else {
+            true
+        }
+    }
+
     fn traverse(
         &self,
         node: Node,
@@ -1405,7 +1415,7 @@ impl<'processor> AstProcessor<'processor> {
         let kind = node.kind();
         let mut entered_function = false;
 
-        if classifier.function_nodes.contains(kind) {
+        if classifier.function_nodes.contains(kind) && Self::at_least_one_pram_if_ocaml(node) {
             let Some(name_span) = self.profile.function_name_span(node) else {
                 warn!("function node without expected name field: {}", kind);
                 let mut cursor = node.walk();
@@ -1474,7 +1484,10 @@ impl<'processor> AstProcessor<'processor> {
                     frame.function_calls.push(function_call);
                     debug!("function arguments from find are: {:?}", args);
                     frame.function_arguments.append(&mut args);
-                    debug!("function arguments are after append are: {:?}", frame.function_arguments);
+                    debug!(
+                        "function arguments are after append are: {:?}",
+                        frame.function_arguments
+                    );
                 }
             }
         }
@@ -1545,7 +1558,9 @@ impl<'processor> AstProcessor<'processor> {
 
 fn find_function_args_go(args: &mut Args, node: Node, source: &str) -> Result<()> {
     let mut cursor = node.walk();
-    let idents = node.children(&mut cursor).filter(|n| n.kind() == "identifier");
+    let idents = node
+        .children(&mut cursor)
+        .filter(|n| n.kind() == "identifier");
     for ident in idents {
         args.push(ident.utf8_text(source.as_bytes())?.to_string());
     }
@@ -1555,7 +1570,19 @@ fn find_function_args_ocaml(args: &mut Args, node: Node, source: &str) -> Result
     let mut cursor = node.walk();
     let idents = node.children_by_field_name("argument", &mut cursor);
     for ident in idents.into_iter() {
-        args.push(ident.utf8_text(source.as_bytes())?.to_string());
+        find_value_name(args, ident, source)?;
+    }
+    Ok(())
+}
+
+fn find_value_name(args: &mut Args, node: Node, source: &str) -> Result<()> {
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        if child.kind() == "value_name" {
+            args.push(child.utf8_text(source.as_bytes())?.to_string());
+        } else {
+            find_value_name(args, child, source)?;
+        }
     }
     Ok(())
 }
