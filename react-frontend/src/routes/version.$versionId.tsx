@@ -4,6 +4,8 @@ import { Search } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 
+import { StatsPanel } from '#/components/stats-panel'
+
 export const Route = createFileRoute('/version/$versionId')({
   component: VersionDashboardPage,
 })
@@ -17,6 +19,7 @@ type Version = {
   author_email: string
   committed_at: string | null
   created_at: string
+  metrics: Record<string, unknown>
   total_files: number
   total_functions: number
 }
@@ -203,6 +206,8 @@ function VersionDashboardPage() {
           </div>
         </dl>
       </header>
+
+      <StatsPanel title="Version Stats" metrics={version.metrics} />
 
       <div className="grid gap-6 xl:grid-cols-2">
         <SearchPanel

@@ -280,7 +280,10 @@ function CodebaseMetricsChart({
     let currentClosed = 0
     const issueStates = new Map<number, 'open' | 'closed'>()
 
-    const setIssueState = (issueNumber: number, nextState: 'open' | 'closed') => {
+    const setIssueState = (
+      issueNumber: number,
+      nextState: 'open' | 'closed',
+    ) => {
       const previousState = issueStates.get(issueNumber)
       if (previousState === nextState) {
         return
@@ -568,7 +571,7 @@ function CodebaseMetricsTable({
     return null
   }
 
-  let sortedVersions = [...versions]
+  const sortedVersions = [...versions]
 
   if (sortConfig.direction === 'default') {
     sortedVersions.sort(

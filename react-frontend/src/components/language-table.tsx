@@ -1,5 +1,9 @@
 import { Link } from '@tanstack/react-router'
-import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { useMemo } from 'react'
 

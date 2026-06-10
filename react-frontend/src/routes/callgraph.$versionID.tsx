@@ -151,7 +151,9 @@ function CallgraphPage() {
   }, [displayedGraph, nodeSearch])
 
   const selectedSearchNode =
-    selectedSearchIndex >= 0 ? (nodeSearchMatches[selectedSearchIndex] ?? null) : null
+    selectedSearchIndex >= 0
+      ? (nodeSearchMatches[selectedSearchIndex] ?? null)
+      : null
 
   function focusNextSearchMatch() {
     if (nodeSearchMatches.length === 0) {
@@ -306,14 +308,13 @@ function useForceGraph(
           .scale(scale)
 
         circle
-          .attr('stroke', (item) => (item.id === nodeId ? '#f2cc60' : '#f0f6fc'))
+          .attr('stroke', (item) =>
+            item.id === nodeId ? '#f2cc60' : '#f0f6fc',
+          )
           .attr('stroke-opacity', (item) => (item.id === nodeId ? 1 : 0.72))
           .attr('stroke-width', (item) => (item.id === nodeId ? 3 : 1))
 
-        svg
-          .transition()
-          .duration(450)
-          .call(zoom.transform, transform)
+        svg.transition().duration(450).call(zoom.transform, transform)
       },
     }
 

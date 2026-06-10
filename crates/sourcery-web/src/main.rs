@@ -41,6 +41,22 @@ struct VersionDashboardResponse {
     total_functions: i64,
 }
 
+#[derive(serde::Serialize)]
+struct FileDetailResponse {
+    #[serde(flatten)]
+    file: FileStateWithFunctionCount,
+    codebase_url: String,
+    commit_hash: String,
+}
+
+#[derive(serde::Serialize)]
+struct FunctionDetailResponse {
+    #[serde(flatten)]
+    function: VersionFunction,
+    codebase_url: String,
+    commit_hash: String,
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     dotenvy::dotenv().ok();
@@ -198,6 +214,16 @@ async fn get_version_or_not_found(
     version.ok_or_else(|| (StatusCode::NOT_FOUND, format!("version {id} not found")))
 }
 
+async fn get_codebase_or_not_found(
+    pool: &PgPool,
+    id: Uuid,
+) -> Result<Codebase, (StatusCode, String)> {
+    let codebase = sourcery_db::get_codebase_by_id(pool, id)
+        .await
+        .map_err(internal_error)?;
+    codebase.ok_or_else(|| (StatusCode::NOT_FOUND, format!("codebase {id} not found")))
+}
+
 async fn list_github_issue_timeline(
     Query(query): Query<GithubIssueTimelineQuery>,
     State(state): State<AppState>,
@@ -245,14 +271,20 @@ fn metric_i64(metrics: &serde_json::Value, key: &str) -> Option<i64> {
 async fn get_file(
     Path(file_id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<FileStateWithFunctionCount>, (StatusCode, String)> {
+) -> Result<Json<FileDetailResponse>, (StatusCode, String)> {
     let file = sourcery_db::get_file_state_by_id(&state.pool, file_id)
         .await
         .map_err(internal_error)?;
     match file {
-        Some(file) => Ok(Json(
-            file_state_with_function_count(&state.pool, file).await?,
-        )),
+        Some(file) => {
+            let version = get_version_or_not_found(&state.pool, file.version_id).await?;
+            let codebase = get_codebase_or_not_found(&state.pool, file.codebase_id).await?;
+            Ok(Json(FileDetailResponse {
+                file: file_state_with_function_count(&state.pool, file).await?,
+                codebase_url: codebase.url,
+                commit_hash: version.commit_hash,
+            }))
+        }
         None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
     }
 }
@@ -260,12 +292,20 @@ async fn get_file(
 async fn get_function(
     Path(function_id): Path<Uuid>,
     State(state): State<AppState>,
-) -> Result<Json<VersionFunction>, (StatusCode, String)> {
+) -> Result<Json<FunctionDetailResponse>, (StatusCode, String)> {
     let function = sourcery_db::get_version_function_by_id(&state.pool, function_id)
         .await
         .map_err(internal_error)?;
     match function {
-        Some(function) => Ok(Json(function)),
+        Some(function) => {
+            let version = get_version_or_not_found(&state.pool, function.version_id).await?;
+            let codebase = get_codebase_or_not_found(&state.pool, version.codebase_id).await?;
+            Ok(Json(FunctionDetailResponse {
+                function,
+                codebase_url: codebase.url,
+                commit_hash: version.commit_hash,
+            }))
+        }
         None => Err((
             StatusCode::NOT_FOUND,
             format!("function {function_id} not found"),
