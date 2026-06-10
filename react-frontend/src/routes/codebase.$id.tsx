@@ -21,6 +21,18 @@ type MetricsSeriesPoint = {
   value: number | null
 }
 
+type GithubIssueTimelineEvent = {
+  issue_number: number
+  event: string
+  event_created_at: string
+}
+
+type ChartSeries = {
+  key: string
+  label: string
+  values: MetricsSeriesPoint[]
+}
+
 const METRIC_OPTIONS = [
   { key: 'total_lines_of_code', label: 'Total LOC' },
   { key: 'total_effective_lines_of_code', label: 'Effective LOC' },
@@ -42,6 +54,15 @@ const METRIC_OPTIONS = [
     label: 'Mean Bracket LOC/File',
   },
   { key: 'mean_cyclomatic_complexity_per_file', label: 'Mean Cyclomatic/File' },
+]
+
+const ISSUE_METRIC_OPTIONS = [
+  { key: 'issue_current_open', label: 'Currently open issues' },
+  { key: 'issue_current_closed', label: 'Currently closed issues' },
+  { key: 'issue_opened', label: 'Issues opened' },
+  { key: 'issue_closed', label: 'Issues closed' },
+  { key: 'issue_comments', label: 'Issue comments' },
+  { key: 'issue_events', label: 'Issue events' },
 ]
 
 const DEFAULT_VISIBLE_METRICS = new Set([
@@ -68,6 +89,14 @@ const toNumber = (value: unknown): number | null => {
     return Number.isFinite(parsed) ? parsed : null
   }
   return null
+}
+
+const githubRepoFromUrl = (url: string): string | null => {
+  const match = url.match(/github\.com[:/]([^/]+)\/([^/.#?]+)(?:\.git)?/i)
+  if (!match) {
+    return null
+  }
+  return `${match[1]}/${match[2]}`
 }
 
 function CodebasePage() {
@@ -97,6 +126,29 @@ function CodebasePage() {
   })
   const isMetricsLoading =
     metricsQuery.isFetching && metricsQuery.data.length === 0
+
+  const githubRepo = useMemo(() => {
+    return data?.url ? githubRepoFromUrl(data.url) : null
+  }, [data?.url])
+
+  const issueTimelineQuery = useQuery({
+    queryKey: ['github-issue-timeline', githubRepo],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        repo: githubRepo ?? '',
+        limit: '5000',
+      })
+      const res = await fetch(
+        `/api/github/issues/timeline?${params.toString()}`,
+      )
+      if (!res.ok) {
+        throw new Error(`Failed to fetch issue timeline (${res.status})`)
+      }
+      return res.json() as Promise<GithubIssueTimelineEvent[]>
+    },
+    enabled: Boolean(githubRepo),
+    initialData: [],
+  })
 
   if (isPending) return <>Loading...</>
   if (error) {
@@ -160,7 +212,18 @@ function CodebasePage() {
           </p>
         ) : (
           <>
-            <CodebaseMetricsChart versions={metricsQuery.data} />
+            {issueTimelineQuery.error && (
+              <p className="text-sm text-[#6b6e73]">
+                Issue timeline unavailable:{' '}
+                {issueTimelineQuery.error instanceof Error
+                  ? issueTimelineQuery.error.message
+                  : 'Unknown error'}
+              </p>
+            )}
+            <CodebaseMetricsChart
+              issueEvents={issueTimelineQuery.data}
+              versions={metricsQuery.data}
+            />
             <CodebaseMetricsTable
               codebaseId={id}
               versions={metricsQuery.data}
@@ -173,8 +236,10 @@ function CodebasePage() {
 }
 
 function CodebaseMetricsChart({
+  issueEvents = [],
   versions,
 }: {
+  issueEvents?: GithubIssueTimelineEvent[]
   versions: CodebaseMetricsVersion[]
 }) {
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -183,7 +248,7 @@ function CodebaseMetricsChart({
   })
   const [hoveredDate, setHoveredDate] = useState<Date | null>(null)
 
-  const timeline = useMemo(() => {
+  const versionTimeline = useMemo(() => {
     return versions
       .map((version) => ({
         date: new Date(version.committed_at ?? version.created_at),
@@ -193,19 +258,100 @@ function CodebaseMetricsChart({
       .sort((a, b) => a.date.getTime() - b.date.getTime())
   }, [versions])
 
-  const series = useMemo(() => {
-    const availableMetrics = METRIC_OPTIONS.filter(({ key }) =>
-      timeline.some((entry) => toNumber(entry.metrics[key]) !== null),
-    )
-    return availableMetrics.map(({ key, label }) => ({
+  const issueSeries = useMemo<ChartSeries[]>(() => {
+    const events = issueEvents
+      .map((event) => ({
+        date: new Date(event.event_created_at),
+        event: event.event,
+        issueNumber: event.issue_number,
+      }))
+      .filter((event) => !Number.isNaN(event.date.valueOf()))
+      .sort((a, b) => a.date.getTime() - b.date.getTime())
+
+    if (events.length === 0) {
+      return []
+    }
+
+    let opened = 0
+    let closed = 0
+    let comments = 0
+    let total = 0
+    let currentOpen = 0
+    let currentClosed = 0
+    const issueStates = new Map<number, 'open' | 'closed'>()
+
+    const setIssueState = (issueNumber: number, nextState: 'open' | 'closed') => {
+      const previousState = issueStates.get(issueNumber)
+      if (previousState === nextState) {
+        return
+      }
+      if (previousState === 'open') {
+        currentOpen -= 1
+      } else if (previousState === 'closed') {
+        currentClosed -= 1
+      }
+      if (nextState === 'open') {
+        currentOpen += 1
+      } else {
+        currentClosed += 1
+      }
+      issueStates.set(issueNumber, nextState)
+    }
+
+    const points = events.map((event) => {
+      total += 1
+      if (event.event === 'opened') {
+        opened += 1
+        setIssueState(event.issueNumber, 'open')
+      } else if (event.event === 'closed') {
+        closed += 1
+        setIssueState(event.issueNumber, 'closed')
+      } else if (event.event === 'reopened') {
+        setIssueState(event.issueNumber, 'open')
+      } else if (event.event === 'commented') {
+        comments += 1
+      }
+      return {
+        date: event.date,
+        issue_current_open: currentOpen,
+        issue_current_closed: currentClosed,
+        issue_opened: opened,
+        issue_closed: closed,
+        issue_comments: comments,
+        issue_events: total,
+      }
+    })
+
+    return ISSUE_METRIC_OPTIONS.map(({ key, label }) => ({
       key,
       label,
-      values: timeline.map((entry) => ({
+      values: points.map((point) => ({
+        date: point.date,
+        value: point[key as keyof typeof point] as number,
+      })),
+    }))
+  }, [issueEvents])
+
+  const series = useMemo<ChartSeries[]>(() => {
+    const availableMetrics = METRIC_OPTIONS.filter(({ key }) =>
+      versionTimeline.some((entry) => toNumber(entry.metrics[key]) !== null),
+    )
+    const metricSeries = availableMetrics.map(({ key, label }) => ({
+      key,
+      label,
+      values: versionTimeline.map((entry) => ({
         date: entry.date,
         value: toNumber(entry.metrics[key]),
       })),
     }))
-  }, [timeline])
+    return [...metricSeries, ...issueSeries]
+  }, [issueSeries, versionTimeline])
+
+  const timelineDates = useMemo(() => {
+    return series
+      .flatMap((metric) => metric.values.map((entry) => entry.date))
+      .sort((a, b) => a.getTime() - b.getTime())
+  }, [series])
 
   const colorScale = useMemo(() => {
     return d3
@@ -234,11 +380,11 @@ function CodebaseMetricsChart({
     const svg = d3.select(svgRef.current)
     svg.selectAll('*').remove()
 
-    if (timeline.length === 0 || series.length === 0) {
+    if (timelineDates.length === 0 || series.length === 0) {
       return
     }
 
-    const [minDate, maxDate] = d3.extent(timeline, (entry) => entry.date)
+    const [minDate, maxDate] = d3.extent(timelineDates)
     if (minDate === undefined) {
       return
     }
@@ -317,26 +463,24 @@ function CodebaseMetricsChart({
         const [mouseX] = d3.pointer(event, svg.node())
         const hoverDate = xScale.invert(mouseX)
 
-        const closestEntry = timeline.reduce((closest, entry) => {
-          const dist = Math.abs(entry.date.getTime() - hoverDate.getTime())
-          const closestDist = Math.abs(
-            closest.date.getTime() - hoverDate.getTime(),
-          )
-          return dist < closestDist ? entry : closest
+        const closestDate = timelineDates.reduce((closest, date) => {
+          const dist = Math.abs(date.getTime() - hoverDate.getTime())
+          const closestDist = Math.abs(closest.getTime() - hoverDate.getTime())
+          return dist < closestDist ? date : closest
         })
 
-        setHoveredDate(closestEntry.date)
+        setHoveredDate(closestDate)
       })
       .on('mouseleave', () => {
         setHoveredDate(null)
       })
-  }, [timeline, series, colorScale, visibleMetrics])
+  }, [timelineDates, series, colorScale, visibleMetrics])
 
   if (versions.length === 0) {
     return <p className="text-sm text-[#6b6e73]">No metrics available yet.</p>
   }
 
-  if (timeline.length === 0 || series.length === 0) {
+  if (versionTimeline.length === 0 || series.length === 0) {
     return (
       <p className="text-sm text-[#6b6e73]">
         No numeric metrics available yet.

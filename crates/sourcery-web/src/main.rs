@@ -8,7 +8,8 @@ use axum::{
 use clap::Parser;
 use sourcery_db::{
     Codebase, Diff, DiffWithChanges, File, FileState, FileStateWithFunctionCount,
-    FilenameSearchResult, FunctionSearchResult, PgPool, Version, VersionFunction,
+    FilenameSearchResult, FunctionSearchResult, GithubIssueTimelineEvent, PgPool, Version,
+    VersionFunction,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
@@ -60,6 +61,7 @@ async fn main() -> anyhow::Result<()> {
         .route("/codebase/{id}", get(get_codebase))
         .route("/codebase/{id}/diff", get(list_diffs_by_codebase))
         .route("/codebase/{id}/metrics", get(list_codebase_metrics))
+        .route("/github/issues/timeline", get(list_github_issue_timeline))
         .route("/version/{id}", get(get_version))
         .route("/file/{file_id}", get(get_file))
         .route("/function/{function_id}", get(get_function))
@@ -70,7 +72,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/diffchange", get(get_version_diff_change))
         .route("/version/{id}/callgraph", get(list_version_callgraph))
-        .route("/version/{id}/treemap/files", get(list_version_treemap_files))
+        .route(
+            "/version/{id}/treemap/files",
+            get(list_version_treemap_files),
+        )
         .route(
             "/version/{id}/treemap/functions",
             get(list_version_treemap_functions),
@@ -164,6 +169,17 @@ struct SearchQuery {
     limit: u32,
 }
 
+#[derive(serde::Deserialize)]
+struct GithubIssueTimelineQuery {
+    repo: String,
+    issue: Option<i32>,
+    event: Option<String>,
+    #[serde(default = "default_limit")]
+    limit: u32,
+    #[serde(default)]
+    offset: u32,
+}
+
 fn default_limit() -> u32 {
     50
 }
@@ -180,6 +196,23 @@ async fn get_version_or_not_found(
         .await
         .map_err(internal_error)?;
     version.ok_or_else(|| (StatusCode::NOT_FOUND, format!("version {id} not found")))
+}
+
+async fn list_github_issue_timeline(
+    Query(query): Query<GithubIssueTimelineQuery>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<GithubIssueTimelineEvent>>, (StatusCode, String)> {
+    let rows = sourcery_db::list_github_issue_timeline_events(
+        &state.pool,
+        &query.repo,
+        query.issue,
+        query.event.as_deref(),
+        i64::from(query.limit),
+        i64::from(query.offset),
+    )
+    .await
+    .map_err(internal_error)?;
+    Ok(Json(rows))
 }
 
 async fn get_version(
@@ -217,7 +250,9 @@ async fn get_file(
         .await
         .map_err(internal_error)?;
     match file {
-        Some(file) => Ok(Json(file_state_with_function_count(&state.pool, file).await?)),
+        Some(file) => Ok(Json(
+            file_state_with_function_count(&state.pool, file).await?,
+        )),
         None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
     }
 }
@@ -285,7 +320,9 @@ async fn get_version_file(
         .await
         .map_err(internal_error)?;
     match file {
-        Some(file) => Ok(Json(file_state_with_function_count(&state.pool, file).await?)),
+        Some(file) => Ok(Json(
+            file_state_with_function_count(&state.pool, file).await?,
+        )),
         None => Err((
             StatusCode::NOT_FOUND,
             format!("file {file_state_id} not found for version {id}"),

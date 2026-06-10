@@ -189,6 +189,27 @@ pub struct FunctionSearchResult {
     pub score: f32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct GithubIssueTimelineEvent {
+    pub id: Uuid,
+    pub repo: String,
+    pub issue_number: i32,
+    pub issue_title: String,
+    pub issue_state: String,
+    pub event: String,
+    pub event_created_at: DateTime<Utc>,
+    pub actor: String,
+    pub commit_id: String,
+    pub label: String,
+    pub assignee: String,
+    pub milestone: String,
+    pub source: String,
+    pub body: String,
+    pub html_url: String,
+    pub raw_event: serde_json::Value,
+    pub imported_at: DateTime<Utc>,
+}
+
 // Connection
 
 pub async fn connect(database_url: &str) -> Result<PgPool> {
@@ -1280,6 +1301,33 @@ pub async fn search_version_functions(
     .bind(version_id)
     .bind(query)
     .bind(limit)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_github_issue_timeline_events(
+    pool: &PgPool,
+    repo: &str,
+    issue_number: Option<i32>,
+    event: Option<&str>,
+    limit: i64,
+    offset: i64,
+) -> Result<Vec<GithubIssueTimelineEvent>> {
+    let rows = sqlx::query_as::<_, GithubIssueTimelineEvent>(
+        "SELECT *
+         FROM github_issue_timeline_events
+         WHERE repo = $1
+           AND ($2::integer IS NULL OR issue_number = $2)
+           AND ($3::text IS NULL OR event = $3)
+         ORDER BY event_created_at, issue_number
+         LIMIT $4 OFFSET $5",
+    )
+    .bind(repo)
+    .bind(issue_number)
+    .bind(event)
+    .bind(limit)
+    .bind(offset)
     .fetch_all(pool)
     .await?;
     Ok(rows)
