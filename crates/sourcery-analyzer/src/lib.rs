@@ -187,22 +187,27 @@ pub async fn analyze_repo_version(
         .into_iter()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.file_type().is_file())
-        .filter(|entry| entry.path().to_string_lossy().ends_with(".go"))
+        .filter(|entry| {
+            let path = entry.path().to_string_lossy();
+            path.ends_with(".go") || path.ends_with(".ml") || path.ends_with(".mli")
+        })
         .for_each(|entry| {
             files.push(entry.path().to_path_buf());
         });
-
-    println!("files: {}", files.len());
 
     for file in files {
         let uri = socket.open_document(&file).await;
         let mut processor = Processor::new(&lc, &file, socket.clone(), uri)?;
         let analysis = processor.analyze_with_enrichted_stats().await?;
-        println!("{}", analysis.functions.len());
+        save_all_data(&analysis);
     }
 
     server.shutdown(mainloop).await;
     Ok(())
+}
+
+fn save_all_data(analysis: &Analysis) -> Result<()> {
+    // @todo
 }
 
 pub async fn analyze_git_repository_with_database(
