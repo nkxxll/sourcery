@@ -1,11 +1,11 @@
 /// this is just a command line application that fires the sql queries so I can look at the results
 use clap::{Parser, Subcommand};
 use sourcery_db::{
-    connect, count_version_files_and_functions, get_codebase_by_id, get_diff_by_version,
-    get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id,
-    list_all_files_states, list_all_functions, list_codebases, list_files_by_version,
-    list_functions_by_version, list_versions_by_codebase, search_version_filenames,
-    search_version_functions,
+    connect, count_version_files_and_functions, delete_codebase, get_codebase_by_id,
+    get_codebase_by_name, get_diff_by_version, get_diff_with_changes_by_version,
+    get_version_by_commit, get_version_by_id, list_all_files_states, list_all_functions,
+    list_codebases, list_files_by_version, list_functions_by_version, list_versions_by_codebase,
+    search_version_filenames, search_version_functions,
 };
 use uuid::Uuid;
 
@@ -23,6 +23,10 @@ pub enum SubCommand {
     },
     /// list of all codebases
     Codebases,
+    /// delete one codebase and descendants by name
+    DeleteCodebase {
+        name: String,
+    },
     /// list of metrics for one codebase
     CodebaseMetrics {
         id: String,
@@ -85,6 +89,18 @@ async fn main() -> anyhow::Result<()> {
         SubCommand::Codebases => {
             let codebases = list_codebases(&pool).await?;
             println!("{}", serde_json::to_string_pretty(&codebases)?);
+        }
+        SubCommand::DeleteCodebase { name } => {
+            let Some(codebase) = get_codebase_by_name(&pool, &name).await? else {
+                anyhow::bail!("codebase not found: {name}");
+            };
+
+            let deleted = delete_codebase(&pool, codebase.id).await?;
+            if !deleted {
+                anyhow::bail!("failed to delete codebase: {name}");
+            }
+
+            println!("{}", serde_json::to_string_pretty(&codebase)?);
         }
         SubCommand::CodebaseMetrics { id } => {
             let codebase_id = Uuid::parse_str(&id)?;
