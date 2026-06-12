@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use sourcery_analyzer::{
-    analyze_git_repository_with_database, analyze_repo_version, analyze_single_file,
-    language::ProgrammingLanguage,
+    analyze_git_repository_with_database, analyze_repo_samples, analyze_repo_version,
+    analyze_single_file, language::ProgrammingLanguage,
 };
 
 #[derive(Parser, Debug)]
@@ -21,6 +21,11 @@ pub enum SubCommand {
     },
     Version {
         path: String,
+        programming_language: Option<ProgrammingLanguage>,
+    },
+    Sample {
+        path: String,
+        samples: usize,
         programming_language: Option<ProgrammingLanguage>,
     },
     File {
@@ -57,6 +62,13 @@ async fn main() -> anyhow::Result<()> {
             programming_language,
         } => {
             analyze_repo_version(path, programming_language).await?;
+        }
+        SubCommand::Sample {
+            path,
+            samples,
+            programming_language,
+        } => {
+            analyze_repo_samples(path, samples, programming_language).await?;
         }
         SubCommand::File {
             path,

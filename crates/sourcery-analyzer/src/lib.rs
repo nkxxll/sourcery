@@ -177,36 +177,116 @@ pub async fn analyze_repo_version(
     let pl = programming_language.unwrap_or_else(|| {
         guess_repo_language(&path).expect("the language could not be determined")
     });
-    let lc = LanguageConfig::new(pl);
     let codebase_name = analyze_version_codebase_name(&path);
     let codebase = db::insert_codebase(&pool, &codebase_name, &path, &pl.to_string()).await?;
-    if let Some(existing_version) =
-        db::get_version_by_commit(&pool, codebase.id, "analyze-version").await?
-    {
-        db::delete_version(&pool, existing_version.id).await?;
-    }
-    let version = db::insert_version(
+
+    analyze_repo_tree_version(
         &pool,
-        codebase.id,
+        &codebase,
+        &PathBuf::from(&path),
+        pl,
         "analyze-version",
         "Analyze repository version",
         "sourcery-analyzer",
         "",
         Some(Utc::now()),
         None,
+    )
+    .await
+}
+
+pub async fn analyze_repo_samples(
+    path: String,
+    samples: usize,
+    programming_language: Option<ProgrammingLanguage>,
+) -> Result<()> {
+    if samples == 0 {
+        return Err(anyhow!("samples must be greater than 0"));
+    }
+
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_string());
+    let pool = db::connect(&database_url).await?;
+    let pl = programming_language.unwrap_or_else(|| {
+        guess_repo_language(&path).expect("the language could not be determined")
+    });
+    let path_buf = PathBuf::from(&path);
+    let sr = SourceRepository::from_path(path_buf.clone())?;
+    let commits = State::gather_commits(&sr);
+    let sampled_commits = select_sample_commits(&sr, &commits, samples)?;
+    let codebase_name = analyze_sample_codebase_name(&path, samples);
+    let codebase = db::insert_codebase(&pool, &codebase_name, &path, &pl.to_string()).await?;
+
+    info!(
+        path = %path,
+        requested_samples = samples,
+        selected_samples = sampled_commits.len(),
+        "starting sampled repository analysis"
+    );
+
+    for (index, oid) in sampled_commits.iter().enumerate() {
+        println!("Analyzing sample ({}/{})", index, sampled_commits.len());
+        sr.checkout_commit(&oid)?;
+        let commit_info = commit_info_from_repository(&sr, &oid)?;
+        analyze_repo_tree_version(
+            &pool,
+            &codebase,
+            &path_buf,
+            pl,
+            &commit_info.hash,
+            &commit_info.message,
+            &commit_info.author_name,
+            &commit_info.author_email,
+            commit_info.committed_at,
+            Some(commit_info.is_fix),
+        )
+        .await?;
+    }
+
+    println!("Analysis complete");
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+async fn analyze_repo_tree_version(
+    pool: &PgPool,
+    codebase: &Codebase,
+    path: &PathBuf,
+    pl: ProgrammingLanguage,
+    commit_hash: &str,
+    message: &str,
+    author_name: &str,
+    author_email: &str,
+    committed_at: Option<DateTime<Utc>>,
+    is_fix: Option<bool>,
+) -> Result<()> {
+    let lc = LanguageConfig::new(pl);
+    if let Some(existing_version) =
+        db::get_version_by_commit(pool, codebase.id, commit_hash).await?
+    {
+        db::delete_version(pool, existing_version.id).await?;
+    }
+    let version = db::insert_version(
+        pool,
+        codebase.id,
+        commit_hash,
+        message,
+        author_name,
+        author_email,
+        committed_at,
+        is_fix,
         &json!({}),
     )
     .await?;
 
     let (binary, args) = pl.lsp();
-    let mut server = Server::new(&path, binary, args);
+    let mut server = Server::new(path, binary, args);
     let mainloop = server.run_main_loop();
     server.initialize().await;
     let mut socket = server.socket();
 
     let mut files = Vec::new();
-    let path_buf = PathBuf::from(&path);
-    walkdir::WalkDir::new(&path_buf)
+    walkdir::WalkDir::new(path)
         .into_iter()
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.file_type().is_file())
@@ -228,7 +308,7 @@ pub async fn analyze_repo_version(
         let mut processor = Processor::new(&lc, &file, socket.clone(), uri)?;
         let analysis = processor.analyze_with_enrichted_stats().await?;
         let relative_path = file
-            .strip_prefix(&path_buf)
+            .strip_prefix(path)
             .unwrap_or(&file)
             .display()
             .to_string();
@@ -248,13 +328,7 @@ pub async fn analyze_repo_version(
     }
 
     let version_metrics = AggregatedFileMetrics::from_file_metrics_map(&metrics_by_path);
-    db::update_version_metrics(
-        &pool,
-        version.id,
-        &version_metrics.to_json(),
-        "analyze-version",
-    )
-    .await?;
+    db::update_version_metrics(&pool, version.id, &version_metrics.to_json(), commit_hash).await?;
 
     server.shutdown(mainloop).await;
     Ok(())
@@ -268,6 +342,86 @@ fn analyze_version_codebase_name(path: &str) -> String {
         .unwrap_or_else(|| path.to_string());
 
     format!("{base_name} (version analysis)")
+}
+
+fn analyze_sample_codebase_name(path: &str, samples: usize) -> String {
+    let base_name = PathBuf::from(path)
+        .file_name()
+        .map(|name| name.to_string_lossy().to_string())
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| path.to_string());
+
+    format!("{base_name} (sample analysis: {samples} samples)")
+}
+
+fn select_sample_commits(
+    sr: &SourceRepository,
+    commits: &[Oid],
+    samples: usize,
+) -> Result<Vec<Oid>> {
+    if commits.is_empty() {
+        return Err(anyhow!("repository has no commits"));
+    }
+    if samples == 1 {
+        return Ok(vec![commits[0]]);
+    }
+
+    let commit_times = commits
+        .iter()
+        .map(|oid| {
+            let commit = sr.find_commit(oid)?;
+            Ok((*oid, commit.time().seconds()))
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let first_time = commit_times
+        .first()
+        .map(|(_, time)| *time)
+        .expect("commit_times is not empty");
+    let last_time = commit_times
+        .last()
+        .map(|(_, time)| *time)
+        .expect("commit_times is not empty");
+    let span = i128::from(last_time) - i128::from(first_time);
+
+    let mut selected = Vec::new();
+    let mut seen = HashSet::new();
+    for index in 0..samples {
+        let target = i128::from(first_time)
+            + span * i128::try_from(index).context("sample index is too large")?
+                / i128::try_from(samples - 1).context("sample count is too large")?;
+        let Some((oid, _)) = commit_times
+            .iter()
+            .filter(|(oid, _)| !seen.contains(oid))
+            .min_by_key(|(_, time)| (i128::from(*time) - target).abs())
+        else {
+            continue;
+        };
+        seen.insert(*oid);
+        selected.push(*oid);
+    }
+
+    Ok(selected)
+}
+
+fn commit_info_from_repository(sr: &SourceRepository, oid: &Oid) -> Result<CommitInfo> {
+    let commit = sr
+        .find_commit(oid)
+        .with_context(|| format!("failed to find commit {oid}"))?;
+    let message = commit.message().unwrap_or("").to_string();
+    let author_name = commit.author().name().unwrap_or_default().to_string();
+    let author_email = commit.author().email().unwrap_or_default().to_string();
+    let committed_at = DateTime::<Utc>::from_timestamp(commit.time().seconds(), 0);
+    let is_fix = is_fix(&message);
+    let hash = oid.to_string();
+
+    Ok(CommitInfo {
+        author_name,
+        author_email,
+        message,
+        committed_at,
+        is_fix,
+        hash,
+    })
 }
 
 pub async fn analyze_git_repository_with_database(

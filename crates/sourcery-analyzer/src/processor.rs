@@ -106,9 +106,10 @@ impl<'processor> Processor<'processor> {
 
     pub async fn close_language_server_file(&mut self) {
         let path = self.source.file();
-        debug!(file = %path.display(), "closing language server file");
-        self.socket.clone().unwrap().close_document(path).await;
-        debug!(file = %path.display(), "closed language server file");
+        let canonical_path = path.canonicalize().unwrap_or_else(|_| path.clone());
+        debug!(file = %canonical_path.display(), "closing language server file");
+        self.socket.clone().unwrap().close_document(&canonical_path).await;
+        debug!(file = %canonical_path.display(), "closed language server file");
     }
 
     pub fn source(&self) -> &str {
