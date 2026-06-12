@@ -171,10 +171,33 @@ pub async fn analyze_repo_version(
     path: String,
     programming_language: Option<ProgrammingLanguage>,
 ) -> Result<()> {
+    let database_url =
+        std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_string());
+    let pool = db::connect(&database_url).await?;
     let pl = programming_language.unwrap_or_else(|| {
         guess_repo_language(&path).expect("the language could not be determined")
     });
     let lc = LanguageConfig::new(pl);
+    let codebase_name = analyze_version_codebase_name(&path);
+    let codebase = db::insert_codebase(&pool, &codebase_name, &path, &pl.to_string()).await?;
+    if let Some(existing_version) =
+        db::get_version_by_commit(&pool, codebase.id, "analyze-version").await?
+    {
+        db::delete_version(&pool, existing_version.id).await?;
+    }
+    let version = db::insert_version(
+        &pool,
+        codebase.id,
+        "analyze-version",
+        "Analyze repository version",
+        "sourcery-analyzer",
+        "",
+        Some(Utc::now()),
+        None,
+        &json!({}),
+    )
+    .await?;
+
     let (binary, args) = pl.lsp();
     let mut server = Server::new(&path, binary, args);
     let mainloop = server.run_main_loop();
@@ -188,26 +211,63 @@ pub async fn analyze_repo_version(
         .filter_map(|entry| entry.ok())
         .filter(|entry| entry.file_type().is_file())
         .filter(|entry| {
-            let path = entry.path().to_string_lossy();
-            path.ends_with(".go") || path.ends_with(".ml") || path.ends_with(".mli")
+            lc.extensions.iter().any(|ext| {
+                entry
+                    .path()
+                    .extension()
+                    .is_some_and(|file_ext| file_ext == *ext)
+            })
         })
         .for_each(|entry| {
             files.push(entry.path().to_path_buf());
         });
 
+    let mut metrics_by_path = HashMap::new();
     for file in files {
         let uri = socket.open_document(&file).await;
         let mut processor = Processor::new(&lc, &file, socket.clone(), uri)?;
         let analysis = processor.analyze_with_enrichted_stats().await?;
-        save_all_data(&analysis);
+        let relative_path = file
+            .strip_prefix(&path_buf)
+            .unwrap_or(&file)
+            .display()
+            .to_string();
+        let file_path = EcoString::from(relative_path);
+        let stored_analysis = store_file_analysis(
+            &pool,
+            &version,
+            &file_path,
+            &pl,
+            &analysis,
+            processor.source(),
+            processor.new_line_map(),
+        )
+        .await?;
+        metrics_by_path.insert(file_path, stored_analysis.metrics);
+        processor.close_language_server_file().await;
     }
+
+    let version_metrics = AggregatedFileMetrics::from_file_metrics_map(&metrics_by_path);
+    db::update_version_metrics(
+        &pool,
+        version.id,
+        &version_metrics.to_json(),
+        "analyze-version",
+    )
+    .await?;
 
     server.shutdown(mainloop).await;
     Ok(())
 }
 
-fn save_all_data(analysis: &Analysis) -> Result<()> {
-    // @todo
+fn analyze_version_codebase_name(path: &str) -> String {
+    let base_name = PathBuf::from(path)
+        .file_name()
+        .map(|name| name.to_string_lossy().to_string())
+        .filter(|name| !name.is_empty())
+        .unwrap_or_else(|| path.to_string());
+
+    format!("{base_name} (version analysis)")
 }
 
 pub async fn analyze_git_repository_with_database(
