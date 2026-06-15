@@ -108,7 +108,11 @@ impl<'processor> Processor<'processor> {
         let path = self.source.file();
         let canonical_path = path.canonicalize().unwrap_or_else(|_| path.clone());
         debug!(file = %canonical_path.display(), "closing language server file");
-        self.socket.clone().unwrap().close_document(&canonical_path).await;
+        self.socket
+            .clone()
+            .unwrap()
+            .close_document(&canonical_path)
+            .await;
         debug!(file = %canonical_path.display(), "closed language server file");
     }
 
@@ -691,6 +695,7 @@ pub struct AggregatedFileMetrics {
     pub total_comment_lines_of_code: u64,
     pub total_bracket_lines_of_code: u64,
     pub total_cyclomatic: u64,
+    pub total_halstead: HalsteadMetrics,
     pub files_with_maintainability_index: u64,
     pub total_three_property_maintainability_index: f64,
     pub total_four_property_maintainability_index: f64,
@@ -705,6 +710,7 @@ impl AggregatedFileMetrics {
         self.total_comment_lines_of_code += metrics.comment_lines_of_code;
         self.total_bracket_lines_of_code += metrics.bracket_lines_of_code;
         self.total_cyclomatic += metrics.total_cyclomatic;
+        self.total_halstead = add_halstead_metrics(self.total_halstead, metrics.total_halstead);
         if let Some(mi) = metrics.maintainability_index {
             self.files_with_maintainability_index += 1;
             self.total_three_property_maintainability_index += mi.three_property;
@@ -755,6 +761,11 @@ impl AggregatedFileMetrics {
                 .get("total_cyclomatic")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            total_halstead: metrics
+                .get("total_halstead")
+                .and_then(HalsteadMetrics::from_json)
+                .or_else(|| halstead_metrics_from_prefixed_json(metrics, "total_halstead"))
+                .unwrap_or_default(),
             files_with_maintainability_index: metrics
                 .get("files_with_maintainability_index")
                 .and_then(serde_json::Value::as_u64)
@@ -775,13 +786,14 @@ impl AggregatedFileMetrics {
     }
 
     pub fn to_json(&self) -> serde_json::Value {
-        serde_json::json!({
+        let mut metrics = serde_json::json!({
             "files": self.files,
             "total_lines_of_code": self.total_lines_of_code,
             "total_effective_lines_of_code": self.total_effective_lines_of_code,
             "total_comment_lines_of_code": self.total_comment_lines_of_code,
             "total_bracket_lines_of_code": self.total_bracket_lines_of_code,
             "total_cyclomatic": self.total_cyclomatic,
+            "total_halstead": halstead_metrics_json(self.total_halstead),
             "files_with_maintainability_index": self.files_with_maintainability_index,
             "total_three_property_maintainability_index": self.total_three_property_maintainability_index,
             "total_four_property_maintainability_index": self.total_four_property_maintainability_index,
@@ -794,7 +806,9 @@ impl AggregatedFileMetrics {
             "mean_three_property_maintainability_index_per_file": Self::mean_f64(self.total_three_property_maintainability_index, self.files_with_maintainability_index),
             "mean_four_property_maintainability_index_per_file": Self::mean_f64(self.total_four_property_maintainability_index, self.files_with_maintainability_index),
             "mean_visual_studio_maintainability_index_per_file": Self::mean_f64(self.total_visual_studio_maintainability_index, self.files_with_maintainability_index),
-        })
+        });
+        add_prefixed_halstead_metrics(&mut metrics, "total_halstead", self.total_halstead);
+        metrics
     }
 
     pub fn from_file_metrics_map(file_metrics_by_path: &HashMap<EcoString, FileMetrics>) -> Self {
@@ -835,6 +849,11 @@ impl AggregatedFileMetrics {
                 .total_cyclomatic
                 .saturating_sub(old_metrics.total_cyclomatic)
                 .saturating_add(new_metrics.total_cyclomatic),
+            total_halstead: reconcile_halstead_metrics(
+                previous.total_halstead,
+                old_metrics.total_halstead,
+                new_metrics.total_halstead,
+            ),
             files_with_maintainability_index: previous
                 .files_with_maintainability_index
                 .saturating_sub(old_metrics.files_with_maintainability_index)
@@ -853,6 +872,108 @@ impl AggregatedFileMetrics {
                 + new_metrics.total_visual_studio_maintainability_index,
         }
     }
+}
+
+fn add_halstead_metrics(left: HalsteadMetrics, right: HalsteadMetrics) -> HalsteadMetrics {
+    HalsteadMetrics::from_counts(
+        left.unique_operators.saturating_add(right.unique_operators),
+        left.unique_operands.saturating_add(right.unique_operands),
+        left.operators.saturating_add(right.operators),
+        left.operands.saturating_add(right.operands),
+    )
+}
+
+fn reconcile_halstead_metrics(
+    previous: HalsteadMetrics,
+    old_metrics: HalsteadMetrics,
+    new_metrics: HalsteadMetrics,
+) -> HalsteadMetrics {
+    HalsteadMetrics::from_counts(
+        previous
+            .unique_operators
+            .saturating_sub(old_metrics.unique_operators)
+            .saturating_add(new_metrics.unique_operators),
+        previous
+            .unique_operands
+            .saturating_sub(old_metrics.unique_operands)
+            .saturating_add(new_metrics.unique_operands),
+        previous
+            .operators
+            .saturating_sub(old_metrics.operators)
+            .saturating_add(new_metrics.operators),
+        previous
+            .operands
+            .saturating_sub(old_metrics.operands)
+            .saturating_add(new_metrics.operands),
+    )
+}
+
+fn add_prefixed_halstead_metrics(
+    value: &mut serde_json::Value,
+    prefix: &str,
+    metrics: HalsteadMetrics,
+) {
+    let Some(object) = value.as_object_mut() else {
+        return;
+    };
+    object.insert(
+        format!("{prefix}_unique_operators"),
+        metrics.unique_operators.into(),
+    );
+    object.insert(
+        format!("{prefix}_unique_operands"),
+        metrics.unique_operands.into(),
+    );
+    object.insert(format!("{prefix}_operators"), metrics.operators.into());
+    object.insert(format!("{prefix}_operands"), metrics.operands.into());
+    object.insert(format!("{prefix}_length"), metrics.length.into());
+    object.insert(format!("{prefix}_vocabulary"), metrics.vocabulary.into());
+    object.insert(
+        format!("{prefix}_calculated_length"),
+        metrics.calculated_length.into(),
+    );
+    object.insert(format!("{prefix}_volume"), metrics.volume.into());
+    object.insert(format!("{prefix}_difficulty"), metrics.difficulty.into());
+    object.insert(format!("{prefix}_effort"), metrics.effort.into());
+    object.insert(
+        format!("{prefix}_time_seconds"),
+        metrics.time_seconds.into(),
+    );
+    object.insert(format!("{prefix}_bugs"), metrics.bugs.into());
+}
+
+fn halstead_metrics_json(metrics: HalsteadMetrics) -> serde_json::Value {
+    serde_json::json!({
+        "unique_operators": metrics.unique_operators,
+        "unique_operands": metrics.unique_operands,
+        "operators": metrics.operators,
+        "operands": metrics.operands,
+        "length": metrics.length,
+        "vocabulary": metrics.vocabulary,
+        "calculated_length": metrics.calculated_length,
+        "volume": metrics.volume,
+        "difficulty": metrics.difficulty,
+        "effort": metrics.effort,
+        "time_seconds": metrics.time_seconds,
+        "bugs": metrics.bugs,
+    })
+}
+
+fn halstead_metrics_from_prefixed_json(
+    metrics: &serde_json::Value,
+    prefix: &str,
+) -> Option<HalsteadMetrics> {
+    Some(HalsteadMetrics::from_counts(
+        usize::try_from(
+            metrics
+                .get(format!("{prefix}_unique_operators"))?
+                .as_u64()?,
+        )
+        .ok()?,
+        usize::try_from(metrics.get(format!("{prefix}_unique_operands"))?.as_u64()?).ok()?,
+        usize::try_from(metrics.get(format!("{prefix}_operators"))?.as_u64()?).ok()?,
+        usize::try_from(metrics.get(format!("{prefix}_operands"))?.as_u64()?).ok()?,
+    ))
 }
 
 #[derive(Debug)]
@@ -1880,7 +2001,7 @@ func main() {
                     comment_lines_of_code: 2,
                     bracket_lines_of_code: 1,
                     total_cyclomatic: 3,
-                    total_halstead: HalsteadMetrics::default(),
+                    total_halstead: HalsteadMetrics::from_counts(1, 2, 3, 4),
                     maintainability_index: Some(MaintainabilityIndex::new(100.0, 3, 8, 2)),
                 },
             ),
@@ -1892,7 +2013,7 @@ func main() {
                     comment_lines_of_code: 5,
                     bracket_lines_of_code: 3,
                     total_cyclomatic: 7,
-                    total_halstead: HalsteadMetrics::default(),
+                    total_halstead: HalsteadMetrics::from_counts(2, 3, 4, 5),
                     maintainability_index: None,
                 },
             ),
@@ -1906,6 +2027,10 @@ func main() {
         assert_eq!(aggregated.total_comment_lines_of_code, 7);
         assert_eq!(aggregated.total_bracket_lines_of_code, 4);
         assert_eq!(aggregated.total_cyclomatic, 10);
+        assert_eq!(
+            aggregated.total_halstead,
+            HalsteadMetrics::from_counts(3, 5, 7, 9)
+        );
         assert_eq!(aggregated.files_with_maintainability_index, 1);
     }
 
@@ -1918,6 +2043,7 @@ func main() {
             total_comment_lines_of_code: 12,
             total_bracket_lines_of_code: 9,
             total_cyclomatic: 18,
+            total_halstead: HalsteadMetrics::from_counts(6, 7, 20, 22),
             files_with_maintainability_index: 2,
             total_three_property_maintainability_index: 150.0,
             total_four_property_maintainability_index: 160.0,
@@ -1930,6 +2056,7 @@ func main() {
             total_comment_lines_of_code: 7,
             total_bracket_lines_of_code: 6,
             total_cyclomatic: 10,
+            total_halstead: HalsteadMetrics::from_counts(2, 3, 5, 6),
             files_with_maintainability_index: 1,
             total_three_property_maintainability_index: 70.0,
             total_four_property_maintainability_index: 75.0,
@@ -1942,6 +2069,7 @@ func main() {
             total_comment_lines_of_code: 4,
             total_bracket_lines_of_code: 5,
             total_cyclomatic: 9,
+            total_halstead: HalsteadMetrics::from_counts(3, 4, 7, 8),
             files_with_maintainability_index: 2,
             total_three_property_maintainability_index: 130.0,
             total_four_property_maintainability_index: 135.0,
@@ -1956,6 +2084,10 @@ func main() {
         assert_eq!(reconciled.total_comment_lines_of_code, 9);
         assert_eq!(reconciled.total_bracket_lines_of_code, 8);
         assert_eq!(reconciled.total_cyclomatic, 17);
+        assert_eq!(
+            reconciled.total_halstead,
+            HalsteadMetrics::from_counts(7, 8, 22, 24)
+        );
         assert_eq!(reconciled.files_with_maintainability_index, 3);
         assert_eq!(reconciled.total_three_property_maintainability_index, 210.0);
         assert_eq!(reconciled.total_four_property_maintainability_index, 220.0);
