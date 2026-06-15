@@ -129,7 +129,7 @@ impl<'processor> Processor<'processor> {
         &self,
         syntax_functions: &[FunctionAnalysis],
         comments: &[CommentAnalysis],
-    ) -> (u64, u64, u64, u64, u64, u64) {
+    ) -> (u64, u64, u64, u64, u64, u64, u64) {
         let source = self.source.source();
         let new_line_map = self.source.new_line_map();
         let lines_of_code = new_line_map.line_count() as u64;
@@ -137,9 +137,20 @@ impl<'processor> Processor<'processor> {
         let blank_lines = self.blank_lines();
         let comment_lines_of_code =
             comments.iter().map(|comment| comment.lines).sum::<usize>() as u64;
-        let effective_lines_of_code = lines_of_code
-            .saturating_sub(comment_lines_of_code)
+        let comment_lines_of_code_without_inline = comments
+            .iter()
+            .filter_map(|comment| {
+                if comment.inline {
+                    return None;
+                }
+                Some(comment.lines)
+            })
+            .sum::<usize>() as u64;
+        let effective_lines_of_code_with_brackets = lines_of_code
+            .saturating_sub(comment_lines_of_code_without_inline)
             .saturating_sub(blank_lines);
+        let effective_lines_of_code =
+            effective_lines_of_code_with_brackets.saturating_sub(bracket_lines_of_code);
         let total_cyclomatic = syntax_functions
             .iter()
             .map(|func| func.cyclomatic)
@@ -150,6 +161,7 @@ impl<'processor> Processor<'processor> {
             blank_lines,
             bracket_lines_of_code,
             comment_lines_of_code,
+            effective_lines_of_code_with_brackets,
             effective_lines_of_code,
             total_cyclomatic,
         )
@@ -165,6 +177,7 @@ impl<'processor> Processor<'processor> {
             blank_lines,
             bracket_lines_of_code,
             comment_lines_of_code,
+            effective_lines_of_code_with_brackets,
             effective_lines_of_code,
             total_cyclomatic,
         ) = self.compute_loc_metrics(&ast_analysis.functions, &ast_analysis.comments);
@@ -174,6 +187,7 @@ impl<'processor> Processor<'processor> {
             blank_lines,
             bracket_lines_of_code,
             comment_lines_of_code,
+            effective_lines_of_code_with_brackets,
             effective_lines_of_code,
             total_cyclomatic,
             functions: ast_analysis.functions,
@@ -183,6 +197,7 @@ impl<'processor> Processor<'processor> {
         debug!(
             file = %self.source.file().display(),
             lines_of_code = syntax.lines_of_code,
+            effective_lines_of_code_with_brackets = syntax.effective_lines_of_code_with_brackets,
             effective_lines_of_code = syntax.effective_lines_of_code,
             comment_lines_of_code = syntax.comment_lines_of_code,
             bracket_lines_of_code = syntax.bracket_lines_of_code,
@@ -202,6 +217,7 @@ impl<'processor> Processor<'processor> {
         debug!(
             file = %analysis.file.display(),
             lines_of_code = analysis.lines_of_code,
+            effective_lines_of_code_with_brackets = analysis.effective_lines_of_code_with_brackets,
             effective_lines_of_code = analysis.effective_lines_of_code,
             comment_lines_of_code = analysis.comment_lines_of_code,
             bracket_lines_of_code = analysis.bracket_lines_of_code,
@@ -341,7 +357,7 @@ impl<'processor> Processor<'processor> {
             MaintainabilityIndex::new(
                 total_halstead.volume,
                 syntax.total_cyclomatic,
-                syntax.effective_lines_of_code,
+                syntax.effective_lines_of_code_with_brackets,
                 syntax.comment_lines_of_code,
             )
         });
@@ -354,6 +370,7 @@ impl<'processor> Processor<'processor> {
             blank_lines: syntax.blank_lines,
             bracket_lines_of_code: syntax.bracket_lines_of_code,
             comment_lines_of_code: syntax.comment_lines_of_code,
+            effective_lines_of_code_with_brackets: syntax.effective_lines_of_code_with_brackets,
             effective_lines_of_code: syntax.effective_lines_of_code,
             total_cyclomatic: syntax.total_cyclomatic,
             total_halstead,
@@ -364,7 +381,13 @@ impl<'processor> Processor<'processor> {
     fn comment_lines_in_span(function_span: CodeLineSpan, comments: &[CommentAnalysis]) -> u64 {
         comments
             .iter()
-            .filter_map(|comment| function_span.overlap_line_count(comment.comment_line_span))
+            .filter_map(|comment| {
+                // inline comments are not counted as lines of comments because they consist of code and comments
+                if comment.inline {
+                    return None;
+                }
+                function_span.overlap_line_count(comment.comment_line_span)
+            })
             .sum::<usize>() as u64
     }
 
@@ -411,6 +434,7 @@ pub struct SyntaxAnalysis {
     pub blank_lines: u64,
     pub bracket_lines_of_code: u64,
     pub comment_lines_of_code: u64,
+    pub effective_lines_of_code_with_brackets: u64,
     pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
 
@@ -540,6 +564,7 @@ pub struct Analysis {
     pub blank_lines: u64,
     pub bracket_lines_of_code: u64,
     pub comment_lines_of_code: u64,
+    pub effective_lines_of_code_with_brackets: u64,
     pub effective_lines_of_code: u64,
     pub total_cyclomatic: u64,
     pub total_halstead: HalsteadMetrics,
@@ -559,6 +584,10 @@ impl Analysis {
         res.push_str(&format!(
             "comment_lines_of_code: {}\n",
             self.comment_lines_of_code
+        ));
+        res.push_str(&format!(
+            "effective_lines_of_code_with_brackets: {}\n",
+            self.effective_lines_of_code_with_brackets
         ));
         res.push_str(&format!(
             "effective_lines_of_code: {}\n",
@@ -646,6 +675,7 @@ impl Analysis {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct FileMetrics {
     pub lines_of_code: u64,
+    pub effective_lines_of_code_with_brackets: u64,
     pub effective_lines_of_code: u64,
     pub comment_lines_of_code: u64,
     pub bracket_lines_of_code: u64,
@@ -665,6 +695,21 @@ impl FileMetrics {
                 .get("effective_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            effective_lines_of_code_with_brackets: metrics
+                .get("effective_lines_of_code_with_brackets")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_else(|| {
+                    metrics
+                        .get("effective_lines_of_code")
+                        .and_then(serde_json::Value::as_u64)
+                        .unwrap_or(0)
+                        .saturating_add(
+                            metrics
+                                .get("bracket_lines_of_code")
+                                .and_then(serde_json::Value::as_u64)
+                                .unwrap_or(0),
+                        )
+                }),
             comment_lines_of_code: metrics
                 .get("comment_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
@@ -692,6 +737,7 @@ impl FileMetrics {
 pub struct AggregatedFileMetrics {
     pub files: u64,
     pub total_lines_of_code: u64,
+    pub total_effective_lines_of_code_with_brackets: u64,
     pub total_effective_lines_of_code: u64,
     pub total_comment_lines_of_code: u64,
     pub total_bracket_lines_of_code: u64,
@@ -707,6 +753,8 @@ impl AggregatedFileMetrics {
     pub fn add_file_metrics(&mut self, metrics: &FileMetrics) {
         self.files += 1;
         self.total_lines_of_code += metrics.lines_of_code;
+        self.total_effective_lines_of_code_with_brackets +=
+            metrics.effective_lines_of_code_with_brackets;
         self.total_effective_lines_of_code += metrics.effective_lines_of_code;
         self.total_comment_lines_of_code += metrics.comment_lines_of_code;
         self.total_bracket_lines_of_code += metrics.bracket_lines_of_code;
@@ -746,6 +794,21 @@ impl AggregatedFileMetrics {
                 .get("total_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
                 .unwrap_or(0),
+            total_effective_lines_of_code_with_brackets: metrics
+                .get("total_effective_lines_of_code_with_brackets")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or_else(|| {
+                    metrics
+                        .get("total_effective_lines_of_code")
+                        .and_then(serde_json::Value::as_u64)
+                        .unwrap_or(0)
+                        .saturating_add(
+                            metrics
+                                .get("total_bracket_lines_of_code")
+                                .and_then(serde_json::Value::as_u64)
+                                .unwrap_or(0),
+                        )
+                }),
             total_effective_lines_of_code: metrics
                 .get("total_effective_lines_of_code")
                 .and_then(serde_json::Value::as_u64)
@@ -790,6 +853,7 @@ impl AggregatedFileMetrics {
         let mut metrics = serde_json::json!({
             "files": self.files,
             "total_lines_of_code": self.total_lines_of_code,
+            "total_effective_lines_of_code_with_brackets": self.total_effective_lines_of_code_with_brackets,
             "total_effective_lines_of_code": self.total_effective_lines_of_code,
             "total_comment_lines_of_code": self.total_comment_lines_of_code,
             "total_bracket_lines_of_code": self.total_bracket_lines_of_code,
@@ -800,6 +864,7 @@ impl AggregatedFileMetrics {
             "total_four_property_maintainability_index": self.total_four_property_maintainability_index,
             "total_visual_studio_maintainability_index": self.total_visual_studio_maintainability_index,
             "mean_lines_of_code_per_file": Self::mean(self.total_lines_of_code, self.files),
+            "mean_effective_lines_of_code_with_brackets_per_file": Self::mean(self.total_effective_lines_of_code_with_brackets, self.files),
             "mean_effective_lines_of_code_per_file": Self::mean(self.total_effective_lines_of_code, self.files),
             "mean_comment_lines_of_code_per_file": Self::mean(self.total_comment_lines_of_code, self.files),
             "mean_bracket_lines_of_code_per_file": Self::mean(self.total_bracket_lines_of_code, self.files),
@@ -834,6 +899,10 @@ impl AggregatedFileMetrics {
                 .total_lines_of_code
                 .saturating_sub(old_metrics.total_lines_of_code)
                 .saturating_add(new_metrics.total_lines_of_code),
+            total_effective_lines_of_code_with_brackets: previous
+                .total_effective_lines_of_code_with_brackets
+                .saturating_sub(old_metrics.total_effective_lines_of_code_with_brackets)
+                .saturating_add(new_metrics.total_effective_lines_of_code_with_brackets),
             total_effective_lines_of_code: previous
                 .total_effective_lines_of_code
                 .saturating_sub(old_metrics.total_effective_lines_of_code)
@@ -1534,7 +1603,11 @@ impl<'processor> AstProcessor<'processor> {
             return false;
         }
 
-        match self.new_line_map.newline_offsets.binary_search(&code_span.get_start()) {
+        match self
+            .new_line_map
+            .newline_offsets
+            .binary_search(&code_span.get_start())
+        {
             Ok(i) | Err(i) => {
                 let line_start = if i == 0 {
                     0
@@ -1544,12 +1617,12 @@ impl<'processor> AstProcessor<'processor> {
                 for index in line_start..code_span.get_start() {
                     let current: u8 = self.source.as_bytes()[index];
                     if !current.is_ascii_whitespace() {
-                        return false;
+                        return true;
                     }
                 }
             }
         }
-        return true;
+        return false;
     }
 
     fn traverse(
@@ -2004,11 +2077,14 @@ let run value =
         let standalone_start = source.find("// standalone").unwrap();
         let trailing_start = source.find("// trailing").unwrap();
 
-        assert!(ast_processor.is_comment_inline(
-            &CodeByteSpan::new(standalone_start, standalone_start + "// standalone comment".len()),
+        assert!(!ast_processor.is_comment_inline(
+            &CodeByteSpan::new(
+                standalone_start,
+                standalone_start + "// standalone comment".len()
+            ),
             true,
         ));
-        assert!(!ast_processor.is_comment_inline(
+        assert!(ast_processor.is_comment_inline(
             &CodeByteSpan::new(trailing_start, trailing_start + "// trailing comment".len()),
             true,
         ));
@@ -2050,6 +2126,7 @@ func main() {
                 EcoString::from("src/a.rs"),
                 FileMetrics {
                     lines_of_code: 10,
+                    effective_lines_of_code_with_brackets: 9,
                     effective_lines_of_code: 8,
                     comment_lines_of_code: 2,
                     bracket_lines_of_code: 1,
@@ -2062,6 +2139,7 @@ func main() {
                 EcoString::from("src/b.rs"),
                 FileMetrics {
                     lines_of_code: 20,
+                    effective_lines_of_code_with_brackets: 18,
                     effective_lines_of_code: 15,
                     comment_lines_of_code: 5,
                     bracket_lines_of_code: 3,
@@ -2076,6 +2154,7 @@ func main() {
 
         assert_eq!(aggregated.files, 2);
         assert_eq!(aggregated.total_lines_of_code, 30);
+        assert_eq!(aggregated.total_effective_lines_of_code_with_brackets, 27);
         assert_eq!(aggregated.total_effective_lines_of_code, 23);
         assert_eq!(aggregated.total_comment_lines_of_code, 7);
         assert_eq!(aggregated.total_bracket_lines_of_code, 4);
@@ -2092,6 +2171,7 @@ func main() {
         let previous = AggregatedFileMetrics {
             files: 3,
             total_lines_of_code: 60,
+            total_effective_lines_of_code_with_brackets: 57,
             total_effective_lines_of_code: 48,
             total_comment_lines_of_code: 12,
             total_bracket_lines_of_code: 9,
@@ -2105,6 +2185,7 @@ func main() {
         let old_metrics = AggregatedFileMetrics {
             files: 2,
             total_lines_of_code: 35,
+            total_effective_lines_of_code_with_brackets: 34,
             total_effective_lines_of_code: 28,
             total_comment_lines_of_code: 7,
             total_bracket_lines_of_code: 6,
@@ -2118,6 +2199,7 @@ func main() {
         let new_metrics = AggregatedFileMetrics {
             files: 2,
             total_lines_of_code: 30,
+            total_effective_lines_of_code_with_brackets: 31,
             total_effective_lines_of_code: 26,
             total_comment_lines_of_code: 4,
             total_bracket_lines_of_code: 5,
@@ -2133,6 +2215,7 @@ func main() {
 
         assert_eq!(reconciled.files, 3);
         assert_eq!(reconciled.total_lines_of_code, 55);
+        assert_eq!(reconciled.total_effective_lines_of_code_with_brackets, 54);
         assert_eq!(reconciled.total_effective_lines_of_code, 46);
         assert_eq!(reconciled.total_comment_lines_of_code, 9);
         assert_eq!(reconciled.total_bracket_lines_of_code, 8);
@@ -2201,6 +2284,9 @@ func analyze(x int, values []int) int {
         // Verify LOC metrics
         assert!(syntax.lines_of_code > 0);
         assert!(syntax.comment_lines_of_code > 0);
+        assert_eq!(syntax.effective_lines_of_code_with_brackets, 10);
+        assert_eq!(syntax.effective_lines_of_code, 8);
+        assert_eq!(syntax.bracket_lines_of_code, 2);
         assert!(syntax.functions.len() > 0);
         assert!(syntax.comments.len() > 0);
 
@@ -2270,6 +2356,7 @@ func main() {
             blank_lines: 0,
             bracket_lines_of_code: 0,
             comment_lines_of_code: 0,
+            effective_lines_of_code_with_brackets: 1,
             effective_lines_of_code: 1,
             total_cyclomatic: 1,
             total_halstead: HalsteadMetrics::from_counts(1, 2, 3, 4),

@@ -35,15 +35,26 @@ type ChartSeries = {
 
 const METRIC_OPTIONS = [
   { key: 'total_lines_of_code', label: 'Total LOC' },
-  { key: 'total_effective_lines_of_code', label: 'Effective LOC' },
+  {
+    key: 'total_effective_lines_of_code_with_brackets',
+    label: 'Effective LOC (with brackets)',
+  },
+  {
+    key: 'total_effective_lines_of_code',
+    label: 'Effective LOC (without brackets)',
+  },
   { key: 'total_comment_lines_of_code', label: 'Comment LOC' },
   { key: 'total_bracket_lines_of_code', label: 'Bracket LOC' },
   { key: 'total_cyclomatic', label: 'Cyclomatic' },
   { key: 'files', label: 'Files' },
   { key: 'mean_lines_of_code_per_file', label: 'Mean LOC/File' },
   {
+    key: 'mean_effective_lines_of_code_with_brackets_per_file',
+    label: 'Mean Effective LOC/File (with brackets)',
+  },
+  {
     key: 'mean_effective_lines_of_code_per_file',
-    label: 'Mean Effective LOC/File',
+    label: 'Mean Effective LOC/File (without brackets)',
   },
   {
     key: 'mean_comment_lines_of_code_per_file',
@@ -67,6 +78,7 @@ const ISSUE_METRIC_OPTIONS = [
 
 const DEFAULT_VISIBLE_METRICS = new Set([
   'total_lines_of_code',
+  'total_effective_lines_of_code_with_brackets',
   'total_effective_lines_of_code',
   'total_comment_lines_of_code',
   'total_cyclomatic',
@@ -89,6 +101,35 @@ const toNumber = (value: unknown): number | null => {
     return Number.isFinite(parsed) ? parsed : null
   }
   return null
+}
+
+const withDerivedLocMetrics = (
+  metrics: Record<string, unknown>,
+): Record<string, unknown> => {
+  const next = { ...metrics }
+  const derive = (target: string, effective: string, brackets: string) => {
+    if (toNumber(next[target]) !== null) {
+      return
+    }
+    const effectiveValue = toNumber(next[effective])
+    const bracketValue = toNumber(next[brackets])
+    if (effectiveValue !== null && bracketValue !== null) {
+      next[target] = effectiveValue + bracketValue
+    }
+  }
+
+  derive(
+    'total_effective_lines_of_code_with_brackets',
+    'total_effective_lines_of_code',
+    'total_bracket_lines_of_code',
+  )
+  derive(
+    'mean_effective_lines_of_code_with_brackets_per_file',
+    'mean_effective_lines_of_code_per_file',
+    'mean_bracket_lines_of_code_per_file',
+  )
+
+  return next
 }
 
 const githubRepoFromUrl = (url: string): string | null => {
@@ -252,7 +293,7 @@ function CodebaseMetricsChart({
     return versions
       .map((version) => ({
         date: new Date(version.committed_at ?? version.created_at),
-        metrics: toMetricsRecord(version.metrics),
+        metrics: withDerivedLocMetrics(toMetricsRecord(version.metrics)),
       }))
       .filter((entry) => !Number.isNaN(entry.date.valueOf()))
       .sort((a, b) => a.date.getTime() - b.date.getTime())
@@ -581,8 +622,8 @@ function CodebaseMetricsTable({
     )
   } else if (sortConfig.key) {
     sortedVersions.sort((a, b) => {
-      const aMetrics = toMetricsRecord(a.metrics)
-      const bMetrics = toMetricsRecord(b.metrics)
+      const aMetrics = withDerivedLocMetrics(toMetricsRecord(a.metrics))
+      const bMetrics = withDerivedLocMetrics(toMetricsRecord(b.metrics))
       const aValue = toNumber(aMetrics[sortConfig.key!]) ?? 0
       const bValue = toNumber(bMetrics[sortConfig.key!]) ?? 0
 
@@ -592,7 +633,9 @@ function CodebaseMetricsTable({
 
   const metricsToDisplay = METRIC_OPTIONS.filter(({ key }) =>
     sortedVersions.some(
-      (v) => toNumber(toMetricsRecord(v.metrics)[key]) !== null,
+      (v) =>
+        toNumber(withDerivedLocMetrics(toMetricsRecord(v.metrics))[key]) !==
+        null,
     ),
   )
 
@@ -644,7 +687,9 @@ function CodebaseMetricsTable({
       <tbody>
         {sortedVersions.map((version) => {
           const date = new Date(version.committed_at ?? version.created_at)
-          const metrics = toMetricsRecord(version.metrics)
+          const metrics = withDerivedLocMetrics(
+            toMetricsRecord(version.metrics),
+          )
           return (
             <tr
               key={version.id}

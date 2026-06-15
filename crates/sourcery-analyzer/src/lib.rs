@@ -742,6 +742,7 @@ async fn store_file_analysis(
     let language_name = format!("{language:?}").to_ascii_lowercase();
     let file_metrics = FileMetrics {
         lines_of_code: analysis.lines_of_code,
+        effective_lines_of_code_with_brackets: analysis.effective_lines_of_code_with_brackets,
         effective_lines_of_code: analysis.effective_lines_of_code,
         comment_lines_of_code: analysis.comment_lines_of_code,
         bracket_lines_of_code: analysis.bracket_lines_of_code,
@@ -1038,6 +1039,7 @@ async fn update_version_metrics(
 fn file_metrics_json(metrics: &FileMetrics) -> serde_json::Value {
     let mut value = json!({
         "lines_of_code": metrics.lines_of_code,
+        "effective_lines_of_code_with_brackets": metrics.effective_lines_of_code_with_brackets,
         "effective_lines_of_code": metrics.effective_lines_of_code,
         "comment_lines_of_code": metrics.comment_lines_of_code,
         "bracket_lines_of_code": metrics.bracket_lines_of_code,
