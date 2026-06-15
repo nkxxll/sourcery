@@ -24,6 +24,36 @@ type FileState = {
   commit_hash: string
 }
 
+type HalsteadMetrics = {
+  unique_operators?: number
+  unique_operands?: number
+  operators?: number
+  operands?: number
+  length?: number
+  vocabulary?: number
+  calculated_length?: number
+  volume?: number
+  difficulty?: number
+  effort?: number
+  time_seconds?: number
+  bugs?: number
+}
+
+const halsteadMetricLabels: Record<keyof HalsteadMetrics, string> = {
+  unique_operators: 'Unique Operators',
+  unique_operands: 'Unique Operands',
+  operators: 'Operators',
+  operands: 'Operands',
+  length: 'Length',
+  vocabulary: 'Vocabulary',
+  calculated_length: 'Calculated Length',
+  volume: 'Volume',
+  difficulty: 'Difficulty',
+  effort: 'Effort',
+  time_seconds: 'Time Seconds',
+  bugs: 'Bugs',
+}
+
 function VersionFilePage() {
   const { fileID } = Route.useParams()
   const fileQuery = useQuery({
@@ -58,6 +88,7 @@ function VersionFilePage() {
     commitHash: file.commit_hash,
     filePath: file.path,
   })
+  const totalHalstead = getTotalHalsteadMetrics(file.metrics)
 
   return (
     <div className="flex flex-col gap-6">
@@ -98,11 +129,47 @@ function VersionFilePage() {
           <Detail label="Source Path" value={file.source_path ?? 'None'} />
           <Detail label="File ID" value={file.file_id ?? 'None'} />
         </dl>
+        {totalHalstead ? (
+          <div className="mt-4 border-t border-[#d0d7de] pt-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6b6e73]">
+              Total Halstead
+            </h3>
+            <dl className="grid gap-4 text-sm text-[#4d4f53] sm:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(halsteadMetricLabels).map(([key, label]) => (
+                <Detail
+                  key={key}
+                  label={label}
+                  value={formatHalsteadValue(
+                    totalHalstead[key as keyof HalsteadMetrics],
+                  )}
+                />
+              ))}
+            </dl>
+          </div>
+        ) : null}
       </header>
 
       <StatsPanel title="File Stats" metrics={file.metrics} />
     </div>
   )
+}
+
+function getTotalHalsteadMetrics(
+  metrics: Record<string, unknown>,
+): HalsteadMetrics | null {
+  const value = metrics.total_halstead
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  return value
+}
+
+function formatHalsteadValue(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 'None'
+  }
+  return Number.isInteger(value) ? value.toString() : value.toFixed(2)
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

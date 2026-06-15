@@ -52,6 +52,21 @@ type TreemapNode = {
 }
 
 const fallbackMetric = 'count'
+const totalHalsteadMetricPrefix = 'total_halstead'
+const totalHalsteadMetricOrder = [
+  'total_halstead_unique_operators',
+  'total_halstead_unique_operands',
+  'total_halstead_operators',
+  'total_halstead_operands',
+  'total_halstead_length',
+  'total_halstead_vocabulary',
+  'total_halstead_calculated_length',
+  'total_halstead_volume',
+  'total_halstead_difficulty',
+  'total_halstead_effort',
+  'total_halstead_time_seconds',
+  'total_halstead_bugs',
+]
 
 function VersionTreemapPage() {
   const { versionID, kind } = Route.useParams()
@@ -275,14 +290,30 @@ function mapFileItems(rows: FileTreemapItem[]): TreemapItem[] {
     label: row.path.split('/').at(-1) ?? row.path,
     path: row.path,
     href: `/file/${row.id}`,
-    metrics: flattenNumericMetrics({
-      ...row.metrics,
-      functions:
-        typeof row.total_functions === 'number'
-          ? row.total_functions
-          : row.metrics.functions,
-    }),
+    metrics: normalizeFileMetrics(row),
   }))
+}
+
+function normalizeFileMetrics(row: FileTreemapItem): Metrics {
+  const metrics = flattenNumericMetrics({
+    ...row.metrics,
+    functions:
+      typeof row.total_functions === 'number'
+        ? row.total_functions
+        : row.metrics.functions,
+  })
+  const totalHalstead = row.metrics[totalHalsteadMetricPrefix]
+
+  if (isMetricObject(totalHalstead)) {
+    for (const [key, value] of Object.entries(totalHalstead)) {
+      const flatKey = `${totalHalsteadMetricPrefix}_${key}`
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        metrics[flatKey] = value
+      }
+    }
+  }
+
+  return metrics
 }
 
 function mapFunctionItems(rows: FunctionTreemapItem[]): TreemapItem[] {
@@ -328,7 +359,12 @@ function getMetricOptions(items: TreemapItem[]) {
       }
     }
   }
-  return [...metrics].sort().concat(fallbackMetric)
+  const totalHalsteadMetrics = totalHalsteadMetricOrder.filter((metric) =>
+    metrics.delete(metric),
+  )
+  metrics.delete(fallbackMetric)
+
+  return [...metrics].sort().concat(totalHalsteadMetrics, fallbackMetric)
 }
 
 function buildTree(items: TreemapItem[], metric: string): TreemapNode {
