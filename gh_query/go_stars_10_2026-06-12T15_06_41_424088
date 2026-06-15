@@ -1,0 +1,212 @@
+[
+  {
+    "createdAt": "2014-07-06T13:42:15Z",
+    "description": "A curated list of awesome Go frameworks, libraries and software",
+    "forksCount": 13304,
+    "fullName": "avelino/awesome-go",
+    "id": "MDEwOlJlcG9zaXRvcnkyMTU0MDc1OQ==",
+    "language": "Go",
+    "name": "awesome-go",
+    "owner": {
+      "id": "MDQ6VXNlcjMxOTk2",
+      "is_bot": false,
+      "login": "avelino",
+      "type": "User",
+      "url": "https://github.com/avelino"
+    },
+    "size": 11571,
+    "stargazersCount": 175235,
+    "updatedAt": "2026-06-12T12:55:34Z",
+    "url": "https://github.com/avelino/awesome-go",
+    "watchersCount": 175235
+  },
+  {
+    "createdAt": "2023-06-26T19:39:32Z",
+    "description": "Get up and running with Kimi-K2.6, GLM-5.1, MiniMax, DeepSeek, gpt-oss, Qwen, Gemma and other models.",
+    "forksCount": 16568,
+    "fullName": "ollama/ollama",
+    "id": "R_kgDOJ0Z1Pg",
+    "language": "Go",
+    "name": "ollama",
+    "owner": {
+      "id": "O_kgDOCQpc8w",
+      "is_bot": false,
+      "login": "ollama",
+      "type": "Organization",
+      "url": "https://github.com/ollama"
+    },
+    "size": 87673,
+    "stargazersCount": 173938,
+    "updatedAt": "2026-06-12T13:03:40Z",
+    "url": "https://github.com/ollama/ollama",
+    "watchersCount": 173938
+  },
+  {
+    "createdAt": "2014-08-19T04:33:40Z",
+    "description": "The Go programming language",
+    "forksCount": 19007,
+    "fullName": "golang/go",
+    "id": "MDEwOlJlcG9zaXRvcnkyMzA5Njk1OQ==",
+    "language": "Go",
+    "name": "go",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjQzMTQwOTI=",
+      "is_bot": false,
+      "login": "golang",
+      "type": "Organization",
+      "url": "https://github.com/golang"
+    },
+    "size": 442597,
+    "stargazersCount": 134650,
+    "updatedAt": "2026-06-12T12:36:05Z",
+    "url": "https://github.com/golang/go",
+    "watchersCount": 134650
+  },
+  {
+    "createdAt": "2014-06-06T22:56:04Z",
+    "description": "Production-Grade Container Scheduling and Management",
+    "forksCount": 43201,
+    "fullName": "kubernetes/kubernetes",
+    "id": "MDEwOlJlcG9zaXRvcnkyMDU4MDQ5OA==",
+    "language": "Go",
+    "name": "kubernetes",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjEzNjI5NDA4",
+      "is_bot": false,
+      "login": "kubernetes",
+      "type": "Organization",
+      "url": "https://github.com/kubernetes"
+    },
+    "size": 1478539,
+    "stargazersCount": 122952,
+    "updatedAt": "2026-06-12T13:03:43Z",
+    "url": "https://github.com/kubernetes/kubernetes",
+    "watchersCount": 122952
+  },
+  {
+    "createdAt": "2015-12-21T15:24:59Z",
+    "description": "A fast reverse proxy to help you expose a local server behind a NAT or firewall to the internet.",
+    "forksCount": 15064,
+    "fullName": "fatedier/frp",
+    "id": "MDEwOlJlcG9zaXRvcnk0ODM3ODk0Nw==",
+    "language": "Go",
+    "name": "frp",
+    "owner": {
+      "id": "MDQ6VXNlcjczNDY2NjE=",
+      "is_bot": false,
+      "login": "fatedier",
+      "type": "User",
+      "url": "https://github.com/fatedier"
+    },
+    "size": 32199,
+    "stargazersCount": 107283,
+    "updatedAt": "2026-06-12T13:03:22Z",
+    "url": "https://github.com/fatedier/frp",
+    "watchersCount": 107283
+  },
+  {
+    "createdAt": "2014-06-16T23:57:25Z",
+    "description": "Gin is a high-performance HTTP web framework written in Go. It provides a Martini-like API but with significantly better performance\u2014up to 40 times faster\u2014thanks to httprouter. Gin is designed for building REST APIs, web applications, and microservices.",
+    "forksCount": 8633,
+    "fullName": "gin-gonic/gin",
+    "id": "MDEwOlJlcG9zaXRvcnkyMDkwNDQzNw==",
+    "language": "Go",
+    "name": "gin",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjc4OTQ0Nzg=",
+      "is_bot": false,
+      "login": "gin-gonic",
+      "type": "Organization",
+      "url": "https://github.com/gin-gonic"
+    },
+    "size": 10558,
+    "stargazersCount": 88671,
+    "updatedAt": "2026-06-12T12:46:51Z",
+    "url": "https://github.com/gin-gonic/gin",
+    "watchersCount": 88671
+  },
+  {
+    "createdAt": "2013-07-04T15:26:26Z",
+    "description": "The world\u2019s fastest framework for building websites.",
+    "forksCount": 8271,
+    "fullName": "gohugoio/hugo",
+    "id": "MDEwOlJlcG9zaXRvcnkxMTE4MDY4Nw==",
+    "language": "Go",
+    "name": "hugo",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjI5Mzg1MjM3",
+      "is_bot": false,
+      "login": "gohugoio",
+      "type": "Organization",
+      "url": "https://github.com/gohugoio"
+    },
+    "size": 142115,
+    "stargazersCount": 88527,
+    "updatedAt": "2026-06-12T11:48:53Z",
+    "url": "https://github.com/gohugoio/hugo",
+    "watchersCount": 88527
+  },
+  {
+    "createdAt": "2013-11-26T09:48:21Z",
+    "description": "Open Source Continuous File Synchronization",
+    "forksCount": 5262,
+    "fullName": "syncthing/syncthing",
+    "id": "MDEwOlJlcG9zaXRvcnkxNDcxMjg1MA==",
+    "language": "Go",
+    "name": "syncthing",
+    "owner": {
+      "id": "MDEyOk9yZ2FuaXphdGlvbjc2MjgwMTg=",
+      "is_bot": false,
+      "login": "syncthing",
+      "type": "Organization",
+      "url": "https://github.com/syncthing"
+    },
+    "size": 125189,
+    "stargazersCount": 85248,
+    "updatedAt": "2026-06-12T11:31:31Z",
+    "url": "https://github.com/syncthing/syncthing",
+    "watchersCount": 85248
+  },
+  {
+    "createdAt": "2013-10-23T16:04:23Z",
+    "description": ":cherry_blossom: A command-line fuzzy finder",
+    "forksCount": 2793,
+    "fullName": "junegunn/fzf",
+    "id": "MDEwOlJlcG9zaXRvcnkxMzgwNzYwNg==",
+    "language": "Go",
+    "name": "fzf",
+    "owner": {
+      "id": "MDQ6VXNlcjcwMDgyNg==",
+      "is_bot": false,
+      "login": "junegunn",
+      "type": "User",
+      "url": "https://github.com/junegunn"
+    },
+    "size": 8300,
+    "stargazersCount": 80937,
+    "updatedAt": "2026-06-12T12:05:19Z",
+    "url": "https://github.com/junegunn/fzf",
+    "watchersCount": 80937
+  },
+  {
+    "createdAt": "2018-05-19T00:53:06Z",
+    "description": "simple terminal UI for git commands",
+    "forksCount": 2859,
+    "fullName": "jesseduffield/lazygit",
+    "id": "MDEwOlJlcG9zaXRvcnkxMzQwMTcyODY=",
+    "language": "Go",
+    "name": "lazygit",
+    "owner": {
+      "id": "MDQ6VXNlcjg0NTY2MzM=",
+      "is_bot": false,
+      "login": "jesseduffield",
+      "type": "User",
+      "url": "https://github.com/jesseduffield"
+    },
+    "size": 154069,
+    "stargazersCount": 79216,
+    "updatedAt": "2026-06-12T12:55:14Z",
+    "url": "https://github.com/jesseduffield/lazygit",
+    "watchersCount": 79216
+  }
+]

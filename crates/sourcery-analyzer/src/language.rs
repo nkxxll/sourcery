@@ -133,6 +133,9 @@ pub struct CodeByteSpan {
 }
 
 impl CodeByteSpan {
+    pub fn get_start(&self) -> usize {
+        self.start
+    }
     pub fn with_location(&self, content: &str, newline_map: &NewLineMap) -> Result<EcoString> {
         let name = self.get_content(content)?;
         let position = newline_map.position(self.start).ok_or_else(|| {

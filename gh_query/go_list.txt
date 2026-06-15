@@ -1,0 +1,11 @@
+# Golist
+"gin-gonic/gin"
+"junegunn/fzf"
+"nektos/act"
+"FiloSottile/mkcert"
+"wagoodman/dive"
+"AlistGo/alist"
+"spf13/cobra"
+"charmbracelet/bubbletea"
+"go-gorm/gorm"
+"router-for-me/CLIProxyAPI"

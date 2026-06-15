@@ -401,6 +401,7 @@ pub struct CommentAnalysis {
     pub comment_line_span: CodeLineSpan,
     /// Length in lines gathered by the newline map.
     pub lines: usize,
+    pub inline: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -1528,6 +1529,29 @@ impl<'processor> AstProcessor<'processor> {
         }
     }
 
+    fn is_comment_inline(&self, code_span: &CodeByteSpan, multiline: bool) -> bool {
+        if !multiline {
+            return false;
+        }
+
+        match self.new_line_map.newline_offsets.binary_search(&code_span.get_start()) {
+            Ok(i) | Err(i) => {
+                let line_start = if i == 0 {
+                    0
+                } else {
+                    self.new_line_map.newline_offsets[i - 1] + 1
+                };
+                for index in line_start..code_span.get_start() {
+                    let current: u8 = self.source.as_bytes()[index];
+                    if !current.is_ascii_whitespace() {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     fn traverse(
         &self,
         node: Node,
@@ -1588,10 +1612,16 @@ impl<'processor> AstProcessor<'processor> {
         if classifier.comment_nodes.contains(kind) || self.profile.is_doc_string_node(node) {
             let comment_span = LanguageConfig::node_span(node);
             let length = self.new_line_map.count_lines(&comment_span)?;
+            let comment_line_span = self.new_line_map.get_code_line_span(&comment_span)?;
+            let inline = self.is_comment_inline(
+                &comment_span,
+                comment_line_span.start_line == comment_line_span.end_line,
+            );
             state.comments.push(CommentAnalysis {
                 comment_span,
-                comment_line_span: self.new_line_map.get_code_line_span(&comment_span)?,
+                comment_line_span,
                 lines: length,
+                inline,
             });
         }
 
@@ -1933,6 +1963,7 @@ let run value =
                     end_line: 3,
                 },
                 lines: 2,
+                inline: false,
             },
             CommentAnalysis {
                 comment_span: CodeByteSpan::new(2, 3),
@@ -1941,6 +1972,7 @@ let run value =
                     end_line: 9,
                 },
                 lines: 2,
+                inline: false,
             },
             CommentAnalysis {
                 comment_span: CodeByteSpan::new(4, 5),
@@ -1949,6 +1981,7 @@ let run value =
                     end_line: 12,
                 },
                 lines: 1,
+                inline: true,
             },
         ];
         let function_span = CodeLineSpan {
@@ -1959,6 +1992,26 @@ let run value =
         let comment_lines = Processor::comment_lines_in_span(function_span, &comments);
 
         assert_eq!(comment_lines, 2);
+    }
+
+    #[test]
+    fn is_comment_inline_requires_only_whitespace_before_comment() {
+        let source = "package main\n    // standalone comment\nvalue := 1 // trailing comment\n";
+        let profile = LanguageConfig::new(ProgrammingLanguage::Golang);
+        let file = std::env::current_dir().unwrap().join("test.go");
+        let uri = Url::from_file_path(&file).expect("url failed in test");
+        let ast_processor = AstProcessor::new(&profile, source, file, uri);
+        let standalone_start = source.find("// standalone").unwrap();
+        let trailing_start = source.find("// trailing").unwrap();
+
+        assert!(ast_processor.is_comment_inline(
+            &CodeByteSpan::new(standalone_start, standalone_start + "// standalone comment".len()),
+            true,
+        ));
+        assert!(!ast_processor.is_comment_inline(
+            &CodeByteSpan::new(trailing_start, trailing_start + "// trailing comment".len()),
+            true,
+        ));
     }
 
     #[test]

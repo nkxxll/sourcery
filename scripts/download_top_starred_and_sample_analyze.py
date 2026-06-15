@@ -105,6 +105,13 @@ def analyze(path: Path, samples: int, language: str, root: Path) -> None:
     )
 
 
+def should_analyze(repo: dict[str, Any], language: str, samples: int) -> bool:
+    full_name = repo.get("fullName", "<unknown>")
+    stars = repo.get("stargazersCount", "unknown")
+    answer = input(f"Analyze {language} repo {full_name} ({stars} stars) with {samples} samples? [y/N] ")
+    return answer.strip().lower() in {"y", "yes"}
+
+
 def parse_args() -> argparse.Namespace:
     root = repo_root()
     parser = argparse.ArgumentParser(
@@ -139,6 +146,7 @@ def parse_args() -> argparse.Namespace:
         help="use an existing gh_query JSON file instead of querying GitHub; repeat per language",
     )
     parser.add_argument("--no-analyze", action="store_true", help="clone/update only")
+    parser.add_argument("--yes", action="store_true", help="analyze every repo without prompting")
     return parser.parse_args()
 
 
@@ -164,7 +172,10 @@ def main() -> int:
             try:
                 repo_path = clone_or_update(repo, language, args.clone_dir)
                 if not args.no_analyze:
-                    analyze(repo_path, args.samples, language, root)
+                    if args.yes or should_analyze(repo, language, args.samples):
+                        analyze(repo_path, args.samples, language, root)
+                    else:
+                        print(f"skipped analysis for {full_name}")
             except (KeyError, subprocess.CalledProcessError, json.JSONDecodeError) as exc:
                 failures.append((language, full_name, str(exc)))
                 print(f"error: failed {language} repo {full_name}: {exc}", file=sys.stderr)
