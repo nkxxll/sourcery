@@ -3,7 +3,10 @@ import type { ReactNode } from 'react'
 
 import { cn } from '#/lib/utils'
 
-const navLinks = [{ path: '/', label: 'Home' }] as const
+const navLinks = [
+  { path: '/', label: 'Home' },
+  { path: '/analysis', label: 'Analysis' },
+] as const
 
 const normalizePath = (path: string) =>
   path === '/' ? '/' : path.replace(/\/+$/, '') || '/'

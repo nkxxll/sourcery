@@ -16,6 +16,7 @@ type Version = {
   author_email: string
   committed_at: string | null
   created_at: string
+  codebase_name: string
 }
 
 type Metrics = Record<string, unknown>
@@ -85,11 +86,17 @@ function VersionTreemapPage() {
     },
   })
 
+  const sampleRoutePrefix = isSampleCodebaseName(
+    versionQuery.data?.codebase_name ?? '',
+  )
+    ? '/sample'
+    : ''
+
   const itemsQuery = useQuery({
-    queryKey: ['version-treemap', versionID, treemapKind],
+    queryKey: ['version-treemap', versionID, treemapKind, sampleRoutePrefix],
     queryFn: async () => {
       const res = await fetch(
-        `/api/version/${versionID}/treemap/${treemapKind}`,
+        `/api/version/${versionID}${sampleRoutePrefix}/treemap/${treemapKind}`,
       )
       if (!res.ok) {
         throw new Error(`Failed to fetch treemap data (${res.status})`)
@@ -99,6 +106,7 @@ function VersionTreemapPage() {
         ? mapFunctionItems(rows as FunctionTreemapItem[])
         : mapFileItems(rows as FileTreemapItem[])
     },
+    enabled: versionQuery.data !== undefined,
   })
 
   const items = itemsQuery.data ?? []
@@ -292,6 +300,10 @@ function mapFileItems(rows: FileTreemapItem[]): TreemapItem[] {
     href: `/file/${row.id}`,
     metrics: normalizeFileMetrics(row),
   }))
+}
+
+function isSampleCodebaseName(name: string) {
+  return name.toLowerCase().includes('sample')
 }
 
 function normalizeFileMetrics(row: FileTreemapItem): Metrics {

@@ -19,6 +19,7 @@ type Version = {
   author_email: string
   committed_at: string | null
   created_at: string
+  codebase_name: string
   metrics: Record<string, unknown>
   total_files: number
   total_functions: number
@@ -58,7 +59,15 @@ function VersionDashboardPage() {
       if (!res.ok) {
         throw new Error(`Failed to fetch version (${res.status})`)
       }
-      return res.json() as Promise<Version>
+      const version = (await res.json()) as Version
+      if (!isSampleCodebaseName(version.codebase_name)) {
+        return version
+      }
+      const sampleRes = await fetch(`/api/version/${versionId}/sample`)
+      if (!sampleRes.ok) {
+        throw new Error(`Failed to fetch sample version (${sampleRes.status})`)
+      }
+      return sampleRes.json() as Promise<Version>
     },
   })
 
@@ -236,6 +245,10 @@ function VersionDashboardPage() {
       </div>
     </div>
   )
+}
+
+function isSampleCodebaseName(name: string) {
+  return name.toLowerCase().includes('sample')
 }
 
 function SearchPanel({

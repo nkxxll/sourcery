@@ -39,6 +39,13 @@ type HalsteadMetrics = {
   bugs?: number
 }
 
+type MaintainabilityIndex = {
+  three_property?: number
+  four_property?: number
+  visual_studio?: number
+  comment_percentage?: number
+}
+
 const halsteadMetricLabels: Record<keyof HalsteadMetrics, string> = {
   unique_operators: 'Unique Operators',
   unique_operands: 'Unique Operands',
@@ -52,6 +59,13 @@ const halsteadMetricLabels: Record<keyof HalsteadMetrics, string> = {
   effort: 'Effort',
   time_seconds: 'Time Seconds',
   bugs: 'Bugs',
+}
+
+const maintainabilityIndexLabels: Record<keyof MaintainabilityIndex, string> = {
+  visual_studio: 'Visual Studio Score',
+  three_property: 'Three-property Score',
+  four_property: 'Four-property Score',
+  comment_percentage: 'Comment Percentage',
 }
 
 function VersionFilePage() {
@@ -89,6 +103,7 @@ function VersionFilePage() {
     filePath: file.path,
   })
   const totalHalstead = getTotalHalsteadMetrics(file.metrics)
+  const maintainabilityIndex = getMaintainabilityIndex(file.metrics)
 
   return (
     <div className="flex flex-col gap-6">
@@ -147,6 +162,25 @@ function VersionFilePage() {
             </dl>
           </div>
         ) : null}
+        {maintainabilityIndex ? (
+          <div className="mt-4 border-t border-[#d0d7de] pt-4">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#6b6e73]">
+              Maintainability Index
+            </h3>
+            <dl className="grid gap-4 text-sm text-[#4d4f53] sm:grid-cols-2 lg:grid-cols-4">
+              {Object.entries(maintainabilityIndexLabels).map(([key, label]) => (
+                <Detail
+                  key={key}
+                  label={label}
+                  value={formatMaintainabilityValue(
+                    maintainabilityIndex[key as keyof MaintainabilityIndex],
+                    key === 'comment_percentage',
+                  )}
+                />
+              ))}
+            </dl>
+          </div>
+        ) : null}
       </header>
 
       <StatsPanel title="File Stats" metrics={file.metrics} />
@@ -165,11 +199,31 @@ function getTotalHalsteadMetrics(
   return value
 }
 
+function getMaintainabilityIndex(
+  metrics: Record<string, unknown>,
+): MaintainabilityIndex | null {
+  const value = metrics.maintainability_index
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+    return null
+  }
+
+  return value
+}
+
 function formatHalsteadValue(value: unknown) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 'None'
   }
   return Number.isInteger(value) ? value.toString() : value.toFixed(2)
+}
+
+function formatMaintainabilityValue(value: unknown, isPercentage: boolean) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return 'None'
+  }
+
+  const formatted = value.toFixed(2)
+  return isPercentage ? `${formatted}%` : formatted
 }
 
 function Detail({ label, value }: { label: string; value: string }) {

@@ -17,6 +17,7 @@ type Version = {
   author_email: string
   committed_at: string | null
   created_at: string
+  codebase_name: string
 }
 
 type FunctionCall = {
@@ -100,6 +101,10 @@ const defaultForceSettings: ForceSettings = {
   centerStrength: 0.012,
 }
 
+function isSampleCodebaseName(name: string) {
+  return name.toLowerCase().includes('sample')
+}
+
 function CallgraphPage() {
   const { versionID } = Route.useParams()
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -120,15 +125,24 @@ function CallgraphPage() {
     },
   })
 
+  const sampleRoutePrefix = isSampleCodebaseName(
+    versionQuery.data?.codebase_name ?? '',
+  )
+    ? '/sample'
+    : ''
+
   const functionsQuery = useQuery({
-    queryKey: ['version-functions-callgraph', versionID],
+    queryKey: ['version-functions-callgraph', versionID, sampleRoutePrefix],
     queryFn: async () => {
-      const res = await fetch(`/api/version/${versionID}/callgraph`)
+      const res = await fetch(
+        `/api/version/${versionID}${sampleRoutePrefix}/callgraph`,
+      )
       if (!res.ok) {
         throw new Error(`Failed to fetch functions (${res.status})`)
       }
       return res.json() as Promise<VersionFunction[]>
     },
+    enabled: versionQuery.data !== undefined,
   })
 
   const graph = useMemo(

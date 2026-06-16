@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VersionVersionIdRouteImport } from './routes/version.$versionId'
 import { Route as FunctionFunctionIDRouteImport } from './routes/function.$functionID'
@@ -19,6 +20,11 @@ import { Route as TreemapVersionIDKindRouteImport } from './routes/treemap.$vers
 import { Route as CodebaseIdStatsRouteImport } from './routes/codebase.$id.stats'
 import { Route as CodebaseIdDiffRouteImport } from './routes/codebase.$id.diff'
 
+const AnalysisRoute = AnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -67,6 +73,7 @@ const CodebaseIdDiffRoute = CodebaseIdDiffRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
   '/file/$fileID': typeof FileFileIDRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
   '/file/$fileID': typeof FileFileIDRoute
@@ -90,6 +98,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/callgraph/$versionID': typeof CallgraphVersionIDRoute
   '/codebase/$id': typeof CodebaseIdRouteWithChildren
   '/file/$fileID': typeof FileFileIDRoute
@@ -103,6 +112,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/analysis'
     | '/callgraph/$versionID'
     | '/codebase/$id'
     | '/file/$fileID'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/analysis'
     | '/callgraph/$versionID'
     | '/codebase/$id'
     | '/file/$fileID'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/analysis'
     | '/callgraph/$versionID'
     | '/codebase/$id'
     | '/file/$fileID'
@@ -137,6 +149,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalysisRoute: typeof AnalysisRoute
   CallgraphVersionIDRoute: typeof CallgraphVersionIDRoute
   CodebaseIdRoute: typeof CodebaseIdRouteWithChildren
   FileFileIDRoute: typeof FileFileIDRoute
@@ -147,6 +160,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/analysis': {
+      id: '/analysis'
+      path: '/analysis'
+      fullPath: '/analysis'
+      preLoaderRoute: typeof AnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -229,6 +249,7 @@ const CodebaseIdRouteWithChildren = CodebaseIdRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalysisRoute: AnalysisRoute,
   CallgraphVersionIDRoute: CallgraphVersionIDRoute,
   CodebaseIdRoute: CodebaseIdRouteWithChildren,
   FileFileIDRoute: FileFileIDRoute,
