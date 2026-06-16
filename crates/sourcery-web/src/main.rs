@@ -7,9 +7,9 @@ use axum::{
 };
 use clap::Parser;
 use sourcery_db::{
-    Codebase, Diff, DiffWithChanges, File, FileState, FileStateWithFunctionCount,
-    FilenameSearchResult, FunctionSearchResult, GithubIssueTimelineEvent, PgPool, Version,
-    VersionFunction,
+    AnalysisMetricSample, AnalysisVersionSample, Codebase, Diff, DiffWithChanges, File, FileState,
+    FileStateWithFunctionCount, FilenameSearchResult, FunctionSearchResult,
+    GithubIssueTimelineEvent, PgPool, Version, VersionFunction,
 };
 use std::collections::{BTreeMap, BTreeSet};
 use uuid::Uuid;
@@ -37,6 +37,7 @@ struct HealthResponse {
 struct VersionDashboardResponse {
     #[serde(flatten)]
     version: Version,
+    codebase_name: String,
     total_files: i64,
     total_functions: i64,
 }
@@ -74,29 +75,49 @@ async fn main() -> anyhow::Result<()> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/codebases", get(list_codebases))
+        .route("/analysis/versions", get(list_analysis_versions))
+        .route("/analysis/metrics", get(list_analysis_metrics))
         .route("/codebase/{id}", get(get_codebase))
         .route("/codebase/{id}/diff", get(list_diffs_by_codebase))
         .route("/codebase/{id}/metrics", get(list_codebase_metrics))
         .route("/github/issues/timeline", get(list_github_issue_timeline))
         .route("/version/{id}", get(get_version))
+        .route("/version/{id}/sample", get(get_sample_version))
         .route("/file/{file_id}", get(get_file))
         .route("/function/{function_id}", get(get_function))
         .route("/version/{id}/changed_files", get(list_version_files))
         .route("/version/{id}/files", get(list_all_version_files))
+        .route("/version/{id}/sample/files", get(list_sample_version_files))
         .route("/version/{id}/files/{file_state_id}", get(get_version_file))
         .route("/version/{id}/files/search", get(search_version_filenames))
         .route("/version/{id}/diff", get(get_version_diff))
         .route("/version/{id}/diffchange", get(get_version_diff_change))
         .route("/version/{id}/callgraph", get(list_version_callgraph))
         .route(
+            "/version/{id}/sample/callgraph",
+            get(list_sample_version_callgraph),
+        )
+        .route(
             "/version/{id}/treemap/files",
             get(list_version_treemap_files),
+        )
+        .route(
+            "/version/{id}/sample/treemap/files",
+            get(list_sample_version_treemap_files),
         )
         .route(
             "/version/{id}/treemap/functions",
             get(list_version_treemap_functions),
         )
+        .route(
+            "/version/{id}/sample/treemap/functions",
+            get(list_sample_version_treemap_functions),
+        )
         .route("/version/{id}/functions", get(list_version_functions))
+        .route(
+            "/version/{id}/sample/functions",
+            get(list_sample_version_functions),
+        )
         .route(
             "/version/{id}/functions/{function_id}",
             get(get_version_function),
@@ -196,6 +217,18 @@ struct GithubIssueTimelineQuery {
     offset: u32,
 }
 
+#[derive(serde::Deserialize)]
+struct AnalysisVersionsQuery {
+    codebase_ids: String,
+}
+
+#[derive(serde::Deserialize)]
+struct AnalysisMetricsQuery {
+    codebase_ids: String,
+    version: i64,
+    metric: String,
+}
+
 fn default_limit() -> u32 {
     50
 }
@@ -241,18 +274,110 @@ async fn list_github_issue_timeline(
     Ok(Json(rows))
 }
 
+async fn list_analysis_versions(
+    Query(query): Query<AnalysisVersionsQuery>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<AnalysisVersionSample>>, (StatusCode, String)> {
+    let codebase_ids = parse_codebase_ids(&query.codebase_ids)?;
+    let rows = sourcery_db::list_analysis_version_samples(&state.pool, &codebase_ids)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(rows))
+}
+
+async fn list_analysis_metrics(
+    Query(query): Query<AnalysisMetricsQuery>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<AnalysisMetricSample>>, (StatusCode, String)> {
+    let codebase_ids = parse_codebase_ids(&query.codebase_ids)?;
+    if !(1..=10).contains(&query.version) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "version must be between 1 and 10".to_string(),
+        ));
+    }
+    if !is_analysis_metric(&query.metric) {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            format!("unsupported analysis metric {}", query.metric),
+        ));
+    }
+
+    let rows = sourcery_db::list_analysis_metric_samples(
+        &state.pool,
+        &codebase_ids,
+        query.version,
+        &query.metric,
+    )
+    .await
+    .map_err(internal_error)?;
+    Ok(Json(rows))
+}
+
+fn parse_codebase_ids(value: &str) -> Result<Vec<Uuid>, (StatusCode, String)> {
+    let ids = value
+        .split(',')
+        .map(str::trim)
+        .filter(|id| !id.is_empty())
+        .map(|id| {
+            id.parse::<Uuid>()
+                .map_err(|_| (StatusCode::BAD_REQUEST, format!("invalid codebase id {id}")))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    if ids.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            "at least one codebase id is required".to_string(),
+        ));
+    }
+    Ok(ids)
+}
+
+fn is_analysis_metric(metric: &str) -> bool {
+    matches!(
+        metric,
+        "lines_of_code"
+            | "effective_lines_of_code"
+            | "comment_lines_of_code"
+            | "total_cyclomatic"
+            | "mean_outdegree_per_file"
+            | "mean_indegree_per_file"
+            | "mean_cyclomatic_per_function_per_file"
+    )
+}
+
 async fn get_version(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<Json<VersionDashboardResponse>, (StatusCode, String)> {
     let version = get_version_or_not_found(&state.pool, id).await?;
+    let codebase = get_codebase_or_not_found(&state.pool, version.codebase_id).await?;
     let counts = sourcery_db::count_version_files_and_functions(&state.pool, id)
         .await
         .map_err(internal_error)?;
     let total_files = metric_i64(&version.metrics, "files").unwrap_or(counts.total_files);
     Ok(Json(VersionDashboardResponse {
         version,
+        codebase_name: codebase.name,
         total_files,
+        total_functions: counts.total_functions,
+    }))
+}
+
+async fn get_sample_version(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<VersionDashboardResponse>, (StatusCode, String)> {
+    let version = get_version_or_not_found(&state.pool, id).await?;
+    let codebase = get_codebase_or_not_found(&state.pool, version.codebase_id).await?;
+    let counts = sourcery_db::count_snapshot_version_files_and_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(VersionDashboardResponse {
+        version,
+        codebase_name: codebase.name,
+        total_files: counts.total_files,
         total_functions: counts.total_functions,
     }))
 }
@@ -351,6 +476,17 @@ async fn list_all_version_files(
     Ok(Json(files))
 }
 
+async fn list_sample_version_files(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FileState>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let files = sourcery_db::list_snapshot_file_states(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(files))
+}
+
 async fn get_version_file(
     Path((id, file_state_id)): Path<(Uuid, Uuid)>,
     State(state): State<AppState>,
@@ -387,6 +523,17 @@ async fn list_version_functions(
     Ok(Json(functions))
 }
 
+async fn list_sample_version_functions(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let functions = sourcery_db::list_snapshot_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(functions))
+}
+
 async fn list_version_callgraph(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
@@ -401,12 +548,40 @@ async fn list_version_callgraph(
     Ok(Json(functions))
 }
 
+async fn list_sample_version_callgraph(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let mut functions = sourcery_db::list_snapshot_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    for function in &mut functions {
+        normalize_callgraph_metrics(function);
+    }
+    Ok(Json(functions))
+}
+
 async fn list_version_treemap_files(
     Path(id): Path<Uuid>,
     State(state): State<AppState>,
 ) -> Result<Json<Vec<FileStateWithFunctionCount>>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
     let mut files = sourcery_db::list_all_file_states_with_function_counts(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    for file in &mut files {
+        add_file_function_count_metric(file);
+    }
+    Ok(Json(files))
+}
+
+async fn list_sample_version_treemap_files(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<FileStateWithFunctionCount>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let mut files = sourcery_db::list_snapshot_file_states_with_function_counts(&state.pool, id)
         .await
         .map_err(internal_error)?;
     for file in &mut files {
@@ -458,6 +633,17 @@ async fn list_version_treemap_functions(
 ) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
     get_version_or_not_found(&state.pool, id).await?;
     let functions = sourcery_db::list_all_functions(&state.pool, id)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(functions))
+}
+
+async fn list_sample_version_treemap_functions(
+    Path(id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<Json<Vec<VersionFunction>>, (StatusCode, String)> {
+    get_version_or_not_found(&state.pool, id).await?;
+    let functions = sourcery_db::list_snapshot_functions(&state.pool, id)
         .await
         .map_err(internal_error)?;
     Ok(Json(functions))

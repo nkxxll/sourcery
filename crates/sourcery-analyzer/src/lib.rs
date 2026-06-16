@@ -191,6 +191,7 @@ pub async fn analyze_repo_version(
         "",
         Some(Utc::now()),
         None,
+        0,
     )
     .await
 }
@@ -225,7 +226,12 @@ pub async fn analyze_repo_samples(
     );
 
     for (index, oid) in sampled_commits.iter().enumerate() {
-        println!("Analyzing sample ({}/{})", index, sampled_commits.len());
+        let sample_number = usize_to_i32(index + 1, "sample_number")?;
+        println!(
+            "Analyzing sample ({}/{})",
+            sample_number,
+            sampled_commits.len()
+        );
         sr.checkout_commit(&oid)?;
         let commit_info = commit_info_from_repository(&sr, &oid)?;
         analyze_repo_tree_version(
@@ -239,6 +245,7 @@ pub async fn analyze_repo_samples(
             &commit_info.author_email,
             commit_info.committed_at,
             Some(commit_info.is_fix),
+            sample_number,
         )
         .await?;
     }
@@ -259,6 +266,7 @@ async fn analyze_repo_tree_version(
     author_email: &str,
     committed_at: Option<DateTime<Utc>>,
     is_fix: Option<bool>,
+    sample_number: i32,
 ) -> Result<()> {
     let lc = LanguageConfig::new(pl);
     if let Some(existing_version) =
@@ -266,10 +274,18 @@ async fn analyze_repo_tree_version(
     {
         db::delete_version(pool, existing_version.id).await?;
     }
+    if sample_number > 0 {
+        if let Some(existing_version) =
+            db::get_version_by_sample_number(pool, codebase.id, sample_number).await?
+        {
+            db::delete_version(pool, existing_version.id).await?;
+        }
+    }
     let version = db::insert_version(
         pool,
         codebase.id,
         commit_hash,
+        sample_number,
         message,
         author_name,
         author_email,
@@ -539,6 +555,7 @@ async fn store_commit_snapshot(
         pool,
         state.codebase.id,
         &commit_info.hash,
+        0,
         &commit_info.message,
         &commit_info.author_name,
         &commit_info.author_email,

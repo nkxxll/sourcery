@@ -21,6 +21,7 @@ pub struct Version {
     pub id: Uuid,
     pub codebase_id: Uuid,
     pub commit_hash: String,
+    pub sample_number: i32,
     pub message: String,
     pub author_name: String,
     pub author_email: String,
@@ -190,6 +191,30 @@ pub struct FunctionSearchResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AnalysisVersionSample {
+    pub codebase_id: Uuid,
+    pub codebase_name: String,
+    pub programming_language: String,
+    pub version_id: Uuid,
+    pub version_number: i64,
+    pub sample_number: i32,
+    pub committed_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct AnalysisMetricSample {
+    pub codebase_id: Uuid,
+    pub codebase_name: String,
+    pub programming_language: String,
+    pub version_id: Uuid,
+    pub version_number: i64,
+    pub sample_number: i32,
+    pub file_path: String,
+    pub value: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct GithubIssueTimelineEvent {
     pub id: Uuid,
     pub repo: String,
@@ -305,6 +330,7 @@ pub async fn insert_version(
     pool: &PgPool,
     codebase_id: Uuid,
     commit_hash: &str,
+    sample_number: i32,
     message: &str,
     author_name: &str,
     author_email: &str,
@@ -313,9 +339,10 @@ pub async fn insert_version(
     metrics: &serde_json::Value,
 ) -> Result<Version> {
     let row = sqlx::query_as::<_, Version>(
-        "INSERT INTO versions (codebase_id, commit_hash, message, author_name, author_email, committed_at, is_fix, metrics)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        "INSERT INTO versions (codebase_id, commit_hash, sample_number, message, author_name, author_email, committed_at, is_fix, metrics)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          ON CONFLICT (codebase_id, commit_hash) DO UPDATE SET
+             sample_number = EXCLUDED.sample_number,
              message = EXCLUDED.message,
              author_name = EXCLUDED.author_name,
              author_email = EXCLUDED.author_email,
@@ -327,6 +354,7 @@ pub async fn insert_version(
     )
     .bind(codebase_id)
     .bind(commit_hash)
+    .bind(sample_number)
     .bind(message)
     .bind(author_name)
     .bind(author_email)
@@ -334,6 +362,25 @@ pub async fn insert_version(
     .bind(is_fix)
     .bind(metrics)
     .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
+pub async fn get_version_by_sample_number(
+    pool: &PgPool,
+    codebase_id: Uuid,
+    sample_number: i32,
+) -> Result<Option<Version>> {
+    let row = sqlx::query_as::<_, Version>(
+        "SELECT *
+         FROM versions
+         WHERE codebase_id = $1 AND sample_number = $2
+         ORDER BY created_at DESC, id DESC
+         LIMIT 1",
+    )
+    .bind(codebase_id)
+    .bind(sample_number)
+    .fetch_optional(pool)
     .await?;
     Ok(row)
 }
@@ -400,6 +447,24 @@ pub async fn count_version_files_and_functions(
     Ok(row)
 }
 
+pub async fn count_snapshot_version_files_and_functions(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<VersionCounts> {
+    let row = sqlx::query_as::<_, VersionCounts>(
+        "SELECT
+            (SELECT COUNT(*) FROM files WHERE version_id = $1)::bigint AS total_files,
+            (SELECT COUNT(fn.id)::bigint
+             FROM files f
+             JOIN functions fn ON fn.file_id = f.id
+             WHERE f.version_id = $1) AS total_functions",
+    )
+    .bind(version_id)
+    .fetch_one(pool)
+    .await?;
+    Ok(row)
+}
+
 pub async fn get_version_by_commit(
     pool: &PgPool,
     codebase_id: Uuid,
@@ -420,6 +485,180 @@ pub async fn list_versions_by_codebase(pool: &PgPool, codebase_id: Uuid) -> Resu
         "SELECT * FROM versions WHERE codebase_id = $1 ORDER BY committed_at",
     )
     .bind(codebase_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_analysis_version_samples(
+    pool: &PgPool,
+    codebase_ids: &[Uuid],
+) -> Result<Vec<AnalysisVersionSample>> {
+    let rows = sqlx::query_as::<_, AnalysisVersionSample>(
+        "WITH ordered_versions AS (
+            SELECT
+                v.*,
+                COALESCE(NULLIF(v.sample_number, 0)::bigint, row_number() OVER (
+                    PARTITION BY v.codebase_id
+                    ORDER BY COALESCE(v.committed_at, v.created_at), v.created_at, v.id
+                )) AS version_number,
+                row_number() OVER (
+                    PARTITION BY v.codebase_id
+                    ORDER BY COALESCE(v.committed_at, v.created_at), v.created_at, v.id
+                ) AS chronological_version_number
+            FROM versions v
+            WHERE v.codebase_id = ANY($1)
+        )
+        SELECT
+            c.id AS codebase_id,
+            c.name AS codebase_name,
+            c.programming_language,
+            v.id AS version_id,
+            v.version_number,
+            v.sample_number,
+            v.committed_at,
+            v.created_at
+        FROM ordered_versions v
+        JOIN codebases c ON c.id = v.codebase_id
+        WHERE v.version_number <= 10
+        ORDER BY c.programming_language, c.name, v.version_number",
+    )
+    .bind(codebase_ids)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_analysis_metric_samples(
+    pool: &PgPool,
+    codebase_ids: &[Uuid],
+    version_number: i64,
+    metric_key: &str,
+) -> Result<Vec<AnalysisMetricSample>> {
+    let rows = sqlx::query_as::<_, AnalysisMetricSample>(
+        "WITH ordered_versions AS (
+            SELECT
+                v.*,
+                COALESCE(NULLIF(v.sample_number, 0)::bigint, row_number() OVER (
+                    PARTITION BY v.codebase_id
+                    ORDER BY COALESCE(v.committed_at, v.created_at), v.created_at, v.id
+                )) AS version_number,
+                row_number() OVER (
+                    PARTITION BY v.codebase_id
+                    ORDER BY COALESCE(v.committed_at, v.created_at), v.created_at, v.id
+                ) AS chronological_version_number
+            FROM versions v
+            WHERE v.codebase_id = ANY($1)
+        ),
+        target_versions AS (
+            SELECT
+                v.*,
+                v.sample_number > 0 OR lower(c.name) LIKE '%sample analysis%' AS is_sample_analysis
+            FROM ordered_versions v
+            JOIN codebases c ON c.id = v.codebase_id
+            WHERE v.version_number = $2
+        ),
+        ranked_file_states AS (
+            SELECT
+                tv.id AS target_version_id,
+                tv.version_number,
+                tv.sample_number,
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY tv.id, fs.path
+                    ORDER BY v.version_number DESC, v.id DESC
+                ) AS rank
+            FROM target_versions tv
+            JOIN file_states fs ON fs.codebase_id = tv.codebase_id
+            JOIN ordered_versions v ON v.id = fs.version_id
+            WHERE NOT tv.is_sample_analysis
+              AND v.version_number <= tv.version_number
+        ),
+        regular_metric_values AS (
+            SELECT
+                c.id AS codebase_id,
+                c.name AS codebase_name,
+                c.programming_language,
+                fs.target_version_id AS version_id,
+                fs.version_number,
+                fs.sample_number,
+                fs.path AS file_path,
+                CASE
+                    WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
+                    WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
+                    WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
+                    ELSE max((fs.metrics ->> $3)::double precision)
+                END AS value
+            FROM ranked_file_states fs
+            JOIN codebases c ON c.id = fs.codebase_id
+            LEFT JOIN functions fn ON fn.file_id = fs.file_id
+            WHERE fs.rank = 1
+              AND fs.exists
+              AND lower(c.programming_language) IN ('go', 'golang', 'ocaml')
+            GROUP BY
+                c.id,
+                c.name,
+                c.programming_language,
+                fs.target_version_id,
+                fs.version_number,
+                fs.sample_number,
+                fs.path,
+                fs.metrics
+        ),
+        snapshot_metric_values AS (
+            SELECT
+                c.id AS codebase_id,
+                c.name AS codebase_name,
+                c.programming_language,
+                tv.id AS version_id,
+                tv.version_number,
+                tv.sample_number,
+                f.path AS file_path,
+                CASE
+                    WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
+                    WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
+                    WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
+                    ELSE max((f.metrics ->> $3)::double precision)
+                END AS value
+            FROM target_versions tv
+            JOIN codebases c ON c.id = tv.codebase_id
+            JOIN files f ON f.version_id = tv.id
+            LEFT JOIN functions fn ON fn.file_id = f.id
+            WHERE tv.is_sample_analysis
+              AND lower(c.programming_language) IN ('go', 'golang', 'ocaml')
+            GROUP BY
+                c.id,
+                c.name,
+                c.programming_language,
+                tv.id,
+                tv.version_number,
+                tv.sample_number,
+                f.path,
+                f.metrics
+        ),
+        metric_values AS (
+            SELECT * FROM regular_metric_values
+            UNION ALL
+            SELECT * FROM snapshot_metric_values
+        )
+        SELECT
+            codebase_id,
+            codebase_name,
+            programming_language,
+            version_id,
+            version_number,
+            sample_number,
+            file_path,
+            value
+        FROM metric_values
+        WHERE value IS NOT NULL
+          AND value > '-Infinity'::double precision
+          AND value < 'Infinity'::double precision
+        ORDER BY programming_language, codebase_name, file_path",
+    )
+    .bind(codebase_ids)
+    .bind(version_number)
+    .bind(metric_key)
     .fetch_all(pool)
     .await?;
     Ok(rows)
@@ -916,6 +1155,33 @@ pub async fn list_all_functions(pool: &PgPool, version_id: Uuid) -> Result<Vec<V
     Ok(rows)
 }
 
+pub async fn list_snapshot_functions(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Vec<VersionFunction>> {
+    let rows = sqlx::query_as::<_, VersionFunction>(
+        "SELECT
+             fn.id AS function_id,
+             fn.file_id,
+             f.version_id,
+             f.path AS file_path,
+             f.language AS file_language,
+             fn.name,
+             fn.start_line,
+             fn.end_line,
+             fn.metrics,
+             fn.created_at
+         FROM functions fn
+         JOIN files f ON f.id = fn.file_id
+         WHERE f.version_id = $1
+         ORDER BY f.path, fn.start_line, fn.name",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn list_functions_by_version(
     pool: &PgPool,
     version_id: Uuid,
@@ -1211,6 +1477,30 @@ pub async fn list_all_files_states(pool: &PgPool, version_id: Uuid) -> Result<Ve
     Ok(rows)
 }
 
+pub async fn list_snapshot_file_states(pool: &PgPool, version_id: Uuid) -> Result<Vec<FileState>> {
+    let rows = sqlx::query_as::<_, FileState>(
+        "SELECT
+            f.id AS id,
+            v.codebase_id,
+            f.version_id,
+            f.path,
+            f.id AS file_id,
+            'analyzed'::text AS status,
+            true AS exists,
+            NULL::text AS source_path,
+            f.metrics,
+            f.created_at
+         FROM files f
+         JOIN versions v ON v.id = f.version_id
+         WHERE f.version_id = $1
+         ORDER BY f.path",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn list_all_file_states_with_function_counts(
     pool: &PgPool,
     version_id: Uuid,
@@ -1265,6 +1555,42 @@ pub async fn list_all_file_states_with_function_counts(
             fs.metrics,
             fs.created_at
         ORDER BY fs.path;",
+    )
+    .bind(version_id)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
+pub async fn list_snapshot_file_states_with_function_counts(
+    pool: &PgPool,
+    version_id: Uuid,
+) -> Result<Vec<FileStateWithFunctionCount>> {
+    let rows = sqlx::query_as::<_, FileStateWithFunctionCount>(
+        "SELECT
+            f.id AS id,
+            v.codebase_id,
+            f.version_id,
+            f.path,
+            f.id AS file_id,
+            'analyzed'::text AS status,
+            true AS exists,
+            NULL::text AS source_path,
+            f.metrics,
+            f.created_at,
+            count(fn.id)::bigint AS total_functions
+         FROM files f
+         JOIN versions v ON v.id = f.version_id
+         LEFT JOIN functions fn ON fn.file_id = f.id
+         WHERE f.version_id = $1
+         GROUP BY
+             f.id,
+             v.codebase_id,
+             f.version_id,
+             f.path,
+             f.metrics,
+             f.created_at
+         ORDER BY f.path",
     )
     .bind(version_id)
     .fetch_all(pool)
