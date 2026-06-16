@@ -12,3 +12,5 @@ bin
 app.log
 
 .envrc
+
+**/metrics.csv
