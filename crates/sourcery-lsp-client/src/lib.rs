@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 use std::time::Duration;
 
-use anyhow::{Result, anyhow};
+use anyhow::{Context, Result, anyhow};
 use async_lsp::concurrency::{Concurrency, ConcurrencyLayer};
 use async_lsp::lsp_types::notification::{LogMessage, Progress, PublishDiagnostics, ShowMessage};
 use async_lsp::lsp_types::{
@@ -28,6 +28,23 @@ use tracing::{debug, info, warn};
 struct Stop;
 type InnerMainLoop = Tracing<CatchUnwind<Concurrency<Router<()>>>>;
 type OptionReferences = Option<Vec<Location>>;
+
+pub fn decode_document_text(path: &Path, bytes: Vec<u8>) -> String {
+    match String::from_utf8(bytes) {
+        Ok(text) => text,
+        Err(err) => {
+            let utf8_error = err.utf8_error();
+            warn!(
+                file = %path.display(),
+                valid_up_to = utf8_error.valid_up_to(),
+                error_len = ?utf8_error.error_len(),
+                "file is not valid UTF-8; decoding bytes as Latin-1 for did_open"
+            );
+
+            err.into_bytes().into_iter().map(char::from).collect()
+        }
+    }
+}
 
 /// public range type from the lsp
 #[derive(Debug)]
@@ -176,16 +193,20 @@ impl Server {
         info!("starting language server main loop");
         let stdout = self.child.stdout.take().expect("missing server stdout");
         let stdin = self.child.stdin.take().expect("missing server stdin");
+        let _socket_guard = self.socket.socket.clone();
         let mainloop = self
             .mainloop
             .take()
             .expect("mainloop already started and moved");
 
         tokio::spawn(async move {
-            mainloop
+            let _socket_guard = _socket_guard;
+            let result = mainloop
                 .run_buffered(stdout.compat(), stdin.compat_write())
-                .await
-                .unwrap();
+                .await;
+            if let Err(err) = result {
+                warn!("language server main loop stopped with error: {err}");
+            }
             info!("language server main loop stopped");
         })
     }
@@ -206,7 +227,9 @@ impl Server {
         socket.shutdown(()).await.unwrap();
         socket.exit(()).unwrap();
         socket.emit(Stop).unwrap();
-        mainloop.await.unwrap();
+        if let Err(err) = mainloop.await {
+            warn!("language server main loop task failed: {err}");
+        }
         let _ = tokio::time::timeout(Duration::from_secs(2), self.child.wait()).await;
         info!("finished language server shutdown");
     }
@@ -268,9 +291,11 @@ impl SharedSocket {
                 .expect("file could not be canoncialized in open document what the duc"),
         )
         .unwrap();
-        let text = tokio::fs::read_to_string(path)
+        let bytes = tokio::fs::read(path)
             .await
+            .with_context(|| format!("the file is {}, the uri is {}", path.display(), file_uri))
             .expect("failed to read file");
+        let text = decode_document_text(path, bytes);
 
         self.socket
             .did_open(DidOpenTextDocumentParams {
@@ -436,5 +461,29 @@ impl SharedSocket {
                 Err(err) => panic!("request failed: {err}"),
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::decode_document_text;
+    use std::path::Path;
+
+    #[test]
+    fn decode_document_text_preserves_valid_utf8() {
+        let text = decode_document_text(
+            Path::new("valid.ml"),
+            "let x = \"\u{e9}\"\n".as_bytes().to_vec(),
+        );
+
+        assert_eq!(text, "let x = \"\u{e9}\"\n");
+    }
+
+    #[test]
+    fn decode_document_text_handles_invalid_utf8() {
+        let text =
+            decode_document_text(Path::new("pixmaps.ml"), vec![b'l', b'e', b't', b' ', 0xe9]);
+
+        assert_eq!(text, "let \u{e9}");
     }
 }

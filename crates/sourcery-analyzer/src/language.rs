@@ -4,6 +4,7 @@ use std::path::Path;
 use anyhow::{Result, anyhow};
 use clap::ValueEnum;
 use ecow::EcoString;
+use sourcery_lsp_client::decode_document_text;
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_go;
 use tree_sitter_ocaml;
@@ -296,7 +297,7 @@ impl LanguageConfig {
     }
 
     pub fn get_tree(&self, path: &Path) -> Result<(Tree, String)> {
-        let source_code = std::fs::read_to_string(path)?;
+        let source_code = decode_document_text(path, std::fs::read(path)?);
         let tree = self.parse_tree(&source_code)?;
         Ok((tree, source_code))
     }

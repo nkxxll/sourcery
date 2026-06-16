@@ -6,7 +6,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use ecow::EcoString;
-use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket};
+use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket, decode_document_text};
 use tracing::{debug, info, warn};
 use tree_sitter::{Node, Tree};
 use url::Url;
@@ -29,7 +29,8 @@ pub struct ProcessorSource {
 
 impl ProcessorSource {
     pub fn from_path(path: &Path) -> Result<Self> {
-        let source = std::fs::read_to_string(path)?;
+        let bytes = std::fs::read(path)?;
+        let source = decode_document_text(path, bytes);
         Ok(Self::from_text(source, path.to_path_buf()))
     }
 
@@ -2085,6 +2086,13 @@ let run value =
             true,
         ));
         assert!(ast_processor.is_comment_inline(
+            &CodeByteSpan::new(
+                standalone_start,
+                standalone_start + "// standalone comment".len()
+            ),
+            true,
+        ));
+        assert!(!ast_processor.is_comment_inline(
             &CodeByteSpan::new(trailing_start, trailing_start + "// trailing comment".len()),
             true,
         ));
