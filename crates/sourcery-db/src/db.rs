@@ -210,7 +210,11 @@ pub struct AnalysisMetricSample {
     pub version_id: Uuid,
     pub version_number: i64,
     pub sample_number: i32,
+    pub metric_level: String,
     pub file_path: String,
+    pub function_name: Option<String>,
+    pub function_start_line: Option<i32>,
+    pub function_end_line: Option<i32>,
     pub value: f64,
 }
 
@@ -574,7 +578,7 @@ pub async fn list_analysis_metric_samples(
             WHERE NOT tv.is_sample_analysis
               AND v.version_number <= tv.version_number
         ),
-        regular_metric_values AS (
+        regular_file_metric_values AS (
             SELECT
                 c.id AS codebase_id,
                 c.name AS codebase_name,
@@ -582,11 +586,19 @@ pub async fn list_analysis_metric_samples(
                 fs.target_version_id AS version_id,
                 fs.version_number,
                 fs.sample_number,
+                'file'::text AS metric_level,
                 fs.path AS file_path,
+                NULL::text AS function_name,
+                NULL::integer AS function_start_line,
+                NULL::integer AS function_end_line,
                 CASE
                     WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
                     WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
                     WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
+                    WHEN $3 = 'maintainability_index_three_property' THEN max((fs.metrics #>> '{maintainability_index,three_property}')::double precision)
+                    WHEN $3 = 'maintainability_index_four_property' THEN max((fs.metrics #>> '{maintainability_index,four_property}')::double precision)
+                    WHEN $3 = 'maintainability_index_visual_studio' THEN max((fs.metrics #>> '{maintainability_index,visual_studio}')::double precision)
+                    WHEN $3 = 'maintainability_index_comment_percentage' THEN max((fs.metrics #>> '{maintainability_index,comment_percentage}')::double precision)
                     ELSE max((fs.metrics ->> $3)::double precision)
                 END AS value
             FROM ranked_file_states fs
@@ -605,7 +617,7 @@ pub async fn list_analysis_metric_samples(
                 fs.path,
                 fs.metrics
         ),
-        snapshot_metric_values AS (
+        snapshot_file_metric_values AS (
             SELECT
                 c.id AS codebase_id,
                 c.name AS codebase_name,
@@ -613,11 +625,19 @@ pub async fn list_analysis_metric_samples(
                 tv.id AS version_id,
                 tv.version_number,
                 tv.sample_number,
+                'file'::text AS metric_level,
                 f.path AS file_path,
+                NULL::text AS function_name,
+                NULL::integer AS function_start_line,
+                NULL::integer AS function_end_line,
                 CASE
                     WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
                     WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
                     WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
+                    WHEN $3 = 'maintainability_index_three_property' THEN max((f.metrics #>> '{maintainability_index,three_property}')::double precision)
+                    WHEN $3 = 'maintainability_index_four_property' THEN max((f.metrics #>> '{maintainability_index,four_property}')::double precision)
+                    WHEN $3 = 'maintainability_index_visual_studio' THEN max((f.metrics #>> '{maintainability_index,visual_studio}')::double precision)
+                    WHEN $3 = 'maintainability_index_comment_percentage' THEN max((f.metrics #>> '{maintainability_index,comment_percentage}')::double precision)
                     ELSE max((f.metrics ->> $3)::double precision)
                 END AS value
             FROM target_versions tv
@@ -636,10 +656,68 @@ pub async fn list_analysis_metric_samples(
                 f.path,
                 f.metrics
         ),
+        regular_function_metric_values AS (
+            SELECT
+                c.id AS codebase_id,
+                c.name AS codebase_name,
+                c.programming_language,
+                fs.target_version_id AS version_id,
+                fs.version_number,
+                fs.sample_number,
+                'function'::text AS metric_level,
+                fs.path AS file_path,
+                fn.name AS function_name,
+                fn.start_line AS function_start_line,
+                fn.end_line AS function_end_line,
+                CASE
+                    WHEN $3 = 'maintainability_index_three_property' THEN (fn.metrics #>> '{maintainability_index,three_property}')::double precision
+                    WHEN $3 = 'maintainability_index_four_property' THEN (fn.metrics #>> '{maintainability_index,four_property}')::double precision
+                    WHEN $3 = 'maintainability_index_visual_studio' THEN (fn.metrics #>> '{maintainability_index,visual_studio}')::double precision
+                    WHEN $3 = 'maintainability_index_comment_percentage' THEN (fn.metrics #>> '{maintainability_index,comment_percentage}')::double precision
+                    ELSE (fn.metrics ->> $3)::double precision
+                END AS value
+            FROM ranked_file_states fs
+            JOIN codebases c ON c.id = fs.codebase_id
+            JOIN functions fn ON fn.file_id = fs.file_id
+            WHERE fs.rank = 1
+              AND fs.exists
+              AND lower(c.programming_language) IN ('go', 'golang', 'ocaml')
+        ),
+        snapshot_function_metric_values AS (
+            SELECT
+                c.id AS codebase_id,
+                c.name AS codebase_name,
+                c.programming_language,
+                tv.id AS version_id,
+                tv.version_number,
+                tv.sample_number,
+                'function'::text AS metric_level,
+                f.path AS file_path,
+                fn.name AS function_name,
+                fn.start_line AS function_start_line,
+                fn.end_line AS function_end_line,
+                CASE
+                    WHEN $3 = 'maintainability_index_three_property' THEN (fn.metrics #>> '{maintainability_index,three_property}')::double precision
+                    WHEN $3 = 'maintainability_index_four_property' THEN (fn.metrics #>> '{maintainability_index,four_property}')::double precision
+                    WHEN $3 = 'maintainability_index_visual_studio' THEN (fn.metrics #>> '{maintainability_index,visual_studio}')::double precision
+                    WHEN $3 = 'maintainability_index_comment_percentage' THEN (fn.metrics #>> '{maintainability_index,comment_percentage}')::double precision
+                    ELSE (fn.metrics ->> $3)::double precision
+                END AS value
+            FROM target_versions tv
+            JOIN codebases c ON c.id = tv.codebase_id
+            JOIN files f ON f.version_id = tv.id
+            JOIN functions fn ON fn.file_id = f.id
+            WHERE tv.is_sample_analysis
+              AND lower(c.programming_language) IN ('go', 'golang', 'ocaml')
+        ),
         metric_values AS (
-            SELECT * FROM regular_metric_values
+            SELECT * FROM regular_file_metric_values
             UNION ALL
-            SELECT * FROM snapshot_metric_values
+            SELECT * FROM snapshot_file_metric_values
+            UNION ALL
+            SELECT * FROM regular_function_metric_values
+            UNION ALL
+            SELECT * FROM snapshot_function_metric_values
         )
         SELECT
             codebase_id,
@@ -648,13 +726,17 @@ pub async fn list_analysis_metric_samples(
             version_id,
             version_number,
             sample_number,
+            metric_level,
             file_path,
+            function_name,
+            function_start_line,
+            function_end_line,
             value
         FROM metric_values
         WHERE value IS NOT NULL
           AND value > '-Infinity'::double precision
           AND value < 'Infinity'::double precision
-        ORDER BY programming_language, codebase_name, file_path",
+        ORDER BY programming_language, codebase_name, file_path, function_start_line, function_name",
     )
     .bind(codebase_ids)
     .bind(version_number)
@@ -1605,7 +1687,81 @@ pub async fn search_version_filenames(
     limit: i32,
 ) -> Result<Vec<FilenameSearchResult>> {
     let rows = sqlx::query_as::<_, FilenameSearchResult>(
-        "SELECT * FROM search_version_filenames($1, $2, $3)",
+        "WITH target AS (
+            SELECT
+                v.id,
+                v.created_at,
+                v.codebase_id,
+                v.sample_number > 0 OR lower(c.name) LIKE '%sample analysis%' AS is_sample_analysis
+            FROM versions v
+            JOIN codebases c ON c.id = v.codebase_id
+            WHERE v.id = $1
+        ),
+        ranked_file_states AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            JOIN target t ON TRUE
+            WHERE NOT t.is_sample_analysis
+              AND fs.codebase_id = t.codebase_id
+              AND (
+                  v.created_at < t.created_at
+                  OR (v.created_at = t.created_at AND v.id <= t.id)
+              )
+        ),
+        regular_files AS (
+            SELECT
+                fs.id AS file_state_id,
+                fs.file_id,
+                fs.path,
+                fs.status,
+                GREATEST(
+                    similarity(fs.path, $2),
+                    similarity(regexp_replace(fs.path, '^.*/', ''), $2)
+                )::real AS score
+            FROM ranked_file_states fs
+            WHERE fs.rank = 1
+              AND fs.exists
+              AND NULLIF(trim($2), '') IS NOT NULL
+              AND (
+                  fs.path % $2
+                  OR regexp_replace(fs.path, '^.*/', '') % $2
+                  OR fs.path ILIKE '%' || $2 || '%'
+              )
+        ),
+        snapshot_files AS (
+            SELECT
+                f.id AS file_state_id,
+                f.id AS file_id,
+                f.path,
+                'analyzed'::text AS status,
+                GREATEST(
+                    similarity(f.path, $2),
+                    similarity(regexp_replace(f.path, '^.*/', ''), $2)
+                )::real AS score
+            FROM target t
+            JOIN files f ON f.version_id = t.id
+            WHERE t.is_sample_analysis
+              AND NULLIF(trim($2), '') IS NOT NULL
+              AND (
+                  f.path % $2
+                  OR regexp_replace(f.path, '^.*/', '') % $2
+                  OR f.path ILIKE '%' || $2 || '%'
+              )
+        )
+        SELECT *
+        FROM (
+            SELECT * FROM regular_files
+            UNION ALL
+            SELECT * FROM snapshot_files
+        ) results
+        ORDER BY score DESC, path
+        LIMIT GREATEST($3, 0)",
     )
     .bind(version_id)
     .bind(query)
@@ -1622,7 +1778,92 @@ pub async fn search_version_functions(
     limit: i32,
 ) -> Result<Vec<FunctionSearchResult>> {
     let rows = sqlx::query_as::<_, FunctionSearchResult>(
-        "SELECT * FROM search_version_functions($1, $2, $3)",
+        "WITH target AS (
+            SELECT
+                v.id,
+                v.created_at,
+                v.codebase_id,
+                v.sample_number > 0 OR lower(c.name) LIKE '%sample analysis%' AS is_sample_analysis
+            FROM versions v
+            JOIN codebases c ON c.id = v.codebase_id
+            WHERE v.id = $1
+        ),
+        ranked_file_states AS (
+            SELECT
+                fs.*,
+                row_number() OVER (
+                    PARTITION BY fs.path
+                    ORDER BY v.created_at DESC, v.id DESC
+                ) AS rank
+            FROM file_states fs
+            JOIN versions v ON v.id = fs.version_id
+            JOIN target t ON TRUE
+            WHERE NOT t.is_sample_analysis
+              AND fs.codebase_id = t.codebase_id
+              AND (
+                  v.created_at < t.created_at
+                  OR (v.created_at = t.created_at AND v.id <= t.id)
+              )
+        ),
+        regular_functions AS (
+            SELECT
+                fn.id AS function_id,
+                f.id AS file_id,
+                fs.path AS file_path,
+                f.language AS file_language,
+                fn.name,
+                fn.start_line,
+                fn.end_line,
+                GREATEST(
+                    similarity(fn.name, $2),
+                    similarity(fs.path, $2)
+                )::real AS score
+            FROM ranked_file_states fs
+            JOIN files f ON f.id = fs.file_id
+            JOIN functions fn ON fn.file_id = f.id
+            WHERE fs.rank = 1
+              AND fs.exists
+              AND NULLIF(trim($2), '') IS NOT NULL
+              AND (
+                  fn.name % $2
+                  OR fn.name ILIKE '%' || $2 || '%'
+                  OR fs.path % $2
+                  OR fs.path ILIKE '%' || $2 || '%'
+              )
+        ),
+        snapshot_functions AS (
+            SELECT
+                fn.id AS function_id,
+                f.id AS file_id,
+                f.path AS file_path,
+                f.language AS file_language,
+                fn.name,
+                fn.start_line,
+                fn.end_line,
+                GREATEST(
+                    similarity(fn.name, $2),
+                    similarity(f.path, $2)
+                )::real AS score
+            FROM target t
+            JOIN files f ON f.version_id = t.id
+            JOIN functions fn ON fn.file_id = f.id
+            WHERE t.is_sample_analysis
+              AND NULLIF(trim($2), '') IS NOT NULL
+              AND (
+                  fn.name % $2
+                  OR fn.name ILIKE '%' || $2 || '%'
+                  OR f.path % $2
+                  OR f.path ILIKE '%' || $2 || '%'
+              )
+        )
+        SELECT *
+        FROM (
+            SELECT * FROM regular_functions
+            UNION ALL
+            SELECT * FROM snapshot_functions
+        ) results
+        ORDER BY score DESC, file_path, start_line, name
+        LIMIT GREATEST($3, 0)",
     )
     .bind(version_id)
     .bind(query)

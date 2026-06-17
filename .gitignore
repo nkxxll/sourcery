@@ -13,4 +13,4 @@ app.log
 
 .envrc
 
-**/metrics.csv
+**/metrics*.csv

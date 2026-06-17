@@ -9,18 +9,104 @@ use sourcery_db::{
     list_snapshot_file_states, list_snapshot_functions, list_versions_by_codebase,
     search_version_filenames, search_version_functions,
 };
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::PathBuf,
+};
 use uuid::Uuid;
 
-const ANALYSIS_METRICS: [(&str, &str); 6] = [
+const ANALYSIS_METRICS: &[(&str, &str)] = &[
+    ("lines_of_code", "Lines Of Code/File"),
+    (
+        "effective_lines_of_code_with_brackets",
+        "Effective LOC With Brackets/File",
+    ),
+    ("effective_lines_of_code", "Effective LOC/File"),
+    ("comment_lines_of_code", "Comment LOC/File"),
+    ("bracket_lines_of_code", "Bracket LOC/File"),
+    ("total_cyclomatic", "Total Cyclomatic/File"),
+    (
+        "maintainability_index_three_property",
+        "Maintainability Index Three Property",
+    ),
+    (
+        "maintainability_index_four_property",
+        "Maintainability Index Four Property",
+    ),
+    (
+        "maintainability_index_visual_studio",
+        "Maintainability Index Visual Studio",
+    ),
+    (
+        "maintainability_index_comment_percentage",
+        "Maintainability Index Comment Percentage",
+    ),
+    (
+        "total_halstead_unique_operators",
+        "Total Halstead Unique Operators/File",
+    ),
+    (
+        "total_halstead_unique_operands",
+        "Total Halstead Unique Operands/File",
+    ),
+    ("total_halstead_operators", "Total Halstead Operators/File"),
+    ("total_halstead_operands", "Total Halstead Operands/File"),
+    ("total_halstead_length", "Total Halstead Length/File"),
+    (
+        "total_halstead_vocabulary",
+        "Total Halstead Vocabulary/File",
+    ),
+    (
+        "total_halstead_calculated_length",
+        "Total Halstead Calculated Length/File",
+    ),
+    ("total_halstead_volume", "Total Halstead Volume/File"),
+    (
+        "total_halstead_difficulty",
+        "Total Halstead Difficulty/File",
+    ),
+    ("total_halstead_effort", "Total Halstead Effort/File"),
+    (
+        "total_halstead_time_seconds",
+        "Total Halstead Time Seconds/File",
+    ),
+    ("total_halstead_bugs", "Total Halstead Bugs/File"),
     ("mean_outdegree_per_file", "Mean Outdegree/File"),
     ("mean_indegree_per_file", "Mean Indegree/File"),
     (
         "mean_cyclomatic_per_function_per_file",
         "Mean Function Cyclomatic/File",
     ),
-    ("lines_of_code", "Lines Of Code/File"),
-    ("effective_lines_of_code", "Effective LOC/File"),
-    ("total_cyclomatic", "Total Cyclomatic/File"),
+    ("function_length", "Function Length"),
+    ("cyclomatic", "Function Cyclomatic"),
+    (
+        "cyclomatic_match_as_single_branch",
+        "Function Cyclomatic Match As Single Branch",
+    ),
+    ("indegree", "Function Indegree"),
+    ("outdegree", "Function Outdegree"),
+    (
+        "halstead_unique_operators",
+        "Function Halstead Unique Operators",
+    ),
+    (
+        "halstead_unique_operands",
+        "Function Halstead Unique Operands",
+    ),
+    ("halstead_operators", "Function Halstead Operators"),
+    ("halstead_operands", "Function Halstead Operands"),
+    ("halstead_length", "Function Halstead Length"),
+    ("halstead_vocabulary", "Function Halstead Vocabulary"),
+    (
+        "halstead_calculated_length",
+        "Function Halstead Calculated Length",
+    ),
+    ("halstead_volume", "Function Halstead Volume"),
+    ("halstead_difficulty", "Function Halstead Difficulty"),
+    ("halstead_effort", "Function Halstead Effort"),
+    ("halstead_time_seconds", "Function Halstead Time Seconds"),
+    ("halstead_bugs", "Function Halstead Bugs"),
 ];
 
 #[derive(Parser)]
@@ -106,6 +192,8 @@ pub enum SubCommand {
         version: i64,
         #[arg(long, value_delimiter = ',')]
         metrics: Vec<String>,
+        #[arg(long)]
+        outfile: PathBuf,
     },
 }
 
@@ -236,6 +324,7 @@ async fn main() -> anyhow::Result<()> {
             codebase_ids,
             version,
             metrics,
+            outfile,
         } => {
             if !(1..=10).contains(&version) {
                 anyhow::bail!("version must be between 1 and 10");
@@ -247,15 +336,18 @@ async fn main() -> anyhow::Result<()> {
                 .collect::<Result<Vec<_>, _>>()?;
             let selected_metrics = selected_analysis_metrics(&metrics)?;
 
-            println!(
-                "metric_key,metric_label,codebase_id,codebase_name,programming_language,version_id,version_number,sample_number,file_path,value"
-            );
+            let mut writer = BufWriter::new(File::create(outfile)?);
+            writeln!(
+                writer,
+                "metric_key,metric_label,codebase_id,codebase_name,programming_language,version_id,version_number,sample_number,metric_level,file_path,function_name,function_start_line,function_end_line,value"
+            )?;
             for (metric_key, metric_label) in selected_metrics {
                 let rows =
                     list_analysis_metric_samples(&pool, &codebase_ids, version, metric_key).await?;
                 for row in rows {
-                    println!(
-                        "{},{},{},{},{},{},{},{},{},{}",
+                    writeln!(
+                        writer,
+                        "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
                         csv_field(metric_key),
                         csv_field(metric_label),
                         csv_field(&row.codebase_id.to_string()),
@@ -264,11 +356,20 @@ async fn main() -> anyhow::Result<()> {
                         csv_field(&row.version_id.to_string()),
                         row.version_number,
                         row.sample_number,
+                        csv_field(&row.metric_level),
                         csv_field(&row.file_path),
+                        csv_field(row.function_name.as_deref().unwrap_or_default()),
+                        row.function_start_line
+                            .map(|value| value.to_string())
+                            .unwrap_or_default(),
+                        row.function_end_line
+                            .map(|value| value.to_string())
+                            .unwrap_or_default(),
                         row.value,
-                    );
+                    )?;
                 }
             }
+            writer.flush()?;
         }
     }
     Ok(())

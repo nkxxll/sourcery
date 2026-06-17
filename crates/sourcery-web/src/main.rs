@@ -338,12 +338,47 @@ fn is_analysis_metric(metric: &str) -> bool {
     matches!(
         metric,
         "lines_of_code"
+            | "effective_lines_of_code_with_brackets"
             | "effective_lines_of_code"
             | "comment_lines_of_code"
+            | "bracket_lines_of_code"
             | "total_cyclomatic"
+            | "maintainability_index_three_property"
+            | "maintainability_index_four_property"
+            | "maintainability_index_visual_studio"
+            | "maintainability_index_comment_percentage"
+            | "total_halstead_unique_operators"
+            | "total_halstead_unique_operands"
+            | "total_halstead_operators"
+            | "total_halstead_operands"
+            | "total_halstead_length"
+            | "total_halstead_vocabulary"
+            | "total_halstead_calculated_length"
+            | "total_halstead_volume"
+            | "total_halstead_difficulty"
+            | "total_halstead_effort"
+            | "total_halstead_time_seconds"
+            | "total_halstead_bugs"
             | "mean_outdegree_per_file"
             | "mean_indegree_per_file"
             | "mean_cyclomatic_per_function_per_file"
+            | "function_length"
+            | "cyclomatic"
+            | "cyclomatic_match_as_single_branch"
+            | "indegree"
+            | "outdegree"
+            | "halstead_unique_operators"
+            | "halstead_unique_operands"
+            | "halstead_operators"
+            | "halstead_operands"
+            | "halstead_length"
+            | "halstead_vocabulary"
+            | "halstead_calculated_length"
+            | "halstead_volume"
+            | "halstead_difficulty"
+            | "halstead_effort"
+            | "halstead_time_seconds"
+            | "halstead_bugs"
     )
 }
 
@@ -410,7 +445,43 @@ async fn get_file(
                 commit_hash: version.commit_hash,
             }))
         }
-        None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
+        None => {
+            let file = sourcery_db::get_file_by_id(&state.pool, file_id)
+                .await
+                .map_err(internal_error)?;
+            match file {
+                Some(file) => {
+                    let version = get_version_or_not_found(&state.pool, file.version_id).await?;
+                    let codebase =
+                        get_codebase_or_not_found(&state.pool, version.codebase_id).await?;
+                    Ok(Json(FileDetailResponse {
+                        file: file_state_with_function_count(
+                            &state.pool,
+                            snapshot_file_state(file, version.codebase_id),
+                        )
+                        .await?,
+                        codebase_url: codebase.url,
+                        commit_hash: version.commit_hash,
+                    }))
+                }
+                None => Err((StatusCode::NOT_FOUND, format!("file {file_id} not found"))),
+            }
+        }
+    }
+}
+
+fn snapshot_file_state(file: File, codebase_id: Uuid) -> FileState {
+    FileState {
+        id: file.id,
+        codebase_id,
+        version_id: file.version_id,
+        path: file.path,
+        file_id: Some(file.id),
+        status: "analyzed".to_string(),
+        exists: true,
+        source_path: None,
+        metrics: file.metrics,
+        created_at: file.created_at,
     }
 }
 
