@@ -599,6 +599,10 @@ pub async fn list_analysis_metric_samples(
                     WHEN $3 = 'maintainability_index_four_property' THEN max((fs.metrics #>> '{maintainability_index,four_property}')::double precision)
                     WHEN $3 = 'maintainability_index_visual_studio' THEN max((fs.metrics #>> '{maintainability_index,visual_studio}')::double precision)
                     WHEN $3 = 'maintainability_index_comment_percentage' THEN max((fs.metrics #>> '{maintainability_index,comment_percentage}')::double precision)
+                    WHEN $3 LIKE 'total_halstead_%' THEN max(COALESCE(
+                        (fs.metrics ->> $3)::double precision,
+                        (fs.metrics #>> ARRAY['total_halstead', regexp_replace($3, '^total_halstead_', '')])::double precision
+                    ))
                     ELSE max((fs.metrics ->> $3)::double precision)
                 END AS value
             FROM ranked_file_states fs
@@ -638,6 +642,10 @@ pub async fn list_analysis_metric_samples(
                     WHEN $3 = 'maintainability_index_four_property' THEN max((f.metrics #>> '{maintainability_index,four_property}')::double precision)
                     WHEN $3 = 'maintainability_index_visual_studio' THEN max((f.metrics #>> '{maintainability_index,visual_studio}')::double precision)
                     WHEN $3 = 'maintainability_index_comment_percentage' THEN max((f.metrics #>> '{maintainability_index,comment_percentage}')::double precision)
+                    WHEN $3 LIKE 'total_halstead_%' THEN max(COALESCE(
+                        (f.metrics ->> $3)::double precision,
+                        (f.metrics #>> ARRAY['total_halstead', regexp_replace($3, '^total_halstead_', '')])::double precision
+                    ))
                     ELSE max((f.metrics ->> $3)::double precision)
                 END AS value
             FROM target_versions tv
@@ -674,6 +682,10 @@ pub async fn list_analysis_metric_samples(
                     WHEN $3 = 'maintainability_index_four_property' THEN (fn.metrics #>> '{maintainability_index,four_property}')::double precision
                     WHEN $3 = 'maintainability_index_visual_studio' THEN (fn.metrics #>> '{maintainability_index,visual_studio}')::double precision
                     WHEN $3 = 'maintainability_index_comment_percentage' THEN (fn.metrics #>> '{maintainability_index,comment_percentage}')::double precision
+                    WHEN $3 LIKE 'halstead_%' THEN COALESCE(
+                        (fn.metrics ->> $3)::double precision,
+                        (fn.metrics #>> ARRAY['halstead', regexp_replace($3, '^halstead_', '')])::double precision
+                    )
                     ELSE (fn.metrics ->> $3)::double precision
                 END AS value
             FROM ranked_file_states fs
@@ -701,6 +713,10 @@ pub async fn list_analysis_metric_samples(
                     WHEN $3 = 'maintainability_index_four_property' THEN (fn.metrics #>> '{maintainability_index,four_property}')::double precision
                     WHEN $3 = 'maintainability_index_visual_studio' THEN (fn.metrics #>> '{maintainability_index,visual_studio}')::double precision
                     WHEN $3 = 'maintainability_index_comment_percentage' THEN (fn.metrics #>> '{maintainability_index,comment_percentage}')::double precision
+                    WHEN $3 LIKE 'halstead_%' THEN COALESCE(
+                        (fn.metrics ->> $3)::double precision,
+                        (fn.metrics #>> ARRAY['halstead', regexp_replace($3, '^halstead_', '')])::double precision
+                    )
                     ELSE (fn.metrics ->> $3)::double precision
                 END AS value
             FROM target_versions tv

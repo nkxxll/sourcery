@@ -6,19 +6,9 @@ from pathlib import Path
 import pandas as pd
 import matplotlib.pyplot as plt
 
-CSV_PATHS = [
-    "metrics1.csv",
-    "metrics2.csv",
-    "metrics3.csv",
-    "metrics4.csv",
-    "metrics5.csv",
-    "metrics6.csv",
-    "metrics7.csv",
-    "metrics8.csv",
-    "metrics9.csv",
-    "metrics.csv",
-]
+SCRIPT_DIR = Path(__file__).resolve().parent
 OUTPUT_PATH = "metrics_by_language.png"
+VERSIONS_OUTPUT_PATH = "metrics_over_versions.png"
 
 # Choose one or many metrics here
 METRIC_NAMES = [
@@ -34,10 +24,9 @@ INPUT_INDEX_COL = "input_index"
 LINES_OF_CODE_METRIC = "lines_of_code"
 CYCLOMATIC_METRIC = "total_cyclomatic"
 ADJUSTED_CYCLOMATIC_METRIC = "cyclomatic_per_line"
-SCRIPT_DIR = Path(__file__).resolve().parent
 
 
-def load_metrics(csv_paths: list[str], metric_names: list[str]) -> pd.DataFrame:
+def load_metrics(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFrame:
     dfs = []
 
     for input_index, csv_path in enumerate(csv_paths, start=1):
@@ -116,7 +105,7 @@ def plot_metrics_stacked_by_input(df: pd.DataFrame, metric_names: list[str]) -> 
             ax = axes[row][col]
             metric_df = input_df[input_df[METRIC_COL] == metric_name]
 
-            ax.set_title(f"Input {input_index}: {metric_name}")
+            ax.set_title(f"Version {input_index}: {metric_name}")
             ax.set_xlabel("Programming Language")
             ax.set_ylabel("Value")
 
@@ -148,7 +137,37 @@ def plot_metrics_stacked_by_input(df: pd.DataFrame, metric_names: list[str]) -> 
     fig.suptitle("Metrics per File by Programming Language")
     plt.tight_layout()
     fig.savefig(OUTPUT_PATH, dpi=200, bbox_inches="tight")
-    plt.show()
+
+
+def plot_metric_evolution_by_version(df: pd.DataFrame, metric_names: list[str]) -> None:
+    fig, axes = plt.subplots(
+        len(metric_names),
+        1,
+        figsize=(9, 4 * len(metric_names)),
+        sharex=True,
+        squeeze=False,
+    )
+
+    for row, metric_name in enumerate(metric_names):
+        ax = axes[row][0]
+        metric_df = df[df[METRIC_COL] == metric_name]
+        ax.set_title(metric_name)
+        ax.set_ylabel("Median value")
+
+        if metric_df.empty:
+            ax.text(0.5, 0.5, "No data", ha="center", va="center")
+            continue
+
+        medians = metric_df.groupby(INPUT_INDEX_COL)[VALUE_COL].median().sort_index()
+
+        ax.plot(medians.index, medians.values, marker="o")
+        ax.grid(True, axis="y", alpha=0.3)
+        ax.set_xticks(medians.index)
+
+    axes[-1][0].set_xlabel("Version file number")
+    fig.suptitle("Metric Evolution Across Version Files")
+    plt.tight_layout()
+    fig.savefig(VERSIONS_OUTPUT_PATH, dpi=200, bbox_inches="tight")
 
 
 def print_medians(df: pd.DataFrame, metric_names: list[str]) -> None:
@@ -158,7 +177,7 @@ def print_medians(df: pd.DataFrame, metric_names: list[str]) -> None:
         for metric_name in metric_names:
             metric_df = input_df[input_df[METRIC_COL] == metric_name]
 
-            print(f"\nMedian values for input {input_index}, {metric_name}:")
+            print(f"\nMedian values for version {input_index}, {metric_name}:")
             print(
                 metric_df.groupby(LANGUAGE_COL)[VALUE_COL]
                 .median()
@@ -173,6 +192,12 @@ def parse_args() -> argparse.Namespace:
         "--interactive",
         action="store_true",
         help="choose metrics interactively with gum",
+    )
+    parser.add_argument(
+        "csv_paths",
+        nargs="+",
+        type=Path,
+        help="CSV files to plot, in version order",
     )
     return parser.parse_args()
 
@@ -211,10 +236,14 @@ if __name__ == "__main__":
     metric_names = (
         choose_metric_names_interactively() if args.interactive else METRIC_NAMES
     )
-    df = load_metrics(CSV_PATHS, metric_names)
+    df = load_metrics(args.csv_paths, metric_names)
 
     if df.empty:
         raise ValueError(f"No rows found for metrics: {metric_names}")
 
     print_medians(df, metric_names)
     plot_metrics_stacked_by_input(df, metric_names)
+    plot_metric_evolution_by_version(df, metric_names)
+
+    if "agg" not in plt.get_backend().lower():
+        plt.show()

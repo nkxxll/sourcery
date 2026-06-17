@@ -63,6 +63,117 @@ type BoxStats = {
 
 const ANALYSIS_METRICS: MetricOption[] = [
   {
+    key: 'lines_of_code',
+    label: 'Lines Of Code/File',
+    description: 'Raw lines of code for each file.',
+  },
+  {
+    key: 'effective_lines_of_code_with_brackets',
+    label: 'Effective LOC With Brackets/File',
+    description:
+      'Non-comment lines for each file, including bracket-only lines.',
+  },
+  {
+    key: 'effective_lines_of_code',
+    label: 'Effective LOC/File',
+    description: 'Non-comment, non-blank lines for each file.',
+  },
+  {
+    key: 'comment_lines_of_code',
+    label: 'Comment LOC/File',
+    description: 'Comment-only lines for each file.',
+  },
+  {
+    key: 'bracket_lines_of_code',
+    label: 'Bracket LOC/File',
+    description: 'Bracket-only lines for each file.',
+  },
+  {
+    key: 'total_cyclomatic',
+    label: 'Total Cyclomatic/File',
+    description: 'Total file-level cyclomatic complexity.',
+  },
+  {
+    key: 'maintainability_index_three_property',
+    label: 'Maintainability Index Three Property',
+    description: 'Three-property maintainability index.',
+  },
+  {
+    key: 'maintainability_index_four_property',
+    label: 'Maintainability Index Four Property',
+    description: 'Four-property maintainability index.',
+  },
+  {
+    key: 'maintainability_index_visual_studio',
+    label: 'Maintainability Index Visual Studio',
+    description: 'Visual Studio maintainability index.',
+  },
+  {
+    key: 'maintainability_index_comment_percentage',
+    label: 'Maintainability Index Comment Percentage',
+    description: 'Maintainability index comment percentage component.',
+  },
+  {
+    key: 'total_halstead_unique_operators',
+    label: 'Total Halstead Unique Operators/File',
+    description: 'Total unique Halstead operators for each file.',
+  },
+  {
+    key: 'total_halstead_unique_operands',
+    label: 'Total Halstead Unique Operands/File',
+    description: 'Total unique Halstead operands for each file.',
+  },
+  {
+    key: 'total_halstead_operators',
+    label: 'Total Halstead Operators/File',
+    description: 'Total Halstead operators for each file.',
+  },
+  {
+    key: 'total_halstead_operands',
+    label: 'Total Halstead Operands/File',
+    description: 'Total Halstead operands for each file.',
+  },
+  {
+    key: 'total_halstead_length',
+    label: 'Total Halstead Length/File',
+    description: 'Total Halstead length for each file.',
+  },
+  {
+    key: 'total_halstead_vocabulary',
+    label: 'Total Halstead Vocabulary/File',
+    description: 'Total Halstead vocabulary for each file.',
+  },
+  {
+    key: 'total_halstead_calculated_length',
+    label: 'Total Halstead Calculated Length/File',
+    description: 'Total calculated Halstead length for each file.',
+  },
+  {
+    key: 'total_halstead_volume',
+    label: 'Total Halstead Volume/File',
+    description: 'Total Halstead volume for each file.',
+  },
+  {
+    key: 'total_halstead_difficulty',
+    label: 'Total Halstead Difficulty/File',
+    description: 'Total Halstead difficulty for each file.',
+  },
+  {
+    key: 'total_halstead_effort',
+    label: 'Total Halstead Effort/File',
+    description: 'Total Halstead effort for each file.',
+  },
+  {
+    key: 'total_halstead_time_seconds',
+    label: 'Total Halstead Time Seconds/File',
+    description: 'Total estimated Halstead time for each file.',
+  },
+  {
+    key: 'total_halstead_bugs',
+    label: 'Total Halstead Bugs/File',
+    description: 'Total estimated Halstead bugs for each file.',
+  },
+  {
     key: 'mean_outdegree_per_file',
     label: 'Mean Outdegree/File',
     description: 'Average function outdegree within each file.',
@@ -78,19 +189,90 @@ const ANALYSIS_METRICS: MetricOption[] = [
     description: 'Average function cyclomatic complexity within each file.',
   },
   {
-    key: 'lines_of_code',
-    label: 'Lines Of Code/File',
-    description: 'Raw lines of code for each file.',
+    key: 'function_length',
+    label: 'Function Length',
+    description: 'Length of each function.',
   },
   {
-    key: 'effective_lines_of_code',
-    label: 'Effective LOC/File',
-    description: 'Non-comment, non-blank lines for each file.',
+    key: 'cyclomatic',
+    label: 'Function Cyclomatic',
+    description: 'Cyclomatic complexity for each function.',
   },
   {
-    key: 'total_cyclomatic',
-    label: 'Total Cyclomatic/File',
-    description: 'Total file-level cyclomatic complexity.',
+    key: 'cyclomatic_match_as_single_branch',
+    label: 'Function Cyclomatic Match As Single Branch',
+    description:
+      'Function cyclomatic complexity treating match as a single branch.',
+  },
+  {
+    key: 'indegree',
+    label: 'Function Indegree',
+    description: 'Indegree for each function.',
+  },
+  {
+    key: 'outdegree',
+    label: 'Function Outdegree',
+    description: 'Outdegree for each function.',
+  },
+  {
+    key: 'halstead_unique_operators',
+    label: 'Function Halstead Unique Operators',
+    description: 'Unique Halstead operators for each function.',
+  },
+  {
+    key: 'halstead_unique_operands',
+    label: 'Function Halstead Unique Operands',
+    description: 'Unique Halstead operands for each function.',
+  },
+  {
+    key: 'halstead_operators',
+    label: 'Function Halstead Operators',
+    description: 'Halstead operators for each function.',
+  },
+  {
+    key: 'halstead_operands',
+    label: 'Function Halstead Operands',
+    description: 'Halstead operands for each function.',
+  },
+  {
+    key: 'halstead_length',
+    label: 'Function Halstead Length',
+    description: 'Halstead length for each function.',
+  },
+  {
+    key: 'halstead_vocabulary',
+    label: 'Function Halstead Vocabulary',
+    description: 'Halstead vocabulary for each function.',
+  },
+  {
+    key: 'halstead_calculated_length',
+    label: 'Function Halstead Calculated Length',
+    description: 'Calculated Halstead length for each function.',
+  },
+  {
+    key: 'halstead_volume',
+    label: 'Function Halstead Volume',
+    description: 'Halstead volume for each function.',
+  },
+  {
+    key: 'halstead_difficulty',
+    label: 'Function Halstead Difficulty',
+    description: 'Halstead difficulty for each function.',
+  },
+  {
+    key: 'halstead_effort',
+    label: 'Function Halstead Effort',
+    description: 'Halstead effort for each function.',
+  },
+  {
+    key: 'halstead_time_seconds',
+    label: 'Function Halstead Time Seconds',
+    description: 'Estimated Halstead time for each function.',
+  },
+  {
+    key: 'halstead_bugs',
+    label: 'Function Halstead Bugs',
+    description: 'Estimated Halstead bugs for each function.',
   },
 ]
 
@@ -461,7 +643,7 @@ function MetricBoxplotCard({ result }: { result: MetricResult }) {
           <p className="text-sm text-[#6b6e73]">{result.metric.description}</p>
         </div>
         <p className="text-xs text-[#6b6e73]">
-          {result.samples.length.toLocaleString()} file samples
+          {result.samples.length.toLocaleString()} samples
         </p>
       </div>
       {stats.length === 0 ? (
@@ -605,7 +787,7 @@ function StatsTable({ stats }: { stats: BoxStats[] }) {
         <thead>
           <tr className="border-b border-[#d0d7de] text-left text-xs uppercase tracking-wide text-[#6b6e73]">
             <th className="py-2 pr-3">Language</th>
-            <th className="py-2 pr-3">Files</th>
+            <th className="py-2 pr-3">Samples</th>
             <th className="py-2 pr-3">Min</th>
             <th className="py-2 pr-3">Q1</th>
             <th className="py-2 pr-3">Median</th>
