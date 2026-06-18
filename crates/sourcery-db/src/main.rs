@@ -195,6 +195,19 @@ pub enum SubCommand {
         #[arg(long)]
         outfile: PathBuf,
     },
+    /// CSV rows for the min/max metric objects shown by react-frontend/src/routes/analysis.tsx
+    AnalysisMetricExtremesCsv {
+        #[arg(long, value_delimiter = ',', required = true)]
+        codebase_ids: Vec<String>,
+        #[arg(long, default_value_t = 10)]
+        version: i64,
+        #[arg(long, value_delimiter = ',')]
+        metrics: Vec<String>,
+        #[arg(long, default_value_t = 10)]
+        limit: usize,
+        #[arg(long)]
+        outfile: PathBuf,
+    },
 }
 
 #[tokio::main]
@@ -345,33 +358,116 @@ async fn main() -> anyhow::Result<()> {
                 let rows =
                     list_analysis_metric_samples(&pool, &codebase_ids, version, metric_key).await?;
                 for row in rows {
-                    writeln!(
-                        writer,
-                        "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
-                        csv_field(metric_key),
-                        csv_field(metric_label),
-                        csv_field(&row.codebase_id.to_string()),
-                        csv_field(&row.codebase_name),
-                        csv_field(&row.programming_language),
-                        csv_field(&row.version_id.to_string()),
-                        row.version_number,
-                        row.sample_number,
-                        csv_field(&row.metric_level),
-                        csv_field(&row.file_path),
-                        csv_field(row.function_name.as_deref().unwrap_or_default()),
-                        row.function_start_line
-                            .map(|value| value.to_string())
-                            .unwrap_or_default(),
-                        row.function_end_line
-                            .map(|value| value.to_string())
-                            .unwrap_or_default(),
-                        row.value,
+                    write_analysis_metric_csv_row(&mut writer, metric_key, metric_label, &row)?;
+                }
+            }
+            writer.flush()?;
+        }
+        SubCommand::AnalysisMetricExtremesCsv {
+            codebase_ids,
+            version,
+            metrics,
+            limit,
+            outfile,
+        } => {
+            if !(1..=10).contains(&version) {
+                anyhow::bail!("version must be between 1 and 10");
+            }
+            if limit == 0 {
+                anyhow::bail!("limit must be greater than 0");
+            }
+
+            let codebase_ids = codebase_ids
+                .iter()
+                .map(|id| Uuid::parse_str(id))
+                .collect::<Result<Vec<_>, _>>()?;
+            let selected_metrics = selected_analysis_metrics(&metrics)?;
+
+            let mut writer = BufWriter::new(File::create(outfile)?);
+            writeln!(
+                writer,
+                "extreme,rank,metric_key,metric_label,codebase_id,codebase_name,programming_language,version_id,version_number,sample_number,metric_level,file_path,function_name,function_start_line,function_end_line,value"
+            )?;
+            for (metric_key, metric_label) in selected_metrics {
+                let mut rows =
+                    list_analysis_metric_samples(&pool, &codebase_ids, version, metric_key).await?;
+                rows.sort_by(|left, right| {
+                    left.value
+                        .total_cmp(&right.value)
+                        .then_with(|| left.programming_language.cmp(&right.programming_language))
+                        .then_with(|| left.codebase_name.cmp(&right.codebase_name))
+                        .then_with(|| left.file_path.cmp(&right.file_path))
+                        .then_with(|| left.function_start_line.cmp(&right.function_start_line))
+                        .then_with(|| left.function_name.cmp(&right.function_name))
+                });
+
+                for (rank, row) in rows.iter().take(limit).enumerate() {
+                    write_analysis_metric_extreme_csv_row(
+                        &mut writer,
+                        "min",
+                        rank + 1,
+                        metric_key,
+                        metric_label,
+                        row,
+                    )?;
+                }
+                for (rank, row) in rows.iter().rev().take(limit).enumerate() {
+                    write_analysis_metric_extreme_csv_row(
+                        &mut writer,
+                        "max",
+                        rank + 1,
+                        metric_key,
+                        metric_label,
+                        row,
                     )?;
                 }
             }
             writer.flush()?;
         }
     }
+    Ok(())
+}
+
+fn write_analysis_metric_extreme_csv_row(
+    writer: &mut impl Write,
+    extreme: &str,
+    rank: usize,
+    metric_key: &str,
+    metric_label: &str,
+    row: &sourcery_db::AnalysisMetricSample,
+) -> anyhow::Result<()> {
+    write!(writer, "{},{},", csv_field(extreme), rank)?;
+    write_analysis_metric_csv_row(writer, metric_key, metric_label, row)
+}
+
+fn write_analysis_metric_csv_row(
+    writer: &mut impl Write,
+    metric_key: &str,
+    metric_label: &str,
+    row: &sourcery_db::AnalysisMetricSample,
+) -> anyhow::Result<()> {
+    writeln!(
+        writer,
+        "{},{},{},{},{},{},{},{},{},{},{},{},{},{}",
+        csv_field(metric_key),
+        csv_field(metric_label),
+        csv_field(&row.codebase_id.to_string()),
+        csv_field(&row.codebase_name),
+        csv_field(&row.programming_language),
+        csv_field(&row.version_id.to_string()),
+        row.version_number,
+        row.sample_number,
+        csv_field(&row.metric_level),
+        csv_field(&row.file_path),
+        csv_field(row.function_name.as_deref().unwrap_or_default()),
+        row.function_start_line
+            .map(|value| value.to_string())
+            .unwrap_or_default(),
+        row.function_end_line
+            .map(|value| value.to_string())
+            .unwrap_or_default(),
+        row.value,
+    )?;
     Ok(())
 }
 
