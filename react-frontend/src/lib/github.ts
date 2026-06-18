@@ -48,6 +48,16 @@ function normalizeGithubRepositoryUrl(codebaseUrl: string) {
 
     return `https://github.com/${owner}/${repo.replace(/\.git$/, '')}`
   } catch {
+    return githubUrlFromSamplePath(codebaseUrl)
+  }
+}
+
+function githubUrlFromSamplePath(codebaseUrl: string) {
+  const repoDirectory = codebaseUrl.replace(/\/+$/, '').split('/').at(-1)
+  const [owner, repo, ...extra] = repoDirectory?.split('__') ?? []
+  if (!owner || !repo || extra.length > 0) {
     return null
   }
+
+  return `https://github.com/${owner}/${repo}`
 }
