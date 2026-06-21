@@ -355,6 +355,9 @@ async fn main() -> anyhow::Result<()> {
                 "metric_key,metric_label,codebase_id,codebase_name,programming_language,version_id,version_number,sample_number,metric_level,file_path,function_name,function_start_line,function_end_line,value"
             )?;
             for (metric_key, metric_label) in selected_metrics {
+                //
+                // this creates the rows for one metric
+                //
                 let rows =
                     list_analysis_metric_samples(&pool, &codebase_ids, version, metric_key).await?;
                 for row in rows {

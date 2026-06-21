@@ -64,7 +64,7 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "sourcery_web=info,axum=info".into()),
+                .unwrap_or_else(|_| "sourcery_web=info".into()),
         )
         .init();
 
@@ -131,7 +131,7 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(&args.bind)
         .await
         .with_context(|| format!("failed to bind on {}", args.bind))?;
-    tracing::debug!("web server listening on {}", listener.local_addr()?);
+    tracing::info!("web server listening on {}", listener.local_addr()?);
 
     axum::serve(listener, app).await?;
     Ok(())
