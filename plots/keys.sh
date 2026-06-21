@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 {
   tail -n +2 metrics.csv | cut -d, -f1

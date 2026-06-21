@@ -7,4 +7,5 @@ requires-python = ">=3.14"
 dependencies = [
     "matplotlib>=3.11.0",
     "pandas>=3.0.3",
+    "pillow>=11.3.0",
 ]
