@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator, MaxNLocator, ScalarFormatter
 
 from core import warn
-from core import INPUT_INDEX_COL, LANGUAGE_COL, METRIC_COL, VALUE_COL
+from core import INPUT_INDEX_COL, LANGUAGE_COL, METRIC_COL, METRIC_LEVEL_COL, VALUE_COL
 
 DEFAULT_OUTPUT_PATH = Path("metrics_over_versions.png")
 
@@ -15,6 +15,7 @@ def plot_metric_evolution_by_version(
     metric_names: list[str],
     output_path: Path = DEFAULT_OUTPUT_PATH,
 ) -> None:
+    metric_level = chart_metric_level(df)
     languages = sorted(df[LANGUAGE_COL].dropna().unique())
     if not languages:
         raise ValueError("No languages found for line chart")
@@ -91,6 +92,17 @@ def plot_metric_evolution_by_version(
 
     for ax in axes[-1]:
         ax.set_xlabel("Version")
-    fig.suptitle("Metric Evolution Across Version Files by Language")
+    fig.suptitle(f"{metric_level.title()} Metric Evolution by Language")
     plt.tight_layout()
     fig.savefig(output_path, dpi=200, bbox_inches="tight")
+
+
+def chart_metric_level(df: pd.DataFrame) -> str:
+    if METRIC_LEVEL_COL not in df.columns:
+        return "Metric"
+
+    metric_levels = sorted(df[METRIC_LEVEL_COL].dropna().unique())
+    if len(metric_levels) == 1:
+        return str(metric_levels[0])
+
+    return "Metric"

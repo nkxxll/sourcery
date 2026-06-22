@@ -8,6 +8,7 @@ METRIC_LEVEL_COL = "metric_level"
 METRIC_COL = "metric_key"
 VALUE_COL = "value"
 INPUT_INDEX_COL = "input_index"
+VERSION_NUMBER_COL = "version_number"
 LINES_OF_CODE_METRIC = "lines_of_code"
 CYCLOMATIC_METRIC = "total_cyclomatic"
 ADJUSTED_CYCLOMATIC_METRIC = "cyclomatic_per_line"
@@ -46,6 +47,7 @@ def load_metrics(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFrame
     df = read_versioned_csvs(
         csv_paths,
         {LANGUAGE_COL, METRIC_LEVEL_COL, METRIC_COL, VALUE_COL},
+        use_version_number=True,
     )
 
     source_metric_names = set(metric_names)
@@ -74,7 +76,7 @@ def load_metrics(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFrame
 
     df = df[df[METRIC_COL].isin(metric_names)].copy()
 
-    require_metrics(df, metric_names, len(csv_paths))
+    require_metrics(df, metric_names, sorted(df[INPUT_INDEX_COL].dropna().unique()))
 
     return df
 
@@ -105,7 +107,7 @@ def load_extremes(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFram
     df = df.dropna(subset=["rank", VALUE_COL]).copy()
     df["rank"] = df["rank"].astype(int)
 
-    require_metrics(df, metric_names, len(csv_paths))
+    require_metrics(df, metric_names, sorted(df[INPUT_INDEX_COL].dropna().unique()))
 
     return df
 
@@ -113,8 +115,9 @@ def load_extremes(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFram
 def read_versioned_csvs(
     csv_paths: list[Path],
     required_columns: set[str],
+    use_version_number: bool = False,
 ) -> pd.DataFrame:
-    return (
+    df = (
         pd.concat(
             [read_csv_with_columns(csv_path, required_columns) for csv_path in csv_paths],
             keys=range(1, len(csv_paths) + 1),
@@ -123,6 +126,16 @@ def read_versioned_csvs(
         .reset_index(level=INPUT_INDEX_COL)
         .reset_index(drop=True)
     )
+
+    if use_version_number and VERSION_NUMBER_COL in df.columns:
+        version_numbers = pd.to_numeric(df[VERSION_NUMBER_COL], errors="coerce")
+        invalid_versions = df[version_numbers.isna()]
+        warn_dropped_rows(f"with non-numeric {VERSION_NUMBER_COL}", invalid_versions)
+        df[INPUT_INDEX_COL] = version_numbers
+        df = df.dropna(subset=[INPUT_INDEX_COL]).copy()
+        df[INPUT_INDEX_COL] = df[INPUT_INDEX_COL].astype(int)
+
+    return df
 
 
 def add_adjusted_cyclomatic_metric(df: pd.DataFrame) -> pd.DataFrame:
@@ -184,10 +197,10 @@ def add_adjusted_cyclomatic_metric(df: pd.DataFrame) -> pd.DataFrame:
 def require_metrics(
     df: pd.DataFrame,
     metric_names: list[str],
-    input_count: int,
+    input_indices,
 ) -> None:
     required = pd.MultiIndex.from_product(
-        [range(1, input_count + 1), metric_names],
+        [input_indices, metric_names],
         names=[INPUT_INDEX_COL, METRIC_COL],
     )
     present = pd.MultiIndex.from_frame(

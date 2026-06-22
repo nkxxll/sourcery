@@ -5,9 +5,10 @@ use sourcery_db::{
     delete_codebase, get_codebase_by_id, get_codebase_by_name, get_diff_by_version,
     get_diff_with_changes_by_version, get_version_by_commit, get_version_by_id,
     get_version_by_sample_number, list_all_files_states, list_all_functions,
-    list_analysis_metric_samples, list_codebases, list_files_by_version, list_functions_by_version,
-    list_snapshot_file_states, list_snapshot_functions, list_versions_by_codebase,
-    search_version_filenames, search_version_functions,
+    list_analysis_metric_samples, list_analysis_version_samples, list_codebases,
+    list_files_by_version, list_functions_by_version, list_snapshot_file_states,
+    list_snapshot_functions, list_versions_by_codebase, search_version_filenames,
+    search_version_functions,
 };
 use std::{
     fs::File,
@@ -109,6 +110,89 @@ const ANALYSIS_METRICS: &[(&str, &str)] = &[
     ("halstead_bugs", "Function Halstead Bugs"),
 ];
 
+const ANALYSIS_VERSION_METRICS: &[(&str, &str)] = &[
+    ("files", "Files"),
+    ("total_lines_of_code", "Total Lines Of Code"),
+    (
+        "total_effective_lines_of_code_with_brackets",
+        "Total Effective LOC With Brackets",
+    ),
+    ("total_effective_lines_of_code", "Total Effective LOC"),
+    ("total_comment_lines_of_code", "Total Comment LOC"),
+    ("total_bracket_lines_of_code", "Total Bracket LOC"),
+    ("total_cyclomatic", "Total Cyclomatic"),
+    (
+        "files_with_maintainability_index",
+        "Files With Maintainability Index",
+    ),
+    (
+        "total_three_property_maintainability_index",
+        "Total Three Property Maintainability Index",
+    ),
+    (
+        "total_four_property_maintainability_index",
+        "Total Four Property Maintainability Index",
+    ),
+    (
+        "total_visual_studio_maintainability_index",
+        "Total Visual Studio Maintainability Index",
+    ),
+    ("mean_lines_of_code_per_file", "Mean Lines Of Code/File"),
+    (
+        "mean_effective_lines_of_code_with_brackets_per_file",
+        "Mean Effective LOC With Brackets/File",
+    ),
+    (
+        "mean_effective_lines_of_code_per_file",
+        "Mean Effective LOC/File",
+    ),
+    (
+        "mean_comment_lines_of_code_per_file",
+        "Mean Comment LOC/File",
+    ),
+    (
+        "mean_bracket_lines_of_code_per_file",
+        "Mean Bracket LOC/File",
+    ),
+    (
+        "mean_cyclomatic_complexity_per_file",
+        "Mean Cyclomatic Complexity/File",
+    ),
+    (
+        "mean_three_property_maintainability_index_per_file",
+        "Mean Three Property Maintainability Index/File",
+    ),
+    (
+        "mean_four_property_maintainability_index_per_file",
+        "Mean Four Property Maintainability Index/File",
+    ),
+    (
+        "mean_visual_studio_maintainability_index_per_file",
+        "Mean Visual Studio Maintainability Index/File",
+    ),
+    (
+        "total_halstead_unique_operators",
+        "Total Halstead Unique Operators",
+    ),
+    (
+        "total_halstead_unique_operands",
+        "Total Halstead Unique Operands",
+    ),
+    ("total_halstead_operators", "Total Halstead Operators"),
+    ("total_halstead_operands", "Total Halstead Operands"),
+    ("total_halstead_length", "Total Halstead Length"),
+    ("total_halstead_vocabulary", "Total Halstead Vocabulary"),
+    (
+        "total_halstead_calculated_length",
+        "Total Halstead Calculated Length",
+    ),
+    ("total_halstead_volume", "Total Halstead Volume"),
+    ("total_halstead_difficulty", "Total Halstead Difficulty"),
+    ("total_halstead_effort", "Total Halstead Effort"),
+    ("total_halstead_time_seconds", "Total Halstead Time Seconds"),
+    ("total_halstead_bugs", "Total Halstead Bugs"),
+];
+
 #[derive(Parser)]
 pub struct CommandLine {
     #[command(subcommand)]
@@ -195,6 +279,15 @@ pub enum SubCommand {
         #[arg(long)]
         outfile: PathBuf,
     },
+    /// CSV rows for version-level metrics shown by react-frontend/src/routes/analysis.tsx
+    AnalysisVersionMetricsCsv {
+        #[arg(long, value_delimiter = ',', required = true)]
+        codebase_ids: Vec<String>,
+        #[arg(long, value_delimiter = ',')]
+        metrics: Vec<String>,
+        #[arg(long)]
+        outfile: PathBuf,
+    },
     /// CSV rows for the min/max metric objects shown by react-frontend/src/routes/analysis.tsx
     AnalysisMetricExtremesCsv {
         #[arg(long, value_delimiter = ',', required = true)]
@@ -205,6 +298,12 @@ pub enum SubCommand {
         metrics: Vec<String>,
         #[arg(long, default_value_t = 10)]
         limit: usize,
+        #[arg(long)]
+        outfile: PathBuf,
+    },
+    /// CSV row with the first and last commit time for one codebase
+    CodebaseCommitTimesCsv {
+        codebase_id: String,
         #[arg(long)]
         outfile: PathBuf,
     },
@@ -366,6 +465,39 @@ async fn main() -> anyhow::Result<()> {
             }
             writer.flush()?;
         }
+        SubCommand::AnalysisVersionMetricsCsv {
+            codebase_ids,
+            metrics,
+            outfile,
+        } => {
+            let codebase_ids = codebase_ids
+                .iter()
+                .map(|id| Uuid::parse_str(id))
+                .collect::<Result<Vec<_>, _>>()?;
+            let selected_metrics = selected_analysis_version_metrics(&metrics)?;
+
+            let rows = list_analysis_version_samples(&pool, &codebase_ids).await?;
+            let mut writer = BufWriter::new(File::create(outfile)?);
+            writeln!(
+                writer,
+                "metric_key,metric_label,codebase_id,codebase_name,programming_language,version_id,version_number,sample_number,metric_level,value"
+            )?;
+            for row in rows {
+                let version = get_version_by_id(&pool, row.version_id).await?;
+                for (metric_key, metric_label) in selected_metrics.iter().copied() {
+                    if let Some(value) = metric_value(&version.metrics, metric_key) {
+                        write_analysis_version_metric_csv_row(
+                            &mut writer,
+                            metric_key,
+                            metric_label,
+                            &row,
+                            value,
+                        )?;
+                    }
+                }
+            }
+            writer.flush()?;
+        }
         SubCommand::AnalysisMetricExtremesCsv {
             codebase_ids,
             version,
@@ -427,7 +559,69 @@ async fn main() -> anyhow::Result<()> {
             }
             writer.flush()?;
         }
+        SubCommand::CodebaseCommitTimesCsv {
+            codebase_id,
+            outfile,
+        } => {
+            let codebase_id = Uuid::parse_str(&codebase_id)?;
+            let Some(codebase) = get_codebase_by_id(&pool, codebase_id).await? else {
+                anyhow::bail!("codebase not found: {codebase_id}");
+            };
+            let versions = list_versions_by_codebase(&pool, codebase_id).await?;
+            let Some(first_commit_time) = versions
+                .iter()
+                .map(|version| version.committed_at.unwrap_or(version.created_at))
+                .min()
+            else {
+                anyhow::bail!("codebase has no versions: {codebase_id}");
+            };
+            let last_commit_time = versions
+                .iter()
+                .map(|version| version.committed_at.unwrap_or(version.created_at))
+                .max()
+                .expect("versions is not empty");
+
+            let mut writer = BufWriter::new(File::create(outfile)?);
+            writeln!(
+                writer,
+                "codebase_id,codebase_name,programming_language,first_commit_time,last_commit_time"
+            )?;
+            writeln!(
+                writer,
+                "{},{},{},{},{}",
+                csv_field(&codebase.id.to_string()),
+                csv_field(&codebase.name),
+                csv_field(&codebase.programming_language),
+                csv_field(&first_commit_time.to_rfc3339()),
+                csv_field(&last_commit_time.to_rfc3339()),
+            )?;
+            writer.flush()?;
+        }
     }
+    Ok(())
+}
+
+fn write_analysis_version_metric_csv_row(
+    writer: &mut impl Write,
+    metric_key: &str,
+    metric_label: &str,
+    row: &sourcery_db::AnalysisVersionSample,
+    value: f64,
+) -> anyhow::Result<()> {
+    writeln!(
+        writer,
+        "{},{},{},{},{},{},{},{},{},{}",
+        csv_field(metric_key),
+        csv_field(metric_label),
+        csv_field(&row.codebase_id.to_string()),
+        csv_field(&row.codebase_name),
+        csv_field(&row.programming_language),
+        csv_field(&row.version_id.to_string()),
+        row.version_number,
+        row.sample_number,
+        csv_field("version"),
+        value,
+    )?;
     Ok(())
 }
 
@@ -491,6 +685,34 @@ fn selected_analysis_metrics(
                 .ok_or_else(|| anyhow::anyhow!("unsupported analysis metric {metric}"))
         })
         .collect()
+}
+
+fn selected_analysis_version_metrics(
+    metrics: &[String],
+) -> anyhow::Result<Vec<(&'static str, &'static str)>> {
+    if metrics.is_empty() {
+        return Ok(ANALYSIS_VERSION_METRICS.to_vec());
+    }
+
+    metrics
+        .iter()
+        .map(|metric| {
+            ANALYSIS_VERSION_METRICS
+                .iter()
+                .copied()
+                .find(|(key, _)| key == metric)
+                .ok_or_else(|| anyhow::anyhow!("unsupported analysis version metric {metric}"))
+        })
+        .collect()
+}
+
+fn metric_value(metrics: &serde_json::Value, key: &str) -> Option<f64> {
+    let value = metrics.get(key)?;
+    if let Some(value) = value.as_f64() {
+        return value.is_finite().then_some(value);
+    }
+    let value = value.as_str()?.parse::<f64>().ok()?;
+    value.is_finite().then_some(value)
 }
 
 fn csv_field(value: &str) -> String {

@@ -1,6 +1,5 @@
 import argparse
 import shutil
-import subprocess
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -17,6 +16,7 @@ from core import (
     ADJUSTED_CYCLOMATIC_METRIC,
     METRIC_COL,
     METRIC_LEVEL_COL,
+    read_csv_with_columns,
     load_extremes,
     load_metrics,
     print_medians,
@@ -97,23 +97,21 @@ def add_metric_args(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def load_metric_names() -> list[str]:
-    try:
-        keys = subprocess.run(
-            [str(SCRIPT_DIR / "keys.sh")],
-            cwd=SCRIPT_DIR,
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.splitlines()
-    except subprocess.CalledProcessError as exc:
-        stderr = exc.stderr.strip()
-        details = f": {stderr}" if stderr else ""
-        raise RuntimeError(f"Failed to load metric names from keys.sh{details}") from exc
-
-    metric_names = sorted(set(key for key in keys if key))
+def load_metric_names(csv_paths: list[Path]) -> list[str]:
+    metric_names = sorted(
+        set(
+            metric_name
+            for csv_path in csv_paths
+            for metric_name in read_csv_with_columns(csv_path, {METRIC_COL})[
+                METRIC_COL
+            ].dropna()
+        )
+    )
     if not metric_names:
-        raise ValueError("keys.sh returned no metric names")
+        raise ValueError("input CSVs contain no metric names")
+
+    if {"lines_of_code", "total_cyclomatic"}.issubset(metric_names):
+        metric_names.append(ADJUSTED_CYCLOMATIC_METRIC)
 
     return metric_names
 
@@ -136,8 +134,8 @@ def choose_metric_names_interactively(metric_names: list[str]) -> list[str]:
     return selected
 
 
-def choose_metric_names(interactive: bool) -> list[str]:
-    metric_names = load_metric_names()
+def choose_metric_names(interactive: bool, csv_paths: list[Path]) -> list[str]:
+    metric_names = load_metric_names(csv_paths)
 
     if interactive:
         return choose_metric_names_interactively(metric_names)
@@ -160,7 +158,7 @@ def metric_names_for_level(df, metric_names: list[str], metric_level: str) -> li
 
 if __name__ == "__main__":
     args = parse_args()
-    metric_names = choose_metric_names(args.interactive)
+    metric_names = choose_metric_names(args.interactive, args.csv_paths)
 
     if args.chart == "extremes":
         extremes_metric_names = [
@@ -184,7 +182,7 @@ if __name__ == "__main__":
 
     print_medians(df, metric_names)
 
-    for metric_level in ["file", "function"]:
+    for metric_level in ["file", "function", "version"]:
         level_df = df[df[METRIC_LEVEL_COL] == metric_level]
         if level_df.empty:
             continue

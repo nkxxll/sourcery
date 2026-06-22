@@ -183,3 +183,4 @@ metrics_by_language.png
 metrics_over_versions.png
 
 *.png
+*.csv
