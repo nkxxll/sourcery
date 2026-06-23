@@ -14,6 +14,10 @@ CYCLOMATIC_METRIC = "total_cyclomatic"
 ADJUSTED_CYCLOMATIC_METRIC = "cyclomatic_per_line"
 
 
+def chart_data_output_path(output_path: Path) -> Path:
+    return output_path.with_suffix(".csv")
+
+
 def warn(message: str) -> None:
     warnings.warn(message, RuntimeWarning, stacklevel=2)
 

@@ -3,10 +3,16 @@ import shutil
 from pathlib import Path
 
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from chart_metric_evolution import (
     DEFAULT_OUTPUT_PATH as LINECHART_OUTPUT_PATH,
     plot_metric_evolution_by_version,
+)
+from chart_commit_times import (
+    DEFAULT_OUTPUT_PATH as TIMESPAN_OUTPUT_PATH,
+    load_commit_times,
+    plot_commit_time_spans,
 )
 from chart_metrics_by_language import (
     DEFAULT_OUTPUT_PATH as BOXPLOT_OUTPUT_PATH,
@@ -48,6 +54,12 @@ def parse_args() -> argparse.Namespace:
     )
     add_extremes_args(extremes_parser)
 
+    timespan_parser = subparsers.add_parser(
+        "timespan",
+        help="plot first-to-last commit times by project",
+    )
+    add_timespan_args(timespan_parser)
+
     return parser.parse_args()
 
 
@@ -85,6 +97,22 @@ def add_extremes_args(parser: argparse.ArgumentParser) -> None:
         nargs="+",
         type=Path,
         help="extremes CSV files to report, in version order",
+    )
+
+
+def add_timespan_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "-o",
+        "--outfile",
+        type=Path,
+        default=TIMESPAN_OUTPUT_PATH,
+        help=f"PNG output path (default: {TIMESPAN_OUTPUT_PATH})",
+    )
+    parser.add_argument(
+        "csv_paths",
+        nargs="+",
+        type=Path,
+        help="commit time CSV files from sourcery-db codebase-commit-times-csv",
     )
 
 
@@ -153,11 +181,22 @@ def metric_names_for_level(df, metric_names: list[str], metric_level: str) -> li
     level_metric_names = set(
         df.loc[df[METRIC_LEVEL_COL] == metric_level, METRIC_COL].dropna().unique()
     )
-    return [metric_name for metric_name in metric_names if metric_name in level_metric_names]
+    names = pd.Index(metric_names).intersection(level_metric_names, sort=False)
+    if metric_level == "version":
+        names = names[~names.str.startswith("mean_")]
+
+    return names.to_list()
 
 
 if __name__ == "__main__":
     args = parse_args()
+
+    if args.chart == "timespan":
+        df = load_commit_times(args.csv_paths)
+        plot_commit_time_spans(df, args.outfile)
+        print(f"Wrote project time span chart to {args.outfile}")
+        raise SystemExit
+
     metric_names = choose_metric_names(args.interactive, args.csv_paths)
 
     if args.chart == "extremes":

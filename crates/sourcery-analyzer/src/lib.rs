@@ -232,8 +232,8 @@ pub async fn analyze_repo_samples(
             sample_number,
             sampled_commits.len()
         );
-        sr.checkout_commit(&oid)?;
-        let commit_info = commit_info_from_repository(&sr, &oid)?;
+        sr.checkout_commit(oid)?;
+        let commit_info = commit_info_from_repository(&sr, oid)?;
         analyze_repo_tree_version(
             &pool,
             &codebase,

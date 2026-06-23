@@ -4,9 +4,17 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from core import warn
-from core import INPUT_INDEX_COL, LANGUAGE_COL, METRIC_COL, METRIC_LEVEL_COL, VALUE_COL
+from core import (
+    INPUT_INDEX_COL,
+    LANGUAGE_COL,
+    METRIC_COL,
+    METRIC_LEVEL_COL,
+    VALUE_COL,
+    chart_data_output_path,
+)
 
 DEFAULT_OUTPUT_PATH = Path("metrics_by_language.png")
+LANGUAGE_ORDER = ["Golang", "Ocaml"]
 
 
 def plot_metrics_stacked_by_input(
@@ -24,6 +32,7 @@ def plot_metrics_stacked_by_input(
         sharey=False,
         squeeze=False,
     )
+    chart_rows = []
 
     for row, input_index in enumerate(input_indices):
         input_df = df[df[INPUT_INDEX_COL] == input_index]
@@ -45,29 +54,58 @@ def plot_metrics_stacked_by_input(
                 ax.set_xticks([])
                 continue
 
-            median_order = (
-                metric_df.groupby(LANGUAGE_COL)[VALUE_COL]
-                .median()
-                .sort_values(ascending=False)
-                .index
+            present_languages = set(metric_df[LANGUAGE_COL].dropna().unique())
+            language_order = [
+                language for language in LANGUAGE_ORDER if language in present_languages
+            ]
+            language_order.extend(
+                sorted(present_languages - set(language_order))
             )
 
             data = [
                 metric_df.loc[metric_df[LANGUAGE_COL] == lang, VALUE_COL]
-                for lang in median_order
+                for lang in language_order
             ]
+            for language, values in zip(language_order, data, strict=False):
+                chart_rows.append(
+                    {
+                        "metric_level": metric_level,
+                        INPUT_INDEX_COL: input_index,
+                        METRIC_COL: metric_name,
+                        LANGUAGE_COL: language,
+                        **boxplot_summary(values),
+                    }
+                )
 
             ax.boxplot(
                 data,
-                tick_labels=median_order,
+                tick_labels=language_order,
                 showfliers=False,
             )
 
             ax.tick_params(axis="x", rotation=45)
 
     fig.suptitle(f"{metric_level.title()} Metrics by Programming Language")
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    pd.DataFrame(chart_rows).to_csv(chart_data_output_path(output_path), index=False)
+
+
+def boxplot_summary(values: pd.Series) -> dict[str, float]:
+    q1 = values.quantile(0.25)
+    median = values.median()
+    q3 = values.quantile(0.75)
+    iqr = q3 - q1
+    lower_bound = q1 - 1.5 * iqr
+    upper_bound = q3 + 1.5 * iqr
+    whisker_values = values[(values >= lower_bound) & (values <= upper_bound)]
+    return {
+        "whisker_low": whisker_values.min(),
+        "q1": q1,
+        "median": median,
+        "q3": q3,
+        "whisker_high": whisker_values.max(),
+    }
 
 
 def chart_metric_level(df: pd.DataFrame) -> str:

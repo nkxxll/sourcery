@@ -303,7 +303,8 @@ pub enum SubCommand {
     },
     /// CSV row with the first and last commit time for one codebase
     CodebaseCommitTimesCsv {
-        codebase_id: String,
+        #[arg(long, value_delimiter = ',', required = true)]
+        codebase_ids: Vec<String>,
         #[arg(long)]
         outfile: PathBuf,
     },
@@ -560,41 +561,43 @@ async fn main() -> anyhow::Result<()> {
             writer.flush()?;
         }
         SubCommand::CodebaseCommitTimesCsv {
-            codebase_id,
+            codebase_ids,
             outfile,
         } => {
-            let codebase_id = Uuid::parse_str(&codebase_id)?;
-            let Some(codebase) = get_codebase_by_id(&pool, codebase_id).await? else {
-                anyhow::bail!("codebase not found: {codebase_id}");
-            };
-            let versions = list_versions_by_codebase(&pool, codebase_id).await?;
-            let Some(first_commit_time) = versions
-                .iter()
-                .map(|version| version.committed_at.unwrap_or(version.created_at))
-                .min()
-            else {
-                anyhow::bail!("codebase has no versions: {codebase_id}");
-            };
-            let last_commit_time = versions
-                .iter()
-                .map(|version| version.committed_at.unwrap_or(version.created_at))
-                .max()
-                .expect("versions is not empty");
-
+            let codebase_ids = codebase_ids.into_iter().map(|c| Uuid::parse_str(&c).expect("codebase id should be parsable as uuid"));
             let mut writer = BufWriter::new(File::create(outfile)?);
             writeln!(
                 writer,
                 "codebase_id,codebase_name,programming_language,first_commit_time,last_commit_time"
             )?;
-            writeln!(
-                writer,
-                "{},{},{},{},{}",
-                csv_field(&codebase.id.to_string()),
-                csv_field(&codebase.name),
-                csv_field(&codebase.programming_language),
-                csv_field(&first_commit_time.to_rfc3339()),
-                csv_field(&last_commit_time.to_rfc3339()),
-            )?;
+            for codebase_id in codebase_ids {
+                let Some(codebase) = get_codebase_by_id(&pool, codebase_id).await? else {
+                    anyhow::bail!("codebase not found: {codebase_id}");
+                };
+                let versions = list_versions_by_codebase(&pool, codebase_id).await?;
+                let Some(first_commit_time) = versions
+                    .iter()
+                    .map(|version| version.committed_at.unwrap_or(version.created_at))
+                    .min()
+                else {
+                    anyhow::bail!("codebase has no versions: {codebase_id}");
+                };
+                let last_commit_time = versions
+                    .iter()
+                    .map(|version| version.committed_at.unwrap_or(version.created_at))
+                    .max()
+                    .expect("versions is not empty");
+
+                writeln!(
+                    writer,
+                    "{},{},{},{},{}",
+                    csv_field(&codebase.id.to_string()),
+                    csv_field(&codebase.name),
+                    csv_field(&codebase.programming_language),
+                    csv_field(&first_commit_time.to_rfc3339()),
+                    csv_field(&last_commit_time.to_rfc3339()),
+                )?;
+            }
             writer.flush()?;
         }
     }

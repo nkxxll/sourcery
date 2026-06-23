@@ -61,6 +61,15 @@ type BoxStats = {
   mean: number
 }
 
+type ProjectTimeSpan = {
+  codebaseId: string
+  codebaseName: string
+  language: string
+  firstCommitTime: Date
+  lastCommitTime: Date
+  versionCount: number
+}
+
 const ANALYSIS_METRICS: MetricOption[] = [
   {
     key: 'lines_of_code',
@@ -424,6 +433,10 @@ function AnalysisPage() {
     return new Set(versionsQuery.data.map((version) => version.version_number))
   }, [versionsQuery.data])
 
+  const projectTimeSpans = useMemo(() => {
+    return buildProjectTimeSpans(versionsQuery.data)
+  }, [versionsQuery.data])
+
   const toggleCodebase = (codebase: Codebase) => {
     setSelectedIds((current) => {
       const next = new Set(current)
@@ -558,6 +571,12 @@ function AnalysisPage() {
             versionNumber={versionNumber}
             versions={versionsQuery.data}
           />
+          {selectedCodebases.length > 0 ? (
+            <ProjectTimeSpanCard
+              isLoading={versionsQuery.isFetching && versionsQuery.data.length === 0}
+              spans={projectTimeSpans}
+            />
+          ) : null}
           {selectedCodebases.length === 0 ? (
             <div className="rounded border border-dashed border-[#d0d7de] bg-white p-8 text-center text-sm text-[#6b6e73]">
               Select at least one Go or OCaml codebase to load boxplots.
@@ -580,6 +599,223 @@ function AnalysisPage() {
           )}
         </main>
       </section>
+    </div>
+  )
+}
+
+function ProjectTimeSpanCard({
+  isLoading,
+  spans,
+}: {
+  isLoading: boolean
+  spans: ProjectTimeSpan[]
+}) {
+  return (
+    <section className="rounded border border-[#d0d7de] bg-white p-4">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-[#0f3f88]">
+            Project time span
+          </h2>
+          <p className="text-sm text-[#6b6e73]">
+            First to last commit time for selected Go and OCaml projects.
+          </p>
+        </div>
+        <p className="text-xs text-[#6b6e73]">
+          {spans.length.toLocaleString()} projects
+        </p>
+      </div>
+      {isLoading ? (
+        <p className="rounded border border-[#d0d7de] p-6 text-sm text-[#6b6e73]">
+          Loading project commit times...
+        </p>
+      ) : spans.length === 0 ? (
+        <p className="rounded border border-dashed border-[#d0d7de] p-6 text-sm text-[#6b6e73]">
+          No commit times for this selection.
+        </p>
+      ) : (
+        <>
+          <ProjectTimeSpanChart spans={spans} />
+          <ProjectTimeSpanTable spans={spans} />
+        </>
+      )}
+    </section>
+  )
+}
+
+function ProjectTimeSpanChart({ spans }: { spans: ProjectTimeSpan[] }) {
+  const svgRef = useRef<SVGSVGElement | null>(null)
+
+  useEffect(() => {
+    const svg = d3.select(svgRef.current)
+    svg.selectAll('*').remove()
+
+    const rowHeight = 30
+    const width = 880
+    const height = Math.max(220, spans.length * rowHeight + 96)
+    const margin = { top: 18, right: 32, bottom: 46, left: 176 }
+    const plotWidth = width - margin.left - margin.right
+    const plotHeight = height - margin.top - margin.bottom
+    const minDate = d3.min(spans, (span) => span.firstCommitTime)
+    const maxDate = d3.max(spans, (span) => span.lastCommitTime)
+
+    if (!minDate || !maxDate) {
+      return
+    }
+
+    const day = 24 * 60 * 60 * 1000
+    const sameTime = minDate.getTime() === maxDate.getTime()
+    const domainStart = sameTime ? new Date(minDate.getTime() - day) : minDate
+    const domainEnd = sameTime ? new Date(maxDate.getTime() + day) : maxDate
+
+    svg.attr('viewBox', `0 0 ${width} ${height}`)
+    const root = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`)
+
+    const x = d3
+      .scaleUtc()
+      .domain([domainStart, domainEnd])
+      .range([0, plotWidth])
+      .nice()
+    const y = d3
+      .scaleBand()
+      .domain(spans.map((span) => span.codebaseId))
+      .range([0, plotHeight])
+      .padding(0.34)
+    const color = d3
+      .scaleOrdinal<string>()
+      .domain(['Go', 'OCaml'])
+      .range(['#0f3f88', '#9a5b00'])
+
+    root
+      .append('g')
+      .attr('stroke', '#eef0f3')
+      .selectAll('line')
+      .data(x.ticks(6))
+      .join('line')
+      .attr('x1', (tick) => x(tick))
+      .attr('x2', (tick) => x(tick))
+      .attr('y1', 0)
+      .attr('y2', plotHeight)
+
+    root
+      .append('g')
+      .attr('transform', `translate(0,${plotHeight})`)
+      .call(d3.axisBottom(x).ticks(6).tickFormat(d3.utcFormat('%Y-%m')))
+      .call((axis) => axis.select('.domain').attr('stroke', '#d0d7de'))
+      .call((axis) => axis.selectAll('text').attr('fill', '#4d4f53'))
+
+    root
+      .append('g')
+      .call(
+        d3.axisLeft(y).tickFormat((codebaseId) => {
+          const span = spans.find((item) => item.codebaseId === codebaseId)
+          return span?.codebaseName ?? String(codebaseId)
+        }),
+      )
+      .call((axis) => axis.select('.domain').remove())
+      .call((axis) => axis.selectAll('line').remove())
+      .call((axis) => axis.selectAll('text').attr('fill', '#24292f'))
+
+    const rows = root
+      .selectAll('g.project-span')
+      .data(spans)
+      .join('g')
+      .attr('class', 'project-span')
+      .attr(
+        'transform',
+        (span) => `translate(0,${(y(span.codebaseId) ?? 0) + y.bandwidth() / 2})`,
+      )
+
+    rows
+      .append('line')
+      .attr('x1', (span) => x(span.firstCommitTime))
+      .attr('x2', (span) => x(span.lastCommitTime))
+      .attr('y1', 0)
+      .attr('y2', 0)
+      .attr('stroke', (span) => color(span.language))
+      .attr('stroke-width', 8)
+      .attr('stroke-linecap', 'round')
+      .attr('stroke-opacity', 0.68)
+
+    rows
+      .append('circle')
+      .attr('cx', (span) => x(span.firstCommitTime))
+      .attr('cy', 0)
+      .attr('r', 4)
+      .attr('fill', (span) => color(span.language))
+
+    rows
+      .append('circle')
+      .attr('cx', (span) => x(span.lastCommitTime))
+      .attr('cy', 0)
+      .attr('r', 4)
+      .attr('fill', (span) => color(span.language))
+
+    const legend = svg
+      .append('g')
+      .attr('transform', `translate(${margin.left},${height - 16})`)
+
+    LANGUAGES.forEach((language, index) => {
+      const item = legend
+        .append('g')
+        .attr('transform', `translate(${index * 96},0)`)
+      item
+        .append('rect')
+        .attr('width', 12)
+        .attr('height', 12)
+        .attr('rx', 2)
+        .attr('fill', color(language))
+      item
+        .append('text')
+        .attr('x', 18)
+        .attr('y', 10)
+        .attr('fill', '#4d4f53')
+        .attr('font-size', 12)
+        .text(language)
+    })
+  }, [spans])
+
+  return (
+    <svg
+      ref={svgRef}
+      aria-label="Project commit time spans for selected Go and OCaml codebases"
+      className="h-auto w-full"
+      role="img"
+    />
+  )
+}
+
+function ProjectTimeSpanTable({ spans }: { spans: ProjectTimeSpan[] }) {
+  return (
+    <div className="mt-3 overflow-x-auto">
+      <table className="w-full min-w-160 border-collapse text-sm">
+        <thead>
+          <tr className="border-b border-[#d0d7de] text-left text-xs uppercase tracking-wide text-[#6b6e73]">
+            <th className="py-2 pr-3">Project</th>
+            <th className="py-2 pr-3">Language</th>
+            <th className="py-2 pr-3">First commit</th>
+            <th className="py-2 pr-3">Last commit</th>
+            <th className="py-2 pr-3">Span</th>
+            <th className="py-2 pr-3">Versions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {spans.map((span) => (
+            <tr key={span.codebaseId} className="border-b border-[#eef0f3]">
+              <td className="py-2 pr-3 font-medium text-[#0f3f88]">
+                {span.codebaseName}
+              </td>
+              <td className="py-2 pr-3">{span.language}</td>
+              <td className="py-2 pr-3">{formatDate(span.firstCommitTime)}</td>
+              <td className="py-2 pr-3">{formatDate(span.lastCommitTime)}</td>
+              <td className="py-2 pr-3">{formatDuration(span)}</td>
+              <td className="py-2 pr-3">{span.versionCount.toLocaleString()}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   )
 }
@@ -846,8 +1082,72 @@ function buildBoxStats(samples: AnalysisMetricSample[]): BoxStats[] {
     )
 }
 
+function buildProjectTimeSpans(
+  versions: AnalysisVersionSample[],
+): ProjectTimeSpan[] {
+  const grouped = d3.group(versions, (version) => version.codebase_id)
+
+  return Array.from(grouped, ([codebaseId, rows]) => {
+    const commitTimes = rows
+      .map((row) => new Date(row.committed_at ?? row.created_at))
+      .filter((date) => Number.isFinite(date.getTime()))
+      .sort((a, b) => a.getTime() - b.getTime())
+
+    if (commitTimes.length === 0) {
+      return null
+    }
+
+    const first = commitTimes[0]
+    const last = commitTimes.at(-1) ?? first
+    const sample = rows[0]
+
+    return {
+      codebaseId,
+      codebaseName: sample.codebase_name,
+      language: displayLanguage(sample.programming_language),
+      firstCommitTime: first,
+      lastCommitTime: last,
+      versionCount: commitTimes.length,
+    }
+  })
+    .filter((span): span is ProjectTimeSpan => span !== null)
+    .sort((a, b) => {
+      const language =
+        LANGUAGES.indexOf(a.language as (typeof LANGUAGES)[number]) -
+        LANGUAGES.indexOf(b.language as (typeof LANGUAGES)[number])
+      return language === 0
+        ? a.firstCommitTime.getTime() - b.firstCommitTime.getTime()
+        : language
+    })
+}
+
 function formatNumber(value: number) {
   return new Intl.NumberFormat(undefined, {
     maximumFractionDigits: value >= 10 ? 1 : 3,
   }).format(value)
+}
+
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(value)
+}
+
+function formatDuration(span: ProjectTimeSpan) {
+  const days = Math.max(
+    0,
+    Math.round(
+      (span.lastCommitTime.getTime() - span.firstCommitTime.getTime()) /
+        (24 * 60 * 60 * 1000),
+    ),
+  )
+  const years = days / 365.25
+
+  if (years >= 1) {
+    return `${formatNumber(years)} years`
+  }
+
+  return `${days.toLocaleString()} days`
 }
