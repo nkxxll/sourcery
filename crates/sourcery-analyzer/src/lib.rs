@@ -23,8 +23,8 @@ use crate::{
     halstead_subprocess::HalsteadMetrics,
     language::{LanguageConfig, ProgrammingLanguage},
     processor::{
-        AggregatedFileMetrics, Analysis, FileMetrics, FunctionAnalysis, FunctionCall, NewLineMap,
-        Processor,
+        AggregatedFileMetrics, Analysis, FileMetrics, FunctionAnalysis, FunctionCall,
+        MaintainabilityIndex, NewLineMap, Processor,
     },
     progress::Progress,
 };
@@ -274,12 +274,11 @@ async fn analyze_repo_tree_version(
     {
         db::delete_version(pool, existing_version.id).await?;
     }
-    if sample_number > 0 {
-        if let Some(existing_version) =
+    if sample_number > 0
+        && let Some(existing_version) =
             db::get_version_by_sample_number(pool, codebase.id, sample_number).await?
-        {
-            db::delete_version(pool, existing_version.id).await?;
-        }
+    {
+        db::delete_version(pool, existing_version.id).await?;
     }
     let version = db::insert_version(
         pool,
@@ -343,7 +342,23 @@ async fn analyze_repo_tree_version(
         processor.close_language_server_file().await;
     }
 
-    let version_metrics = AggregatedFileMetrics::from_file_metrics_map(&metrics_by_path);
+    //
+    // @warning this is shitty programming the nearly same code can be found in
+    // update_version_metrics if I would still more than 60 days on this project I would fix it
+    // immediately but for now it works don't blaim a man for: never change a running system
+    // yes I am writing in this thesis about maintainability -- do as I say not as I do pls ⸜(｡˃ ᵕ ˂ )⸝♡!
+    //
+    let mut version_metrics = AggregatedFileMetrics::from_file_metrics_map(&metrics_by_path);
+    let mi = MaintainabilityIndex::new(
+        version_metrics.total_halstead.volume,
+        version_metrics.total_cyclomatic,
+        version_metrics.total_lines_of_code,
+        version_metrics.total_comment_lines_of_code,
+    );
+
+    version_metrics.total_three_property_maintainability_index = mi.three_property;
+    version_metrics.total_four_property_maintainability_index = mi.four_property;
+    version_metrics.total_visual_studio_maintainability_index = mi.visual_studio;
     db::update_version_metrics(&pool, version.id, &version_metrics.to_json(), commit_hash).await?;
 
     server.shutdown(mainloop).await;
@@ -1036,8 +1051,20 @@ async fn update_version_metrics(
     new_metrics_by_path: HashMap<EcoString, FileMetrics>,
 ) -> Result<()> {
     let new_metrics = AggregatedFileMetrics::from_file_metrics_map(&new_metrics_by_path);
-    let version_metrics =
+    let mut version_metrics =
         AggregatedFileMetrics::reconcile(state.current_aggregate, old_metrics, new_metrics);
+
+    let mi = MaintainabilityIndex::new(
+        version_metrics.total_halstead.volume,
+        version_metrics.total_cyclomatic,
+        version_metrics.total_lines_of_code,
+        version_metrics.total_comment_lines_of_code,
+    );
+
+    version_metrics.total_three_property_maintainability_index = mi.three_property;
+    version_metrics.total_four_property_maintainability_index = mi.four_property;
+    version_metrics.total_visual_studio_maintainability_index = mi.visual_studio;
+
     db::update_version_metrics(pool, version.id, &version_metrics.to_json(), diff_id).await?;
 
     for changed_path in commit_diff.files() {

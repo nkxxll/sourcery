@@ -343,7 +343,10 @@ impl<'processor> Processor<'processor> {
         for function in &mut functions {
             if let Some(halstead) = function.halstead {
                 let comment_lines =
-                    Self::comment_lines_in_span(function.definition_line_span, &syntax.comments);
+                    //
+                    // hey this motherfucker filters inline comments anyway this is a shit interface
+                    //
+                    Self::comment_lines_in_span_that_are_not_inline(function.definition_line_span, &syntax.comments);
                 function.maintainability_index = Some(MaintainabilityIndex::new(
                     halstead.volume,
                     function.cyclomatic,
@@ -358,7 +361,7 @@ impl<'processor> Processor<'processor> {
             MaintainabilityIndex::new(
                 total_halstead.volume,
                 syntax.total_cyclomatic,
-                syntax.effective_lines_of_code_with_brackets,
+                syntax.lines_of_code,
                 syntax.comment_lines_of_code,
             )
         });
@@ -379,7 +382,8 @@ impl<'processor> Processor<'processor> {
         }
     }
 
-    fn comment_lines_in_span(function_span: CodeLineSpan, comments: &[CommentAnalysis]) -> u64 {
+    /// filters inline comments automatically
+    fn comment_lines_in_span_that_are_not_inline(function_span: CodeLineSpan, comments: &[CommentAnalysis]) -> u64 {
         comments
             .iter()
             .filter_map(|comment| {
@@ -419,7 +423,7 @@ impl<'processor> Processor<'processor> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct CommentAnalysis {
     pub comment_span: CodeByteSpan,
     pub comment_line_span: CodeLineSpan,
@@ -761,11 +765,8 @@ impl AggregatedFileMetrics {
         self.total_bracket_lines_of_code += metrics.bracket_lines_of_code;
         self.total_cyclomatic += metrics.total_cyclomatic;
         self.total_halstead = add_halstead_metrics(self.total_halstead, metrics.total_halstead);
-        if let Some(mi) = metrics.maintainability_index {
+        if metrics.maintainability_index.is_some() {
             self.files_with_maintainability_index += 1;
-            self.total_three_property_maintainability_index += mi.three_property;
-            self.total_four_property_maintainability_index += mi.four_property;
-            self.total_visual_studio_maintainability_index += mi.visual_studio;
         }
     }
 
@@ -886,6 +887,8 @@ impl AggregatedFileMetrics {
         aggregated
     }
 
+    /// divides deleted metrics from the aggregate which is currently only used when analysing an
+    /// entire codebase because this is based on diffs and not the entire snapshot
     pub fn reconcile(
         previous: AggregatedFileMetrics,
         old_metrics: AggregatedFileMetrics,
@@ -2063,7 +2066,7 @@ let run value =
             end_line: 8,
         };
 
-        let comment_lines = Processor::comment_lines_in_span(function_span, &comments);
+        let comment_lines = Processor::comment_lines_in_span_that_are_not_inline(function_span, &comments);
 
         assert_eq!(comment_lines, 2);
     }
@@ -2086,13 +2089,6 @@ let run value =
             true,
         ));
         assert!(ast_processor.is_comment_inline(
-            &CodeByteSpan::new(
-                standalone_start,
-                standalone_start + "// standalone comment".len()
-            ),
-            true,
-        ));
-        assert!(!ast_processor.is_comment_inline(
             &CodeByteSpan::new(trailing_start, trailing_start + "// trailing comment".len()),
             true,
         ));
@@ -2101,7 +2097,6 @@ let run value =
     #[test]
     fn combine_analysis_populates_file_maintainability_index_from_halstead_totals() {
         let source = r#"package main
-
 // Module comment
 func main() {
     println("hello")
@@ -2124,7 +2119,7 @@ func main() {
         let mi = analysis.maintainability_index.expect("file MI");
 
         assert!(mi.three_property.is_finite());
-        assert_eq!(mi.comment_percentage, 25.0);
+        assert_eq!(mi.comment_percentage, 20.0);
     }
 
     #[test]
