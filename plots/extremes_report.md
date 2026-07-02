@@ -6126,31 +6126,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 53 | Ocaml | janestreet__core | function | lib/core_unix.ml:494::improve:494:5 |
-| 2 | 47 | Ocaml | janestreet__core | function | setup.ml:17::f_:17:7 |
-| 3 | 43 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:19::f_:19:7 |
-| 4 | 39 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:265::pair:265:9 |
-| 5 | 28 | Ocaml | janestreet__core | function | lib/core_map.ml:514::compare_key:514:5 |
-| 6 | 25 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:272::obs:272:9 |
-| 7 | 24 | Ocaml | fastpack__fastpack | function | bin/Fastpack_printer.ml:19::emit:19:5 |
-| 8 | 22 | Ocaml | janestreet__core | function | lib/core_list.ml:762::f:762:7 |
-| 9 | 21 | Ocaml | janestreet__core | function | setup.ml:308::failwithf:308:7 |
-| 10 | 21 | Ocaml | janestreet__core | function | lib/core_string.ml:975::loop:975:13 |
+| 1 | 16 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/text_parser.go:111::next:111:27 |
+| 2 | 14 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/text_parser.go:105::error:105:27 |
+| 3 | 11 | Ocaml | janestreet__core | function | lib_test/hash_heap_test.ml:8::make:8:5 |
+| 4 | 11 | Ocaml | bcpierce00__unison | function | src/ubase/uprintf_old.ml:18::doprn:18:11 |
+| 5 | 11 | Ocaml | bcpierce00__unison | function | src/ubase/uprintf_new.ml:18::doprn:18:11 |
+| 6 | 11 | Ocaml | bcpierce00__unison | function | src/ubase/uprintf.ml:18::doprn:18:11 |
+| 7 | 11 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/xml_generator.go:77::element:77:29 |
+| 8 | 11 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/text_parser.go:122::backup:122:27 |
+| 9 | 11 | Golang | FiloSottile__mkcert | function | main.go:218::fatalIfErr:218:6 |
+| 10 | 8 | Golang | gin-gonic__gin | function | gin.go:71::WriteHeader:71:27 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | conf/config.go:19::DefaultConfig:19:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | main.go:53::init:53:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | main.go:62::main:62:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | model/init.go:15::InitModel:15:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | utils/file.go:22::CreatNestedFile:22:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | utils/file.go:35::WriteToJson:35:6 |
-| 7 | 0 | Golang | FiloSottile__mkcert | function | main.go:27::main:27:6 |
-| 8 | 0 | Golang | FiloSottile__mkcert | function | main.go:51::Run:51:18 |
-| 9 | 0 | Golang | FiloSottile__mkcert | function | main.go:67::loadCA:67:18 |
-| 10 | 0 | Golang | FiloSottile__mkcert | function | main.go:94::newCA:94:18 |
+| 1 | 0 | Golang | AlistGo__alist | function | main.go:53::init:53:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | main.go:62::main:62:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | utils/file.go:22::CreatNestedFile:22:6 |
+| 4 | 0 | Golang | FiloSottile__mkcert | function | main.go:27::main:27:6 |
+| 5 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:72::generateDocument:72:27 |
+| 6 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:295::Indent:295:27 |
+| 7 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:299::newBplistGenerator:299:6 |
+| 8 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_parser.go:65::parseDocument:65:24 |
+| 9 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_parser.go:351::newBplistParser:351:6 |
+| 10 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/decode.go:113::Unmarshal:113:6 |
 
 ### Version 2
 
@@ -6159,30 +6159,30 @@
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 173 | Golang | nektos__act | function | vendor/golang.org/x/sys/windows/zsyscall_windows.go:24::errnoErr:24:6 |
-| 2 | 86 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_aix_ppc64_gc.go:364::syscall6:364:6 |
-| 3 | 83 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_marshal.go:1520::appendVarint:1520:6 |
-| 4 | 55 | Ocaml | janestreet__core | function | lib/core_unix.ml:37::improve:37:5 |
-| 5 | 47 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:19::f_:19:7 |
-| 6 | 41 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:262::pair:262:9 |
-| 7 | 41 | Ocaml | fastpack__fastpack | function | Fastpack/Printer.ml:147::emit:147:5 |
-| 8 | 41 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go:2143::decodeVarint:2143:6 |
-| 9 | 39 | Golang | nektos__act | function | vendor/github.com/stretchr/testify/assert/assertions.go:239::Fail:239:6 |
-| 10 | 32 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/decoder.ml:323::return:323:11 |
+| 2 | 144 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_marshal.go:1520::appendVarint:1520:6 |
+| 3 | 103 | Golang | AlistGo__alist | function | utils/file.go:85::ParsePath:85:6 |
+| 4 | 86 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_aix_ppc64_gc.go:364::syscall6:364:6 |
+| 5 | 72 | Golang | gin-gonic__gin | function | gin.go:92::New:92:6 |
+| 6 | 72 | Golang | AlistGo__alist | function | model/file.go:84::IsDir:84:15 |
+| 7 | 69 | Golang | AlistGo__alist | function | server/common/common.go:47::ErrorResp:47:6 |
+| 8 | 68 | Golang | nektos__act | function | vendor/github.com/stretchr/testify/assert/assertions.go:239::Fail:239:6 |
+| 9 | 67 | Golang | gin-gonic__gin | function | routes_test.go:19::performRequest:19:6 |
+| 10 | 59 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go:2143::decodeVarint:2143:6 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | function | alist.go:34::main:34:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | bootstrap/account.go:11::InitAccounts:11:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | bootstrap/cache.go:13::InitCache:13:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | bootstrap/conf.go:14::InitConf:14:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | bootstrap/cron.go:10::InitCron:10:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | bootstrap/log.go:28::init:28:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | bootstrap/model.go:20::InitModel:20:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | bootstrap/setting.go:12::InitSettings:12:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | conf/config.go:37::DefaultConfig:37:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | conf/var.go:50::Set:50:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | bootstrap/log.go:28::init:28:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/123/123.go:174::init:174:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/139/139.go:173::init:173:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/139/family.go:63::familyLink:63:24 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/189/189.go:597::OldUpload:597:24 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/189/util.go:168::init:168:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/189pc/driver.go:26::init:26:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/189pc/util.go:131::MustString:131:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/alidrive/alidrive.go:201::init:201:6 |
 
 ### Version 3
 
@@ -6190,16 +6190,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1096::d:1096:11 |
-| 2 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1016::d:1016:11 |
-| 3 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:956::d:956:11 |
-| 4 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:892::d:892:11 |
-| 5 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:505::d:505:9 |
-| 6 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:428::d:428:9 |
-| 7 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:316::d:316:9 |
-| 8 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:251::d:251:9 |
-| 9 | 115 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:27::debug:27:7 |
-| 10 | 90 | Ocaml | janestreet__core | function | src/iobuf.ml:1240::uadv:1240:9 |
+| 1 | 157 | Golang | AlistGo__alist | function | internal/model/object.go:30::GetID:30:18 |
+| 2 | 157 | Golang | AlistGo__alist | function | drivers/thunder/types.go:153::GetID:153:17 |
+| 3 | 157 | Golang | AlistGo__alist | function | drivers/mega/types.go:32::GetID:32:20 |
+| 4 | 157 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:114::GetID:114:22 |
+| 5 | 157 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:111::GetID:111:17 |
+| 6 | 157 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:58::GetID:58:16 |
+| 7 | 157 | Golang | AlistGo__alist | function | drivers/189pc/types.go:177::GetID:177:26 |
+| 8 | 157 | Golang | AlistGo__alist | function | drivers/189pc/types.go:145::GetID:145:24 |
+| 9 | 157 | Golang | AlistGo__alist | function | drivers/123/types.go:53::GetID:53:15 |
+| 10 | 135 | Golang | AlistGo__alist | function | server/common/common.go:23::ErrorResp:23:6 |
 
 #### Min
 
@@ -6207,14 +6207,14 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:28::init:28:6 |
 | 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:30::init:30:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/common.go:8::Init:8:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:78::generateDriversJson:78:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:105::generateSettingsJson:105:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:140::init:140:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/root.go:19::Execute:19:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/server.go:78::init:78:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/server.go:93::OutAlistInit:93:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:140::init:140:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/server.go:78::init:78:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:93::OutAlistInit:93:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/version.go:32::init:32:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115/meta.go:24::init:24:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/123/meta.go:28::init:28:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/139/meta.go:21::init:21:6 |
 
 ### Version 4
 
@@ -6222,16 +6222,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1198::d:1198:11 |
-| 2 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1106::d:1106:11 |
-| 3 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1034::d:1034:11 |
-| 4 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:958::d:958:11 |
-| 5 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:542::d:542:9 |
-| 6 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:457::d:457:9 |
-| 7 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:333::d:333:9 |
-| 8 | 154 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:256::d:256:9 |
-| 9 | 134 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:32::debug:32:7 |
-| 10 | 90 | Ocaml | janestreet__core | function | src/iobuf.ml:1200::uadv:1200:9 |
+| 1 | 184 | Golang | AlistGo__alist | function | server/common/common.go:23::ErrorResp:23:6 |
+| 2 | 182 | Golang | AlistGo__alist | function | internal/model/object.go:54::GetPath:54:18 |
+| 3 | 182 | Golang | AlistGo__alist | function | drivers/thunder/types.go:154::GetPath:154:17 |
+| 4 | 182 | Golang | AlistGo__alist | function | drivers/mega/types.go:36::GetPath:36:20 |
+| 5 | 182 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:134::GetPath:134:34 |
+| 6 | 182 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:63::GetPath:63:24 |
+| 7 | 182 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:122::GetPath:122:17 |
+| 8 | 182 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:69::GetPath:69:16 |
+| 9 | 182 | Golang | AlistGo__alist | function | drivers/189pc/types.go:178::GetPath:178:26 |
+| 10 | 182 | Golang | AlistGo__alist | function | drivers/189pc/types.go:146::GetPath:146:24 |
 
 #### Min
 
@@ -6239,14 +6239,14 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:28::init:28:6 |
 | 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:32::init:32:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/common.go:14::Init:14:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:25::initDaemon:25:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:78::generateDriversJson:78:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:114::generateSettingsJson:114:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/root.go:19::Execute:19:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:79::init:79:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:94::OutAlistInit:94:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:18::init:18:6 |
 
 ### Version 5
 
@@ -6254,31 +6254,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 156 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:32::debug:32:7 |
-| 2 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1324::d:1324:11 |
-| 3 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1219::d:1219:11 |
-| 4 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1137::d:1137:11 |
-| 5 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:1049::d:1049:11 |
-| 6 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:627::d:627:9 |
-| 7 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:530::d:530:9 |
-| 8 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:380::d:380:9 |
-| 9 | 146 | Ocaml | janestreet__core | function | src/iobuf_debug.ml:291::d:291:9 |
-| 10 | 88 | Ocaml | janestreet__core | function | src/iobuf.ml:1322::uadv:1322:9 |
+| 1 | 324 | Golang | go-gorm__gorm | function | main.go:487::Model:487:14 |
+| 2 | 224 | Golang | AlistGo__alist | function | server/common/common.go:23::ErrorResp:23:6 |
+| 3 | 213 | Golang | go-gorm__gorm | function | main.go:444::Save:444:14 |
+| 4 | 211 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 5 | 210 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 6 | 208 | Golang | AlistGo__alist | function | internal/model/object.go:62::GetPath:62:18 |
+| 7 | 207 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:51::GetPath:51:18 |
+| 8 | 207 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:20::GetPath:20:16 |
+| 9 | 207 | Golang | AlistGo__alist | function | drivers/thunder/types.go:165::GetPath:165:17 |
+| 10 | 207 | Golang | AlistGo__alist | function | drivers/mega/types.go:44::GetPath:44:20 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:15::Init:15:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:23::Release:23:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:30::initDaemon:30:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:78::generateDriversJson:78:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:114::generateSettingsJson:114:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:137::init:137:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:152::OutAlistInit:152:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
 
 ### Version 6
 
@@ -6286,31 +6286,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 75 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_empty.ml:10::sort:10:5 |
-| 2 | 63 | Golang | spf13__cobra | function | command_test.go:17::executeCommand:17:6 |
-| 3 | 60 | Ocaml | janestreet__core | function | src/core_unix.ml:35::improve:35:5 |
-| 4 | 60 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_manager.ml:95::join2:95:5 |
-| 5 | 53 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:849::return:849:7 |
-| 6 | 51 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/monads/monads_monad.ml:211::f:211:15 |
-| 7 | 47 | Ocaml | fastpack__fastpack | function | FastpackUtil/Printer.ml:209::emit:209:5 |
-| 8 | 47 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/powerpc.ml:149::lvtreg:149:7 |
-| 9 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:316::expw:316:13 |
-| 10 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:238::expw:238:13 |
+| 1 | 277 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 2 | 276 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 3 | 275 | Golang | AlistGo__alist | function | drivers/189pc/types.go:224::GetID:224:26 |
+| 4 | 273 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:154::GetID:154:34 |
+| 5 | 273 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:65::GetID:65:24 |
+| 6 | 272 | Golang | AlistGo__alist | function | internal/model/object.go:58::GetID:58:18 |
+| 7 | 272 | Golang | AlistGo__alist | function | drivers/thunder/types.go:164::GetID:164:17 |
+| 8 | 272 | Golang | AlistGo__alist | function | drivers/mega/types.go:40::GetID:40:20 |
+| 9 | 272 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:122::GetID:122:17 |
+| 10 | 272 | Golang | AlistGo__alist | function | drivers/baidu_photo/types.go:65::GetID:65:16 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:15::Init:15:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:23::Release:23:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:30::initDaemon:30:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:78::generateDriversJson:78:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:114::generateSettingsJson:114:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:160::init:160:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:175::OutAlistInit:175:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
 
 ### Version 7
 
@@ -6318,31 +6318,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 75 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_empty.ml:10::sort:10:5 |
-| 2 | 63 | Golang | spf13__cobra | function | command_test.go:18::executeCommand:18:6 |
-| 3 | 60 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_manager.ml:98::join2:98:5 |
-| 4 | 56 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:833::return:833:7 |
-| 5 | 51 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/monads/monads_monad.ml:213::f:213:15 |
-| 6 | 47 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/powerpc.ml:149::lvtreg:149:7 |
-| 7 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:316::expw:316:13 |
-| 8 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:238::expw:238:13 |
-| 9 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:191::expw:191:13 |
-| 10 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:101::expw:101:13 |
+| 1 | 321 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 2 | 320 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 3 | 319 | Golang | AlistGo__alist | function | drivers/189pc/types.go:224::GetID:224:26 |
+| 4 | 317 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:154::GetID:154:34 |
+| 5 | 317 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:65::GetID:65:24 |
+| 6 | 316 | Golang | AlistGo__alist | function | internal/model/object.go:58::GetID:58:18 |
+| 7 | 316 | Golang | AlistGo__alist | function | drivers/thunderx/types.go:164::GetID:164:17 |
+| 8 | 316 | Golang | AlistGo__alist | function | drivers/thunder_browser/types.go:183::GetID:183:17 |
+| 9 | 316 | Golang | AlistGo__alist | function | drivers/thunder/types.go:164::GetID:164:17 |
+| 10 | 316 | Golang | AlistGo__alist | function | drivers/quark_uc_tv/types.go:76::GetID:76:17 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:15::Init:15:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:23::Release:23:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:30::initDaemon:30:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:78::generateDriversJson:78:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:114::generateSettingsJson:114:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:160::init:160:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:175::OutAlistInit:175:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
 
 ### Version 8
 
@@ -6350,31 +6350,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 83 | Golang | spf13__cobra | function | command_test.go:32::executeCommand:32:6 |
-| 2 | 75 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_empty.ml:10::sort:10:5 |
-| 3 | 60 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_manager.ml:98::join2:98:5 |
-| 4 | 56 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:833::return:833:7 |
-| 5 | 51 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/monads/monads_monad.ml:214::f:214:15 |
-| 6 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:316::expw:316:13 |
-| 7 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:238::expw:238:13 |
-| 8 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:191::expw:191:13 |
-| 9 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:101::expw:101:13 |
-| 10 | 47 | Golang | spf13__cobra | function | args_test.go:23::getCommand:23:6 |
+| 1 | 380 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 2 | 379 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 3 | 377 | Golang | AlistGo__alist | function | internal/model/object.go:59::GetPath:59:18 |
+| 4 | 377 | Golang | AlistGo__alist | function | drivers/lenovonas_share/types.go:45::GetPath:45:15 |
+| 5 | 377 | Golang | AlistGo__alist | function | drivers/189pc/types.go:224::GetID:224:26 |
+| 6 | 377 | Golang | AlistGo__alist | function | drivers/115_open/types.go:29::GetID:29:15 |
+| 7 | 376 | Golang | AlistGo__alist | function | internal/model/object.go:55::GetID:55:18 |
+| 8 | 376 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:51::GetPath:51:18 |
+| 9 | 376 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:20::GetPath:20:16 |
+| 10 | 376 | Golang | AlistGo__alist | function | drivers/thunderx/types.go:165::GetPath:165:17 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:15::Init:15:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:25::Release:25:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:32::initDaemon:32:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:18::kill:18:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:79::generateDriversJson:79:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:115::generateSettingsJson:115:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:225::init:225:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:240::OutAlistInit:240:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/stop_default.go:46::init:46:6 |
 
 ### Version 9
 
@@ -6382,31 +6382,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 88 | Golang | spf13__cobra | function | command_test.go:32::executeCommand:32:6 |
-| 2 | 75 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_empty.ml:10::sort:10:5 |
-| 3 | 60 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_manager.ml:98::join2:98:5 |
-| 4 | 56 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:833::return:833:7 |
-| 5 | 51 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/monads/monads_monad.ml:214::f:214:15 |
-| 6 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:316::expw:316:13 |
-| 7 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:238::expw:238:13 |
-| 8 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:191::expw:191:13 |
-| 9 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:101::expw:101:13 |
-| 10 | 47 | Golang | spf13__cobra | function | command_test.go:74::checkStringContains:74:6 |
+| 1 | 453 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 2 | 452 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 3 | 450 | Golang | AlistGo__alist | function | drivers/189pc/types.go:224::GetID:224:26 |
+| 4 | 450 | Golang | AlistGo__alist | function | drivers/115_open/types.go:29::GetID:29:15 |
+| 5 | 449 | Golang | AlistGo__alist | function | internal/model/object.go:74::GetID:74:18 |
+| 6 | 449 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:154::GetID:154:34 |
+| 7 | 449 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:65::GetID:65:24 |
+| 8 | 449 | Golang | AlistGo__alist | function | drivers/189pc/types.go:192::GetID:192:24 |
+| 9 | 448 | Golang | AlistGo__alist | function | drivers/thunderx/types.go:164::GetID:164:17 |
+| 10 | 448 | Golang | AlistGo__alist | function | drivers/thunder_browser/types.go:183::GetID:183:17 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:16::Init:16:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:32::Release:32:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:39::initDaemon:39:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:18::kill:18:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:79::generateDriversJson:79:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:115::generateSettingsJson:115:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:225::init:225:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:240::OutAlistInit:240:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/stop_default.go:46::init:46:6 |
 
 ### Version 10
 
@@ -6414,31 +6414,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 90 | Golang | spf13__cobra | function | command_test.go:32::executeCommand:32:6 |
-| 2 | 75 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_empty.ml:10::sort:10:5 |
-| 3 | 60 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_manager.ml:98::join2:98:5 |
-| 4 | 56 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:833::return:833:7 |
-| 5 | 51 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/monads/monads_monad.ml:214::f:214:15 |
-| 6 | 51 | Golang | spf13__cobra | function | args_test.go:23::getCommand:23:6 |
-| 7 | 49 | Golang | spf13__cobra | function | command_test.go:74::checkStringContains:74:6 |
-| 8 | 48 | Golang | router-for-me__CLIProxyAPI | function | internal/pluginhost/adapters_test.go:3037::newHostWithRecords:3037:6 |
-| 9 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:316::expw:316:13 |
-| 10 | 47 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_core_theory/bap_core_theory_parser.ml:238::expw:238:13 |
+| 1 | 531 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:46::GetID:46:18 |
+| 2 | 530 | Golang | AlistGo__alist | function | drivers/weiyun/types.go:15::GetID:15:16 |
+| 3 | 528 | Golang | AlistGo__alist | function | drivers/189pc/types.go:224::GetID:224:26 |
+| 4 | 528 | Golang | AlistGo__alist | function | drivers/115_open/types.go:29::GetID:29:15 |
+| 5 | 527 | Golang | AlistGo__alist | function | internal/model/object.go:74::GetID:74:18 |
+| 6 | 527 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:154::GetID:154:34 |
+| 7 | 527 | Golang | AlistGo__alist | function | drivers/lanzou/types.go:65::GetID:65:24 |
+| 8 | 527 | Golang | AlistGo__alist | function | drivers/189pc/types.go:192::GetID:192:24 |
+| 9 | 526 | Golang | AlistGo__alist | function | drivers/thunderx/types.go:164::GetID:164:17 |
+| 10 | 526 | Golang | AlistGo__alist | function | drivers/thunder_browser/types.go:183::GetID:183:17 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:67::setAdminPassword:67:6 |
-| 2 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
-| 3 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
-| 4 | 0 | Golang | AlistGo__alist | function | cmd/common.go:16::Init:16:6 |
-| 5 | 0 | Golang | AlistGo__alist | function | cmd/common.go:32::Release:32:6 |
-| 6 | 0 | Golang | AlistGo__alist | function | cmd/common.go:39::initDaemon:39:6 |
-| 7 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:18::kill:18:6 |
-| 8 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
-| 9 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:79::generateDriversJson:79:6 |
-| 10 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:115::generateSettingsJson:115:6 |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/mcp.go:25::init:25:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:251::init:251:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/server.go:266::OutAlistInit:266:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
 
 ## Lines Of Code/File
 
@@ -8380,16 +8380,338 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 4.3 | Ocaml | janestreet__core | file | lib/core_string.ml |
-| 2 | 3.5968992248062017 | Ocaml | janestreet__core | file | lib/core_list.ml |
-| 3 | 2.58974358974359 | Ocaml | janestreet__core | file | lib/blang.ml |
-| 4 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 5 | 2.076923076923077 | Ocaml | fastpack__fastpack | file | bin/Fastpack_visit.ml |
-| 6 | 2.0458715596330275 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
-| 7 | 2.0277777777777777 | Ocaml | fastpack__fastpack | file | bin/Fastpack_printer.ml |
-| 8 | 1.9523809523809523 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 9 | 1.71900826446281 | Ocaml | janestreet__core | file | lib_test/doubly_linked_test.ml |
-| 10 | 1.6359447004608294 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 1 | 11 | Ocaml | janestreet__core | file | lib_test/hash_heap_test.ml |
+| 2 | 3.857142857142857 | Ocaml | bcpierce00__unison | file | src/lwt/pqueue.ml |
+| 3 | 3.8 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf_old.ml |
+| 4 | 3.8 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf_new.ml |
+| 5 | 3.8 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.ml |
+| 6 | 3.3076923076923075 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/text_parser.go |
+| 7 | 3 | Ocaml | janestreet__core | file | lib_test/hash_queue_test.ml |
+| 8 | 3 | Ocaml | janestreet__core | file | lib_test/fqueue_test.ml |
+| 9 | 3 | Ocaml | janestreet__core | file | lib_test/core_int_test.ml |
+| 10 | 3 | Ocaml | bcpierce00__unison | file | tools/asktk.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | conf/var.go |
+| 2 | 0 | Golang | AlistGo__alist | file | model/config.go |
+| 3 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/bplist.go |
+| 4 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 5 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/fuzz.go |
+| 6 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/plist_types.go |
+| 7 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/zerocopy.go |
+| 8 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/zerocopy_appengine.go |
+| 9 | 0 | Golang | gin-gonic__gin | file | examples/example_basic.go |
+| 10 | 0 | Golang | router-for-me__CLIProxyAPI | file | cmd/server/main.go |
+
+### Version 2
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 37 | Golang | gin-gonic__gin | file | test_helpers.go |
+| 2 | 29 | Golang | AlistGo__alist | file | server/common/common.go |
+| 3 | 22.166666666666668 | Golang | AlistGo__alist | file | utils/file.go |
+| 4 | 17 | Golang | AlistGo__alist | file | utils/slice.go |
+| 5 | 13.4 | Golang | AlistGo__alist | file | drivers/base/cache.go |
+| 6 | 12.8 | Golang | go-gorm__gorm | file | main_private.go |
+| 7 | 12 | Golang | gin-gonic__gin | file | binding/binding.go |
+| 8 | 11.857142857142858 | Golang | AlistGo__alist | file | model/file.go |
+| 9 | 10.666666666666666 | Golang | go-gorm__gorm | file | field.go |
+| 10 | 10.428571428571429 | Golang | go-gorm__gorm | file | callback.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | conf/const.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189pc/type.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/baidu/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/base/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/quark/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/sftp/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/sftp/util.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/teambition/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/template/types.go |
+
+### Version 3
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 84.66666666666667 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 2 | 84.25 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 3 | 75.6470588235294 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+| 4 | 68 | Golang | AlistGo__alist | file | drivers/189pc/types.go |
+| 5 | 59.5 | Golang | AlistGo__alist | file | server/common/common.go |
+| 6 | 56.888888888888886 | Golang | AlistGo__alist | file | internal/model/object.go |
+| 7 | 51.5 | Golang | AlistGo__alist | file | drivers/thunder/types.go |
+| 8 | 40 | Golang | gin-gonic__gin | file | helpers_test.go |
+| 9 | 15.5 | Golang | gin-gonic__gin | file | binding/binding.go |
+| 10 | 15 | Golang | go-gorm__gorm | file | field.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/139/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/189/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+
+### Version 4
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 114.33333333333331 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 2 | 110.25 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 3 | 91.73333333333332 | Golang | AlistGo__alist | file | drivers/189pc/types.go |
+| 4 | 88 | Golang | gin-gonic__gin | file | test_helpers.go |
+| 5 | 86.4375 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 6 | 86.0625 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+| 7 | 76.0909090909091 | Golang | AlistGo__alist | file | internal/model/object.go |
+| 8 | 69.3 | Golang | AlistGo__alist | file | drivers/thunder/types.go |
+| 9 | 60.6 | Golang | AlistGo__alist | file | server/common/common.go |
+| 10 | 20 | Golang | AlistGo__alist | file | pkg/utils/ctx.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 7 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+
+### Version 5
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 107.625 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 2 | 106 | Golang | gin-gonic__gin | file | test_helpers.go |
+| 3 | 97.44444444444444 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 4 | 95.88888888888889 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 5 | 95.88888888888889 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 6 | 86.75 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 7 | 86.4 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+| 8 | 86.3 | Golang | AlistGo__alist | file | drivers/115_share/utils.go |
+| 9 | 80.3076923076923 | Golang | AlistGo__alist | file | internal/model/object.go |
+| 10 | 72.41666666666667 | Golang | AlistGo__alist | file | drivers/thunder/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 6
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 128.625 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 2 | 116.11111111111111 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 3 | 114.55555555555556 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 4 | 114.55555555555556 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 5 | 111 | Golang | gin-gonic__gin | file | test_helpers.go |
+| 6 | 103.55 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 7 | 103.2 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+| 8 | 103.1 | Golang | AlistGo__alist | file | drivers/115_share/utils.go |
+| 9 | 94.84615384615384 | Golang | AlistGo__alist | file | internal/model/object.go |
+| 10 | 86.54166666666667 | Golang | AlistGo__alist | file | drivers/189pc/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 7
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 143 | Golang | AlistGo__alist | file | drivers/quark_uc_tv/types.go |
+| 2 | 143 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 3 | 128.88888888888889 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 4 | 127.33333333333331 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 5 | 127.33333333333331 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 6 | 125 | Golang | gin-gonic__gin | file | test_helpers.go |
+| 7 | 115.05 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 8 | 114.7 | Golang | AlistGo__alist | file | drivers/lenovonas_share/types.go |
+| 9 | 114.7 | Golang | AlistGo__alist | file | drivers/halalcloud/types.go |
+| 10 | 114.7 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 8
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 190.75 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 2 | 190.625 | Golang | AlistGo__alist | file | drivers/quark_uc_tv/types.go |
+| 3 | 171.22222222222223 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 4 | 169.88888888888889 | Golang | AlistGo__alist | file | drivers/115_open/types.go |
+| 5 | 169.66666666666666 | Golang | AlistGo__alist | file | drivers/lenovonas_share/types.go |
+| 6 | 169.66666666666666 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 7 | 169.66666666666666 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 8 | 153.15 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 9 | 153 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 10 | 152.8 | Golang | AlistGo__alist | file | drivers/halalcloud/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+
+### Version 9
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 217.25 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 2 | 217.125 | Golang | AlistGo__alist | file | drivers/quark_uc_tv/types.go |
+| 3 | 194.77777777777777 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 4 | 193.44444444444449 | Golang | AlistGo__alist | file | drivers/115_open/types.go |
+| 5 | 193.22222222222223 | Golang | AlistGo__alist | file | drivers/lenovonas_share/types.go |
+| 6 | 193.22222222222223 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 7 | 193.22222222222223 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 8 | 174.35 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 9 | 174 | Golang | AlistGo__alist | file | drivers/halalcloud/types.go |
+| 10 | 174 | Golang | AlistGo__alist | file | drivers/baidu_photo/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+
+### Version 10
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 260 | Golang | AlistGo__alist | file | drivers/mega/types.go |
+| 2 | 259.875 | Golang | AlistGo__alist | file | drivers/quark_uc_tv/types.go |
+| 3 | 232.77777777777777 | Golang | AlistGo__alist | file | drivers/weiyun/types.go |
+| 4 | 231.44444444444449 | Golang | AlistGo__alist | file | drivers/115_open/types.go |
+| 5 | 231.22222222222223 | Golang | AlistGo__alist | file | drivers/lenovonas_share/types.go |
+| 6 | 231.22222222222223 | Golang | AlistGo__alist | file | drivers/123_share/types.go |
+| 7 | 231.22222222222223 | Golang | AlistGo__alist | file | drivers/123/types.go |
+| 8 | 231.11111111111111 | Golang | AlistGo__alist | file | drivers/quark_uc/types.go |
+| 9 | 208.55 | Golang | AlistGo__alist | file | drivers/lanzou/types.go |
+| 10 | 208.2 | Golang | AlistGo__alist | file | drivers/halalcloud/types.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/mcp.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 7 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+
+## Mean Outdegree/File
+
+### Version 1
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 41.875 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers.go |
+| 2 | 30.666666666666668 | Golang | router-for-me__CLIProxyAPI | file | cmd/server/main.go |
+| 3 | 23.666666666666668 | Golang | router-for-me__CLIProxyAPI | file | internal/auth/auth.go |
+| 4 | 23.666666666666668 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/xml_parser.go |
+| 5 | 22 | Golang | AlistGo__alist | file | model/init.go |
+| 6 | 18 | Ocaml | bcpierce00__unison | file | src/main.ml |
+| 7 | 17.25 | Ocaml | bcpierce00__unison | file | private/proofs/spec.ml |
+| 8 | 15.5 | Golang | FiloSottile__mkcert | file | truststore_darwin.go |
+| 9 | 14.933333333333334 | Ocaml | bcpierce00__unison | file | src/files.ml |
+| 10 | 14.428571428571429 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/marshal.go |
 
 #### Min
 
@@ -8398,13 +8720,13 @@
 | 1 | 0 | Golang | AlistGo__alist | file | conf/config.go |
 | 2 | 0 | Golang | AlistGo__alist | file | conf/var.go |
 | 3 | 0 | Golang | AlistGo__alist | file | model/config.go |
-| 4 | 0 | Golang | AlistGo__alist | file | model/init.go |
-| 5 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/bplist.go |
-| 6 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/bplist_parser.go |
-| 7 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
-| 8 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/fuzz.go |
-| 9 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/must.go |
-| 10 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/plist.go |
+| 4 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/bplist.go |
+| 5 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 6 | 0 | Golang | router-for-me__CLIProxyAPI | file | internal/api/mine-type.go |
+| 7 | 0 | Golang | router-for-me__CLIProxyAPI | file | internal/api/models.go |
+| 8 | 0 | Ocaml | bcpierce00__unison | file | src/case.mli |
+| 9 | 0 | Ocaml | bcpierce00__unison | file | src/checksum.mli |
+| 10 | 0 | Ocaml | bcpierce00__unison | file | src/clroot.mli |
 
 ### Version 2
 
@@ -8412,31 +8734,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 2.7899159663865545 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/decoder.ml |
-| 2 | 2.7096774193548385 | Ocaml | fastpack__fastpack | file | Fastpack/Printer.ml |
-| 3 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 4 | 2.458333333333333 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 5 | 2.3529411764705883 | Ocaml | fastpack__fastpack | file | Fastpack/Visit.ml |
-| 6 | 2.2777777777777777 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/AstMapper.ml |
-| 7 | 2.037037037037037 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
-| 8 | 2 | Golang | wagoodman__dive | file | ui/filetree_viewmodel_test.go |
-| 9 | 1.9285714285714288 | Ocaml | comby-tools__comby | file | lib/pipeline/pipeline.ml |
-| 10 | 1.75 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/cap_freebsd.go |
+| 1 | 119 | Ocaml | BinaryAnalysisPlatform__bap | file | lib_test/bap_types/test_trie.ml |
+| 2 | 105 | Golang | nektos__act | file | vendor/golang.org/x/crypto/poly1305/sum_ref.go |
+| 3 | 100 | Golang | router-for-me__CLIProxyAPI | file | internal/api/translator/openai/request.go |
+| 4 | 72 | Golang | router-for-me__CLIProxyAPI | file | internal/api/translator/claude/code/response.go |
+| 5 | 69 | Golang | router-for-me__CLIProxyAPI | file | internal/api/translator/openai/response.go |
+| 6 | 59.25 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_merge.go |
+| 7 | 54 | Golang | router-for-me__CLIProxyAPI | file | internal/cmd/run.go |
+| 8 | 51 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_arm_mov.ml |
+| 9 | 47 | Golang | router-for-me__CLIProxyAPI | file | internal/api/translator/gemini/cli/request.go |
+| 10 | 44.5 | Golang | go-gorm__gorm | file | association_test.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | bootstrap/account.go |
-| 2 | 0 | Golang | AlistGo__alist | file | bootstrap/cache.go |
-| 3 | 0 | Golang | AlistGo__alist | file | bootstrap/cron.go |
-| 4 | 0 | Golang | AlistGo__alist | file | bootstrap/model.go |
-| 5 | 0 | Golang | AlistGo__alist | file | bootstrap/setting.go |
-| 6 | 0 | Golang | AlistGo__alist | file | conf/config.go |
-| 7 | 0 | Golang | AlistGo__alist | file | conf/const.go |
-| 8 | 0 | Golang | AlistGo__alist | file | conf/var.go |
-| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/123.go |
-| 10 | 0 | Golang | AlistGo__alist | file | drivers/123/driver.go |
+| 1 | 0 | Golang | AlistGo__alist | file | conf/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | conf/const.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189pc/type.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/baidu/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/base/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/quark/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/s3/util.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/sftp/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/sftp/util.go |
 
 ### Version 3
 
@@ -8444,31 +8766,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 4.758741258741258 | Ocaml | janestreet__core | file | src/iobuf_debug.ml |
-| 2 | 3.52 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 3 | 3.450980392156863 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 2.8693181818181817 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
-| 5 | 2.7384615384615385 | Ocaml | fastpack__fastpack | file | Fastpack/Printer.ml |
-| 6 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 7 | 2.411764705882353 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 8 | 2.3529411764705883 | Ocaml | fastpack__fastpack | file | Fastpack/Visit.ml |
-| 9 | 2.2777777777777777 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/AstMapper.ml |
-| 10 | 2.2724358974358974 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 1 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 2 | 172.33333333333334 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 3 | 159 | Golang | go-gorm__gorm | file | polymorphic_test.go |
+| 4 | 155 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/claude/openai_claude_request.go |
+| 5 | 150 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go |
+| 6 | 147 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_response.go |
+| 7 | 133 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 8 | 130 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/chat-completions/claude_openai_request.go |
+| 9 | 121 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 10 | 111 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
-| 8 | 0 | Golang | AlistGo__alist | file | drivers/115/driver.go |
-| 9 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
-| 10 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/util.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/all.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/base/types.go |
 
 ### Version 4
 
@@ -8476,31 +8798,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 4.524590163934426 | Ocaml | janestreet__core | file | src/iobuf_debug.ml |
-| 2 | 3.4857142857142858 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 3 | 3.388888888888889 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 4 | 2.988372093023256 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
-| 5 | 2.723684210526316 | Ocaml | fastpack__fastpack | file | FastpackUtil/Printer.ml |
-| 6 | 2.662686567164179 | Ocaml | janestreet__core | file | src/iobuf.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 9 | 2.440677966101695 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 10 | 2.375 | Ocaml | fastpack__fastpack | file | FastpackUtil/Visit.ml |
+| 1 | 185.33333333333331 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 2 | 182 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 3 | 164 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
+| 4 | 159.66666666666666 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go |
+| 5 | 155.66666666666666 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_response.go |
+| 6 | 155 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/claude/openai_claude_request.go |
+| 7 | 151 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 8 | 138 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/chat-completions/claude_openai_request.go |
+| 9 | 135.5 | Golang | go-gorm__gorm | file | polymorphic_test.go |
+| 10 | 130 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/stop.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
 
 ### Version 5
 
@@ -8508,31 +8830,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 4.19435736677116 | Ocaml | janestreet__core | file | src/iobuf_debug.ml |
-| 2 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 3 | 3.4857142857142858 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 3.4 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 5 | 3.388888888888889 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 6 | 2.8578680203045685 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | 2.8270893371757926 | Ocaml | janestreet__core | file | src/iobuf.ml |
-| 8 | 2.723684210526316 | Ocaml | fastpack__fastpack | file | FastpackUtil/Printer.ml |
-| 9 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 10 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
+| 1 | 234 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 2 | 185.33333333333331 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 3 | 182 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 4 | 164 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
+| 5 | 160.66666666666666 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go |
+| 6 | 155.66666666666666 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_response.go |
+| 7 | 152 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 8 | 138 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/chat-completions/claude_openai_request.go |
+| 9 | 135.5 | Golang | go-gorm__gorm | file | polymorphic_test.go |
+| 10 | 105 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_request.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/stop.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
 
 ### Version 6
 
@@ -8540,31 +8862,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 2 | 3.4722222222222223 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 3 | 3.4 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 4 | 3.388888888888889 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 5 | 2.8585858585858586 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 6 | 2.6538461538461537 | Ocaml | fastpack__fastpack | file | FastpackUtil/Printer.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
-| 9 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 10 | 2.375 | Ocaml | fastpack__fastpack | file | FastpackUtil/Visit.ml |
+| 1 | 234 | Golang | go-gorm__gorm | file | schema/field.go |
+| 2 | 219 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 3 | 192.33333333333331 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 4 | 189 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 5 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
+| 6 | 171 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go |
+| 7 | 161 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 8 | 152 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/chat-completions/claude_openai_request.go |
+| 9 | 133 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go |
+| 10 | 123.75 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_response.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/stop.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
 
 ### Version 7
 
@@ -8572,31 +8894,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 3.933884297520661 | Ocaml | janestreet__core | file | core/src/doubly_linked.ml |
-| 2 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 3 | 3.4722222222222223 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 3.4 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 5 | 3.388888888888889 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 6 | 2.8536585365853657 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
-| 9 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 10 | 2.4646464646464645 | Ocaml | janestreet__core | file | core/test/src/hashtbl_unit_tests.ml |
+| 1 | 248.5 | Golang | go-gorm__gorm | file | schema/field.go |
+| 2 | 218 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 3 | 207 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 4 | 198.66666666666663 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 5 | 177 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/claude/antigravity_claude_request.go |
+| 6 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 7 | 171 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
+| 8 | 166 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/chat-completions/claude_openai_request.go |
+| 9 | 161 | Golang | nektos__act | file | pkg/artifactcache/handler_test.go |
+| 10 | 129 | Golang | go-gorm__gorm | file | tests/count_test.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/stop.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v3/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
 
 ### Version 8
 
@@ -8604,31 +8926,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 3.85483870967742 | Ocaml | janestreet__core | file | core/src/doubly_linked.ml |
-| 2 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 3 | 3.4722222222222223 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 3.327272727272727 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 5 | 3.23972602739726 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 6 | 2.8536585365853657 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
-| 9 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 10 | 2.4646464646464645 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.ml |
+| 1 | 236 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/claude/antigravity_claude_request.go |
+| 2 | 226 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 3 | 221 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 4 | 198.66666666666663 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 5 | 197 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_request.go |
+| 6 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 7 | 141.33333333333334 | Golang | nektos__act | file | pkg/artifactcache/handler_test.go |
+| 8 | 137.5 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go |
+| 9 | 134 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini-cli/claude/gemini-cli_claude_request.go |
+| 10 | 130.25 | Golang | go-gorm__gorm | file | schema/field.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/kill.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/stop_default.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
 
 ### Version 9
 
@@ -8636,31 +8958,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 3.85483870967742 | Ocaml | janestreet__core | file | core/src/doubly_linked.ml |
-| 2 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 3 | 3.4722222222222223 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 3.327272727272727 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 5 | 3.23972602739726 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 6 | 2.8536585365853657 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
-| 9 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 10 | 2.4646464646464645 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.ml |
+| 1 | 226 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 2 | 221 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+| 3 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 4 | 150.75 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 5 | 137.5 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go |
+| 6 | 134 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini-cli/claude/gemini-cli_claude_request.go |
+| 7 | 130.5 | Golang | go-gorm__gorm | file | schema/field.go |
+| 8 | 126 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/openai/responses/claude_openai-responses_response.go |
+| 9 | 125.5 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/chat-completions/gemini_openai_request.go |
+| 10 | 124 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini-cli/openai/chat-completions/gemini-cli_openai_request.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
-| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/kill.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/stop_default.go |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
 
 ### Version 10
 
@@ -8668,16 +8990,114 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 3.873015873015873 | Ocaml | janestreet__core | file | core/src/doubly_linked.ml |
-| 2 | 3.5783132530120483 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_core_theory/bap_core_theory_parser.ml |
-| 3 | 3.4722222222222223 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_future/bap_future.ml |
-| 4 | 3.327272727272727 | Ocaml | bcpierce00__unison | file | src/unicode.ml |
-| 5 | 3.23972602739726 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 6 | 2.8536585365853657 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | 2.6 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | 2.495575221238938 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/bil/bil_float.ml |
-| 9 | 2.466666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/safelist.ml |
-| 10 | 2.4411764705882355 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.ml |
+| 1 | 275 | Golang | junegunn__fzf | file | src/tui/light_test.go |
+| 2 | 226 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/claude/gemini/claude_gemini_request.go |
+| 3 | 174 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/gemini/openai_gemini_request.go |
+| 4 | 150.75 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_response.go |
+| 5 | 139 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/openai/openai/responses/openai_openai-responses_request.go |
+| 6 | 138 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini-cli/claude/gemini-cli_claude_request.go |
+| 7 | 137.5 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go |
+| 8 | 131.25 | Golang | go-gorm__gorm | file | schema/field.go |
+| 9 | 123 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/chat-completions/gemini_openai_response.go |
+| 10 | 112 | Golang | router-for-me__CLIProxyAPI | file | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/alias/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/alist_v2/util.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/global.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/aliyundrive_share/types.go |
+
+## Mean Unique Indegree/File
+
+### Version 1
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | lib_test/hash_queue_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | lib_test/hash_heap_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | lib_test/fqueue_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | lib_test/core_int_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | lib_test/core_float_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | lib_test/avltree_test.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | lib/unit.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | lib/union_find.ml |
+| 9 | 1 | Ocaml | janestreet__core | file | lib/tuple.ml |
+| 10 | 1 | Ocaml | janestreet__core | file | lib/sys_open_patch.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | conf/var.go |
+| 2 | 0 | Golang | AlistGo__alist | file | model/config.go |
+| 3 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/bplist.go |
+| 4 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 5 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/fuzz.go |
+| 6 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/plist_types.go |
+| 7 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/zerocopy.go |
+| 8 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/zerocopy_appengine.go |
+| 9 | 0 | Golang | gin-gonic__gin | file | examples/example_basic.go |
+| 10 | 0 | Golang | router-for-me__CLIProxyAPI | file | cmd/server/main.go |
+
+### Version 2
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | lib_test/hash_queue_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | lib_test/hash_heap_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | lib_test/fqueue_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | lib_test/core_set_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | lib_test/core_int_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | lib_test/core_char_test.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | lib_test/command-tests/main.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | lib_test/avltree_test.ml |
+| 9 | 1 | Ocaml | janestreet__core | file | lib/crc.ml |
+| 10 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Context.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | conf/const.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189pc/type.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/baidu/types.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/base/types.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/quark/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/sftp/types.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/sftp/util.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/teambition/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/template/types.go |
+
+### Version 3
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | test/hash_queue_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | test/hash_heap_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | test/fdeque_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | test/core_set_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | test/core_int_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | test/core_char_test.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | test/avltree_test.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | js-utils/gen_install.ml |
+| 9 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Context.ml |
+| 10 | 1 | Ocaml | fastpack__fastpack | file | FastpackSourceMap/Base64VLQ.ml |
 
 #### Min
 
@@ -8685,16 +9105,240 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
 | 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
-| 3 | 0 | Golang | AlistGo__alist | file | cmd/common.go |
-| 4 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
-| 5 | 0 | Golang | AlistGo__alist | file | cmd/kill.go |
-| 6 | 0 | Golang | AlistGo__alist | file | cmd/mcp.go |
-| 7 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
-| 8 | 0 | Golang | AlistGo__alist | file | cmd/root.go |
-| 9 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
-| 10 | 0 | Golang | AlistGo__alist | file | cmd/start.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/139/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/139/types.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/189/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/189/types.go |
 
-## Mean Outdegree/File
+### Version 4
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | test/bin/hash_queue_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | test/bin/hash_heap_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | test/bin/fdeque_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | test/bin/core_set_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | test/bin/core_int_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | test/bin/core_char_test.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | test/bin/avltree_test.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | src/config/discover.ml |
+| 9 | 1 | Ocaml | janestreet__core | file | src/am_running_inline_test.ml |
+| 10 | 1 | Ocaml | fastpack__fastpack | file | FastpackUtil/Error.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/admin.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 7 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115/types.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+
+### Version 5
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | test/bin/hash_heap_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | test/bin/fdeque_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | test/bin/core_set_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | test/bin/core_int_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | test/bin/core_char_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | test/bin/avltree_test.ml |
+| 7 | 1 | Ocaml | fastpack__fastpack | file | FastpackUtil/Error.ml |
+| 8 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Error.ml |
+| 9 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Context.ml |
+| 10 | 1 | Ocaml | fastpack__fastpack | file | Fastpack/Run.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 6
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | test/bin/fdeque_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | test/bin/core_set_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | test/bin/core_int_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | test/bin/core_char_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | test/bin/avltree_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | process_env/src/process_env.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | error_checking_mutex/test/test_error_checking_mutex.ml |
+| 8 | 1 | Ocaml | fastpack__fastpack | file | FastpackUtil/Error.ml |
+| 9 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Error.ml |
+| 10 | 1 | Ocaml | fastpack__fastpack | file | FastpackTranspiler/Context.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 7
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | core/test/bin/fdeque_test.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | core/test/bin/core_set_test.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | core/test/bin/core_int_test.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | core/test/bin/core_char_test.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | core/test/bin/avltree_test.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | core/src/result.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | core/src/printexc.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | core/src/ordered_collection_common.ml |
+| 9 | 1 | Ocaml | janestreet__core | file | core/src/option.ml |
+| 10 | 1 | Ocaml | janestreet__core | file | core/src/core_sys.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/123/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/123_link/meta.go |
+
+### Version 8
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | core/src/result.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | core/src/printexc.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | core/src/ordered_collection_common.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | core/src/option.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | core/src/make_stable.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | core/src/info.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | core/src/core_sys.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | core/bench-bin/array_queue.ml |
+| 9 | 1 | Ocaml | comby-tools__comby | file | test/common/test_script.ml |
+| 10 | 1 | Ocaml | comby-tools__comby | file | test/common/test_python_string_literals.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+
+### Version 9
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | core/src/result.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | core/src/printexc.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | core/src/ordered_collection_common.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | core/src/option.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | core/src/make_stable.ml |
+| 6 | 1 | Ocaml | janestreet__core | file | core/src/info.ml |
+| 7 | 1 | Ocaml | janestreet__core | file | core/src/core_sys.ml |
+| 8 | 1 | Ocaml | janestreet__core | file | core/bench-bin/array_queue.ml |
+| 9 | 1 | Ocaml | comby-tools__comby | file | test/common/test_script.ml |
+| 10 | 1 | Ocaml | comby-tools__comby | file | test/common/test_python_string_literals.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_share/meta.go |
+
+### Version 10
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | file | validate/bench/validate_bench.ml |
+| 2 | 1 | Ocaml | janestreet__core | file | core/src/printexc.ml |
+| 3 | 1 | Ocaml | janestreet__core | file | core/src/ordered_collection_common.ml |
+| 4 | 1 | Ocaml | janestreet__core | file | core/src/core_sys.ml |
+| 5 | 1 | Ocaml | janestreet__core | file | core/bench-bin/array_queue.ml |
+| 6 | 1 | Ocaml | comby-tools__comby | file | test/common/test_script.ml |
+| 7 | 1 | Ocaml | comby-tools__comby | file | lib/kernel/matchers/types.ml |
+| 8 | 1 | Ocaml | comby-tools__comby | file | lib/kernel/matchers/languages.ml |
+| 9 | 1 | Ocaml | comby-tools__comby | file | lib/kernel/matchers/external.ml |
+| 10 | 1 | Ocaml | comby-tools__comby | file | lib/kernel/matchers/configuration.ml |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | file | cmd/cancel2FA.go |
+| 2 | 0 | Golang | AlistGo__alist | file | cmd/flags/config.go |
+| 3 | 0 | Golang | AlistGo__alist | file | cmd/mcp.go |
+| 4 | 0 | Golang | AlistGo__alist | file | cmd/restart.go |
+| 5 | 0 | Golang | AlistGo__alist | file | cmd/server.go |
+| 6 | 0 | Golang | AlistGo__alist | file | cmd/storage.go |
+| 7 | 0 | Golang | AlistGo__alist | file | cmd/version.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/115/meta.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/115_open/meta.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/115_open/util.go |
+
+## Mean Unique Outdegree/File
 
 ### Version 1
 
@@ -9024,16 +9668,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 106 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1067::createToplevelWindow:1067:9 |
-| 2 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1026::createToplevelWindow:1026:9 |
-| 3 | 51 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:848::simulate:848:7 |
-| 4 | 49 | Ocaml | bcpierce00__unison | function | src/files.ml:613::merge:613:5 |
-| 5 | 43 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:809::getProfile:809:5 |
-| 6 | 43 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:767::getProfile:767:5 |
-| 7 | 42 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:49::main:49:6 |
-| 8 | 40 | Golang | router-for-me__CLIProxyAPI | function | internal/api/handlers.go:182::prepareRequest:182:23 |
-| 9 | 40 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/marshal.go:89::marshal:89:19 |
-| 10 | 37 | Golang | router-for-me__CLIProxyAPI | function | internal/api/handlers.go:628::convertCliToOpenAINonStream:628:23 |
+| 1 | 302 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1026::createToplevelWindow:1026:9 |
+| 2 | 301 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1067::createToplevelWindow:1067:9 |
+| 3 | 158 | Ocaml | bcpierce00__unison | function | src/files.ml:613::merge:613:5 |
+| 4 | 129 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:848::simulate:848:7 |
+| 5 | 116 | Ocaml | fastpack__fastpack | function | bin/Fastpack_printer.ml:76::emit_statement:76:11 |
+| 6 | 104 | Golang | router-for-me__CLIProxyAPI | function | internal/api/handlers.go:182::prepareRequest:182:23 |
+| 7 | 101 | Ocaml | fastpack__fastpack | function | bin/Fastpack_printer.ml:298::emit_expression:298:7 |
+| 8 | 86 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:809::getProfile:809:5 |
+| 9 | 84 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:49::main:49:6 |
+| 10 | 83 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:767::getProfile:767:5 |
 
 #### Min
 
@@ -9056,16 +9700,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 130 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_merge.go:163::computeMergeInfo:163:22 |
-| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86.ml:420::get_opcode:420:7 |
-| 3 | 112 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86_lifter.ml:279::to_ir:279:11 |
-| 4 | 110 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1232::createToplevelWindow:1232:9 |
-| 5 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1023::createToplevelWindow:1023:9 |
-| 6 | 73 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/decoder.ml:1225::decode:1225:10 |
-| 7 | 66 | Golang | AlistGo__alist | function | server/webdav/internal/xml/read.go:272::unmarshal:272:19 |
-| 8 | 64 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go:466::typeUnmarshaler:466:6 |
-| 9 | 62 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_marshal.go:569::typeMarshaler:569:6 |
-| 10 | 59 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/text_parser.go:441::readStruct:441:22 |
+| 1 | 871 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86_lifter.ml:279::to_ir:279:11 |
+| 2 | 454 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86.ml:420::get_opcode:420:7 |
+| 3 | 328 | Ocaml | bcpierce00__unison | function | src/test.ml:217::test:217:5 |
+| 4 | 316 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1232::createToplevelWindow:1232:9 |
+| 5 | 302 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1023::createToplevelWindow:1023:9 |
+| 6 | 296 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/decoder.ml:1225::decode:1225:10 |
+| 7 | 233 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/mksyscall_aix_ppc64.go:122::main:122:6 |
+| 8 | 210 | Golang | nektos__act | function | vendor/golang.org/x/crypto/curve25519/curve25519.go:275::feMul:275:6 |
+| 9 | 208 | Ocaml | bcpierce00__unison | function | src/files.ml:786::merge:786:5 |
+| 10 | 192 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_merge.go:163::computeMergeInfo:163:22 |
 
 #### Min
 
@@ -9088,16 +9732,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 2 | 112 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
-| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
-| 4 | 104 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2631::createToplevelWindow:2631:5 |
-| 5 | 93 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:38::ConvertGeminiRequestToClaude:38:6 |
-| 6 | 90 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2043::decode:2043:17 |
-| 7 | 74 | Golang | junegunn__fzf | function | src/terminal.go:864::Loop:864:20 |
-| 8 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
-| 9 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/claude/openai_claude_request.go:20::ConvertClaudeRequestToOpenAI:20:6 |
-| 10 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/chat-completions/claude_openai_request.go:36::ConvertOpenAIRequestToClaude:36:6 |
+| 1 | 871 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
+| 2 | 553 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/armv7.ml:313::data_proc:313:7 |
+| 3 | 454 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 344 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:42::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:42:6 |
+| 5 | 339 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2043::decode:2043:17 |
+| 6 | 328 | Ocaml | bcpierce00__unison | function | src/test.ml:237::test:237:5 |
+| 7 | 302 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 8 | 279 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:44::ConvertGeminiResponseToOpenAIResponses:44:6 |
+| 9 | 274 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:44::ConvertClaudeResponseToOpenAIResponses:44:6 |
+| 10 | 245 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2631::createToplevelWindow:2631:5 |
 
 #### Min
 
@@ -9120,16 +9764,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 127 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:275::to_ir:275:11 |
-| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2646::createToplevelWindow:2646:5 |
-| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
-| 5 | 97 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
-| 6 | 92 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2230::decode:2230:17 |
-| 7 | 87 | Golang | junegunn__fzf | function | src/terminal.go:1296::Loop:1296:20 |
-| 8 | 78 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:23::ConvertGeminiRequestToOpenAI:23:6 |
-| 9 | 78 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:11::ConvertOpenAIResponsesRequestToGemini:11:6 |
-| 10 | 77 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+| 1 | 899 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:275::to_ir:275:11 |
+| 2 | 478 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 394 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/armv7.ml:589::data_proc:589:7 |
+| 4 | 393 | Ocaml | bcpierce00__unison | function | src/test.ml:237::test:237:5 |
+| 5 | 383 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:50::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:50:6 |
+| 6 | 340 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2230::decode:2230:17 |
+| 7 | 308 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:45::ConvertGeminiResponseToOpenAIResponses:45:6 |
+| 8 | 302 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 9 | 300 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:48::ConvertClaudeResponseToOpenAIResponses:48:6 |
+| 10 | 250 | Golang | junegunn__fzf | function | src/terminal.go:1296::Loop:1296:20 |
 
 #### Min
 
@@ -9152,16 +9796,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 130 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:272::to_ir:272:11 |
-| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
-| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
-| 5 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
-| 6 | 99 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2576::decode:2576:13 |
-| 7 | 97 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
-| 8 | 97 | Golang | junegunn__fzf | function | src/terminal.go:1421::Loop:1421:20 |
-| 9 | 80 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:23::ConvertGeminiRequestToOpenAI:23:6 |
-| 10 | 77 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+| 1 | 911 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:272::to_ir:272:11 |
+| 2 | 478 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 393 | Ocaml | bcpierce00__unison | function | src/test.ml:237::test:237:5 |
+| 4 | 383 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:50::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:50:6 |
+| 5 | 358 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2576::decode:2576:13 |
+| 6 | 311 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:45::ConvertGeminiResponseToOpenAIResponses:45:6 |
+| 7 | 302 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 8 | 300 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:48::ConvertClaudeResponseToOpenAIResponses:48:6 |
+| 9 | 267 | Golang | junegunn__fzf | function | src/terminal.go:1421::Loop:1421:20 |
+| 10 | 248 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
 
 #### Min
 
@@ -9184,16 +9828,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 139 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
-| 2 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 3 | 112 | Golang | junegunn__fzf | function | src/terminal.go:1726::Loop:1726:20 |
-| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
-| 5 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
-| 6 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
-| 7 | 100 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2607::decode:2607:13 |
-| 8 | 91 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go:30::ConvertOpenAIRequestToAntigravity:30:6 |
-| 9 | 86 | Golang | nektos__act | function | pkg/container/docker_cli.go:326::parse:326:6 |
-| 10 | 84 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:34::ConvertOpenAIResponsesRequestToClaude:34:6 |
+| 1 | 925 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
+| 2 | 495 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 438 | Ocaml | bcpierce00__unison | function | src/test.ml:241::test:241:5 |
+| 4 | 393 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:54::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:54:6 |
+| 5 | 372 | Golang | go-gorm__gorm | function | schema/field.go:383::setupValuerAndSetter:383:21 |
+| 6 | 362 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2607::decode:2607:13 |
+| 7 | 329 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:53::ConvertGeminiResponseToOpenAIResponses:53:6 |
+| 8 | 327 | Golang | junegunn__fzf | function | src/terminal.go:1726::Loop:1726:20 |
+| 9 | 312 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:58::ConvertClaudeResponseToOpenAIResponses:58:6 |
+| 10 | 265 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go:30::ConvertOpenAIRequestToAntigravity:30:6 |
 
 #### Min
 
@@ -9216,16 +9860,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
-| 2 | 130 | Golang | junegunn__fzf | function | src/terminal.go:1922::Loop:1922:20 |
-| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
-| 5 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
-| 6 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
-| 7 | 91 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:13::ConvertOpenAIResponsesRequestToGemini:13:6 |
-| 8 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
-| 9 | 86 | Golang | nektos__act | function | pkg/container/docker_cli.go:326::parse:326:6 |
-| 10 | 81 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+| 1 | 941 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 2 | 498 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 440 | Ocaml | bcpierce00__unison | function | src/test.ml:241::test:241:5 |
+| 4 | 412 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:59::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:59:6 |
+| 5 | 400 | Golang | go-gorm__gorm | function | schema/field.go:431::setupValuerAndSetter:431:21 |
+| 6 | 385 | Golang | junegunn__fzf | function | src/terminal.go:1922::Loop:1922:20 |
+| 7 | 377 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:89::ConvertGeminiResponseToOpenAIResponses:89:6 |
+| 8 | 362 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 9 | 313 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:58::ConvertClaudeResponseToOpenAIResponses:58:6 |
+| 10 | 281 | Golang | nektos__act | function | pkg/artifactcache/handler_test.go:19::TestHandler:19:6 |
 
 #### Min
 
@@ -9248,16 +9892,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 166 | Golang | junegunn__fzf | function | src/terminal.go:2526::Loop:2526:20 |
-| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
-| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 4 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
-| 5 | 106 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2584::createToplevelWindow:2584:5 |
-| 6 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
-| 7 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:38::ConvertClaudeRequestToAntigravity:38:6 |
-| 8 | 94 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:56::main:56:6 |
-| 9 | 88 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
-| 10 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+| 1 | 941 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 2 | 515 | Golang | junegunn__fzf | function | src/terminal.go:2526::Loop:2526:20 |
+| 3 | 498 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 440 | Ocaml | bcpierce00__unison | function | src/test.ml:241::test:241:5 |
+| 5 | 412 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:60::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:60:6 |
+| 6 | 412 | Golang | go-gorm__gorm | function | schema/field.go:437::setupValuerAndSetter:437:21 |
+| 7 | 378 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:92::ConvertGeminiResponseToOpenAIResponses:92:6 |
+| 8 | 362 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 9 | 338 | Golang | nektos__act | function | pkg/artifactcache/handler_test.go:21::TestHandler:21:6 |
+| 10 | 313 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:59::ConvertClaudeResponseToOpenAIResponses:59:6 |
 
 #### Min
 
@@ -9280,16 +9924,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 209 | Golang | junegunn__fzf | function | src/terminal.go:3888::Loop:3888:20 |
-| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
-| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 4 | 118 | Ocaml | bcpierce00__unison | function | src/uigtk3.ml:2784::createToplevelWindow:2784:5 |
-| 5 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
-| 6 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
-| 7 | 99 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:88::ConvertClaudeRequestToAntigravity:88:6 |
-| 8 | 93 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:56::main:56:6 |
-| 9 | 88 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
-| 10 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+| 1 | 941 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 2 | 652 | Golang | junegunn__fzf | function | src/terminal.go:3888::Loop:3888:20 |
+| 3 | 533 | Ocaml | bcpierce00__unison | function | src/test.ml:250::test:250:5 |
+| 4 | 498 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 5 | 412 | Golang | go-gorm__gorm | function | schema/field.go:450::setupValuerAndSetter:450:21 |
+| 6 | 378 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:92::ConvertGeminiResponseToOpenAIResponses:92:6 |
+| 7 | 362 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 8 | 338 | Golang | nektos__act | function | pkg/artifactcache/handler_test.go:21::TestHandler:21:6 |
+| 9 | 321 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:60::ConvertClaudeResponseToOpenAIResponses:60:6 |
+| 10 | 300 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:202::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:202:6 |
 
 #### Min
 
@@ -9312,16 +9956,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 263 | Golang | junegunn__fzf | function | src/terminal.go:5921::Loop:5921:20 |
-| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
-| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
-| 4 | 120 | Ocaml | bcpierce00__unison | function | src/uigtk3.ml:2976::createToplevelWindow:2976:5 |
-| 5 | 115 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:69::main:69:6 |
-| 6 | 109 | Golang | junegunn__fzf | function | src/core.go:55::Run:55:6 |
-| 7 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
-| 8 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
-| 9 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:256::ConvertClaudeRequestToAntigravity:256:6 |
-| 10 | 89 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:16::ConvertOpenAIResponsesRequestToGemini:16:6 |
+| 1 | 990 | Ocaml | bcpierce00__unison | function | src/test.ml:250::test:250:5 |
+| 2 | 941 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 3 | 846 | Golang | junegunn__fzf | function | src/terminal.go:5921::Loop:5921:20 |
+| 4 | 496 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 5 | 417 | Golang | go-gorm__gorm | function | schema/field.go:451::setupValuerAndSetter:451:21 |
+| 6 | 378 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_response.go:92::ConvertGeminiResponseToOpenAIResponses:92:6 |
+| 7 | 362 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 8 | 338 | Golang | nektos__act | function | pkg/artifactcache/handler_test.go:21::TestHandler:21:6 |
+| 9 | 334 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_response.go:115::ConvertClaudeResponseToOpenAIResponses:115:6 |
+| 10 | 300 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/openai/responses/openai_openai-responses_response.go:202::ConvertOpenAIChatCompletionsResponseToOpenAIResponses:202:6 |
 
 #### Min
 
@@ -13523,3 +14167,647 @@
 | 8 | 0 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus_machine/bap_primus_machine.mli |
 | 9 | 0 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_types/bap_bitvector.ml |
 | 10 | 0 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_types/bap_stmt.ml |
+
+## Function Unique Indegree
+
+### Version 1
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:106::add:106:13 |
+| 2 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:17::inv:17:13 |
+| 3 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:11::equal:11:15 |
+| 4 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:10::hash:10:15 |
+| 5 | 1 | Ocaml | janestreet__core | function | lib_test/hash_heap_test.ml:8::make:8:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | lib_test/fqueue_test.ml:5::lpush:5:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:10::aux:10:11 |
+| 8 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:9::rand:9:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:5::esc_test:5:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | lib_test/core_float_test.ml:115::frand:115:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | main.go:53::init:53:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | main.go:62::main:62:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | utils/file.go:22::CreatNestedFile:22:6 |
+| 4 | 0 | Golang | FiloSottile__mkcert | function | main.go:27::main:27:6 |
+| 5 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:72::generateDocument:72:27 |
+| 6 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:295::Indent:295:27 |
+| 7 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:299::newBplistGenerator:299:6 |
+| 8 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_parser.go:65::parseDocument:65:24 |
+| 9 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_parser.go:351::newBplistParser:351:6 |
+| 10 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/decode.go:113::Unmarshal:113:6 |
+
+### Version 2
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:105::add:105:13 |
+| 2 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:16::inv:16:13 |
+| 3 | 1 | Ocaml | janestreet__core | function | lib_test/hash_queue_test.ml:10::hash:10:15 |
+| 4 | 1 | Ocaml | janestreet__core | function | lib_test/hash_heap_test.ml:8::make:8:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | lib_test/fqueue_test.ml:5::lpush:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | lib_test/core_set_test.ml:16::test:16:7 |
+| 7 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:9::aux:9:11 |
+| 8 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:8::rand:8:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | lib_test/core_int_test.ml:4::esc_test:4:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | lib_test/core_char_test.ml:4::of_string_test:4:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | alist.go:34::main:34:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | bootstrap/log.go:28::init:28:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/123/123.go:174::init:174:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/139/139.go:173::init:173:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/139/family.go:63::familyLink:63:24 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/189/189.go:597::OldUpload:597:24 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/189/util.go:168::init:168:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/189pc/driver.go:26::init:26:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/189pc/util.go:131::MustString:131:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/alidrive/alidrive.go:201::init:201:6 |
+
+### Version 3
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | test/hash_queue_test.ml:105::add:105:13 |
+| 2 | 1 | Ocaml | janestreet__core | function | test/hash_queue_test.ml:16::inv:16:13 |
+| 3 | 1 | Ocaml | janestreet__core | function | test/hash_queue_test.ml:10::hash:10:15 |
+| 4 | 1 | Ocaml | janestreet__core | function | test/hash_heap_test.ml:8::make:8:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | test/fdeque_test.ml:5::lpush:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | test/core_set_test.ml:16::test:16:7 |
+| 7 | 1 | Ocaml | janestreet__core | function | test/core_int_test.ml:9::aux:9:11 |
+| 8 | 1 | Ocaml | janestreet__core | function | test/core_int_test.ml:8::rand:8:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | test/core_int_test.ml:4::esc_test:4:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | test/core_char_test.ml:4::of_string_test:4:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:28::init:28:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:30::init:30:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:140::init:140:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/server.go:78::init:78:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:93::OutAlistInit:93:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/version.go:32::init:32:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115/meta.go:24::init:24:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/123/meta.go:28::init:28:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/139/meta.go:21::init:21:6 |
+
+### Version 4
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | test/bin/hash_queue_test.ml:104::add:104:11 |
+| 2 | 1 | Ocaml | janestreet__core | function | test/bin/hash_queue_test.ml:15::inv:15:11 |
+| 3 | 1 | Ocaml | janestreet__core | function | test/bin/hash_queue_test.ml:10::hash:10:13 |
+| 4 | 1 | Ocaml | janestreet__core | function | test/bin/hash_heap_test.ml:8::make:8:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | test/bin/fdeque_test.ml:5::lpush:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | test/bin/core_set_test.ml:16::test:16:7 |
+| 7 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:9::aux:9:11 |
+| 8 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:8::rand:8:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:4::esc_test:4:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | test/bin/core_char_test.ml:4::of_string_test:4:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:28::init:28:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:32::init:32:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:26::init:26:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:79::init:79:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:94::OutAlistInit:94:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:18::init:18:6 |
+
+### Version 5
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | test/bin/hash_heap_test.ml:8::make:8:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | test/bin/fdeque_test.ml:5::lpush:5:5 |
+| 3 | 1 | Ocaml | janestreet__core | function | test/bin/core_set_test.ml:16::test:16:7 |
+| 4 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:9::aux:9:11 |
+| 5 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:8::rand:8:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:4::esc_test:4:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | test/bin/core_char_test.ml:4::of_string_test:4:5 |
+| 8 | 1 | Ocaml | janestreet__core | function | test/bin/core_array_test.ml:95::f:95:12 |
+| 9 | 1 | Ocaml | janestreet__core | function | test/bin/comparable_test.ml:19::foreach:19:9 |
+| 10 | 1 | Ocaml | janestreet__core | function | test/bin/avltree_test.ml:85::test:85:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:137::init:137:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:152::OutAlistInit:152:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+
+### Version 6
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | test/bin/fdeque_test.ml:6::lpush:6:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | test/bin/core_set_test.ml:16::test:16:7 |
+| 3 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:9::aux:9:11 |
+| 4 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:8::rand:8:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | test/bin/core_int_test.ml:4::esc_test:4:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | test/bin/core_char_test.ml:5::of_string_test:5:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | test/bin/core_array_test.ml:96::f:96:12 |
+| 8 | 1 | Ocaml | janestreet__core | function | test/bin/comparable_test.ml:19::foreach:19:9 |
+| 9 | 1 | Ocaml | janestreet__core | function | test/bin/avltree_test.ml:85::test:85:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | test/bin/avltree_test.ml:76::test_add_remove:76:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:160::init:160:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:175::OutAlistInit:175:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+
+### Version 7
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | core/test/bin/fdeque_test.ml:6::lpush:6:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_set_test.ml:16::test:16:7 |
+| 3 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_int_test.ml:8::aux:8:11 |
+| 4 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_int_test.ml:7::rand:7:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_int_test.ml:4::esc_test:4:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_char_test.ml:5::of_string_test:5:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | core/test/bin/core_array_test.ml:113::f:113:17 |
+| 8 | 1 | Ocaml | janestreet__core | function | core/test/bin/comparable_test.ml:25::foreach:25:9 |
+| 9 | 1 | Ocaml | janestreet__core | function | core/test/bin/avltree_test.ml:87::test:87:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | core/test/bin/avltree_test.ml:74::test_add_remove:74:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:149::init:149:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/root.go:28::init:28:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/server.go:160::init:160:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:175::OutAlistInit:175:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/stop.go:46::init:46:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+
+### Version 8
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:34::trd3:34:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:33::snd3:33:5 |
+| 3 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:32::fst3:32:5 |
+| 4 | 1 | Ocaml | janestreet__core | function | core/src/result.ml:11::map:11:9 |
+| 5 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:5::catch:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:4::print:4:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:3::to_string:3:5 |
+| 8 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:5::slice:5:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:3::normalize:3:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | core/src/option.ml:47::unsafe_value:47:9 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:225::init:225:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:240::OutAlistInit:240:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/stop_default.go:46::init:46:6 |
+
+### Version 9
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:34::trd3:34:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:33::snd3:33:5 |
+| 3 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:32::fst3:32:5 |
+| 4 | 1 | Ocaml | janestreet__core | function | core/src/result.ml:21::map:21:9 |
+| 5 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:5::catch:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:4::print:4:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:3::to_string:3:5 |
+| 8 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:5::slice:5:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:3::normalize:3:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | core/src/option.ml:48::unsafe_value:48:9 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/server.go:225::init:225:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:240::OutAlistInit:240:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/stop_default.go:46::init:46:6 |
+
+### Version 10
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 1 | Ocaml | janestreet__core | function | validate/bench/validate_bench.ml:3::name:3:5 |
+| 2 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:40::trd3:40:5 |
+| 3 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:39::snd3:39:5 |
+| 4 | 1 | Ocaml | janestreet__core | function | core/src/std_internal.ml:38::fst3:38:5 |
+| 5 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:5::catch:5:5 |
+| 6 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:4::print:4:5 |
+| 7 | 1 | Ocaml | janestreet__core | function | core/src/printexc.ml:3::to_string:3:5 |
+| 8 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:5::slice:5:5 |
+| 9 | 1 | Ocaml | janestreet__core | function | core/src/ordered_collection_common.ml:3::normalize:3:5 |
+| 10 | 1 | Ocaml | janestreet__core | function | core/src/no_polymorphic_compare.ml:21::max:21:5 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/admin.go:86::init:86:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | cmd/cancel2FA.go:34::init:34:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | cmd/kill.go:42::init:42:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | cmd/lang.go:151::init:151:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | cmd/mcp.go:25::init:25:6 |
+| 6 | 0 | Golang | AlistGo__alist | function | cmd/restart.go:20::init:20:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | cmd/root.go:29::init:29:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | cmd/server.go:251::init:251:6 |
+| 9 | 0 | Golang | AlistGo__alist | function | cmd/server.go:266::OutAlistInit:266:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | cmd/start.go:59::init:59:6 |
+
+## Function Unique Outdegree
+
+### Version 1
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 106 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1067::createToplevelWindow:1067:9 |
+| 2 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1026::createToplevelWindow:1026:9 |
+| 3 | 51 | Ocaml | janestreet__core | function | lib_test/doubly_linked_test.ml:848::simulate:848:7 |
+| 4 | 49 | Ocaml | bcpierce00__unison | function | src/files.ml:613::merge:613:5 |
+| 5 | 43 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:809::getProfile:809:5 |
+| 6 | 43 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:767::getProfile:767:5 |
+| 7 | 42 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:49::main:49:6 |
+| 8 | 40 | Golang | router-for-me__CLIProxyAPI | function | internal/api/handlers.go:182::prepareRequest:182:23 |
+| 9 | 40 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/marshal.go:89::marshal:89:19 |
+| 10 | 37 | Golang | router-for-me__CLIProxyAPI | function | internal/api/handlers.go:628::convertCliToOpenAINonStream:628:23 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | conf/config.go:19::DefaultConfig:19:6 |
+| 2 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:25::bplistValueShouldUnique:25:6 |
+| 3 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:295::Indent:295:27 |
+| 4 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_generator.go:299::newBplistGenerator:299:6 |
+| 5 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/bplist_parser.go:351::newBplistParser:351:6 |
+| 6 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/decode.go:82::NewDecoder:82:6 |
+| 7 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/encode.go:56::Indent:56:19 |
+| 8 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/encode.go:67::NewEncoderForFormat:67:6 |
+| 9 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/plist_types.go:19::typeName:19:22 |
+| 10 | 0 | Golang | FiloSottile__mkcert | function | vendor/github.com/DHowett/go-plist/plist_types.go:23::hash:23:24 |
+
+### Version 2
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 130 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_merge.go:163::computeMergeInfo:163:22 |
+| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86.ml:420::get_opcode:420:7 |
+| 3 | 112 | Ocaml | BinaryAnalysisPlatform__bap | function | lib/bap_disasm/bap_disasm_x86_lifter.ml:279::to_ir:279:11 |
+| 4 | 110 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:1232::createToplevelWindow:1232:9 |
+| 5 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1023::createToplevelWindow:1023:9 |
+| 6 | 73 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/decoder.ml:1225::decode:1225:10 |
+| 7 | 66 | Golang | AlistGo__alist | function | server/webdav/internal/xml/read.go:272::unmarshal:272:19 |
+| 8 | 64 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go:466::typeUnmarshaler:466:6 |
+| 9 | 62 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/table_marshal.go:569::typeMarshaler:569:6 |
+| 10 | 59 | Golang | nektos__act | function | vendor/github.com/gogo/protobuf/proto/text_parser.go:441::readStruct:441:22 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | conf/config.go:37::DefaultConfig:37:6 |
+| 2 | 0 | Golang | AlistGo__alist | function | conf/var.go:50::Set:50:6 |
+| 3 | 0 | Golang | AlistGo__alist | function | conf/var.go:54::GetStr:54:6 |
+| 4 | 0 | Golang | AlistGo__alist | function | conf/var.go:62::GetBool:62:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:26::Config:26:22 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:32::Items:32:22 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:205::Preview:205:22 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:272::Copy:272:22 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/123/types.go:24::GetName:24:21 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/139/driver.go:20::Config:20:24 |
+
+### Version 3
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 2 | 112 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
+| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 4 | 104 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2631::createToplevelWindow:2631:5 |
+| 5 | 93 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:38::ConvertGeminiRequestToClaude:38:6 |
+| 6 | 90 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2043::decode:2043:17 |
+| 7 | 74 | Golang | junegunn__fzf | function | src/terminal.go:864::Loop:864:20 |
+| 8 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+| 9 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/claude/openai_claude_request.go:20::ConvertClaudeRequestToOpenAI:20:6 |
+| 10 | 72 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/chat-completions/claude_openai_request.go:36::ConvertOpenAIRequestToClaude:36:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:20::Config:20:18 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:24::GetAddition:24:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:37::Drop:37:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/meta.go:20::New:20:6 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:35::Config:35:18 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:39::GetAddition:39:18 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:52::Drop:52:18 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:165::Copy:165:18 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/123/meta.go:24::New:24:6 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/123/types.go:33::GetPath:33:15 |
+
+### Version 4
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 127 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:275::to_ir:275:11 |
+| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2646::createToplevelWindow:2646:5 |
+| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 5 | 97 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
+| 6 | 92 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/x86.ml:2230::decode:2230:17 |
+| 7 | 87 | Golang | junegunn__fzf | function | src/terminal.go:1296::Loop:1296:20 |
+| 8 | 78 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:23::ConvertGeminiRequestToOpenAI:23:6 |
+| 9 | 78 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:11::ConvertOpenAIResponsesRequestToGemini:11:6 |
+| 10 | 77 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:20::Config:20:18 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:24::GetAddition:24:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:32::Drop:32:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:34::Config:34:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:38::GetAddition:38:18 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:47::Drop:47:18 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/123/driver.go:159::Copy:159:18 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/123/types.go:21::GetPath:21:15 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/123/types.go:25::GetSize:25:15 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/123/types.go:29::GetName:29:15 |
+
+### Version 5
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 130 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:272::to_ir:272:11 |
+| 2 | 124 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
+| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk.ml:1022::createToplevelWindow:1022:9 |
+| 5 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
+| 6 | 99 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2576::decode:2576:13 |
+| 7 | 97 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
+| 8 | 97 | Golang | junegunn__fzf | function | src/terminal.go:1421::Loop:1421:20 |
+| 9 | 80 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:23::ConvertGeminiRequestToOpenAI:23:6 |
+| 10 | 77 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:23::Config:23:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:27::GetAddition:27:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:45::Drop:45:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:16::CreateTime:16:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:315::chunksProducer:315:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:21::Config:21:23 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:25::GetAddition:25:23 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:44::Drop:44:23 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:88::MakeDir:88:23 |
+
+### Version 6
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 139 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:276::to_ir:276:11 |
+| 2 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 3 | 112 | Golang | junegunn__fzf | function | src/terminal.go:1726::Loop:1726:20 |
+| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
+| 5 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
+| 6 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
+| 7 | 100 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2607::decode:2607:13 |
+| 8 | 91 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/openai/chat-completions/antigravity_openai_request.go:30::ConvertOpenAIRequestToAntigravity:30:6 |
+| 9 | 86 | Golang | nektos__act | function | pkg/container/docker_cli.go:326::parse:326:6 |
+| 10 | 84 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:34::ConvertOpenAIResponsesRequestToClaude:34:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:23::Config:23:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:27::GetAddition:27:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:45::Drop:45:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:16::CreateTime:16:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:373::chunksProducer:373:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:21::Config:21:23 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:25::GetAddition:25:23 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:44::Drop:44:23 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:88::MakeDir:88:23 |
+
+### Version 7
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 2 | 130 | Golang | junegunn__fzf | function | src/terminal.go:1922::Loop:1922:20 |
+| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 105 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2647::createToplevelWindow:2647:5 |
+| 5 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 6 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:47::ConvertGeminiRequestToClaude:47:6 |
+| 7 | 91 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:13::ConvertOpenAIResponsesRequestToGemini:13:6 |
+| 8 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+| 9 | 86 | Golang | nektos__act | function | pkg/container/docker_cli.go:326::parse:326:6 |
+| 10 | 81 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/openai/responses/claude_openai-responses_request.go:33::ConvertOpenAIResponsesRequestToClaude:33:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:25::Config:25:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:29::GetAddition:29:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:48::Drop:48:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:17::CreateTime:17:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:452::chunksProducer:452:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:21::Config:21:23 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:25::GetAddition:25:23 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:44::Drop:44:23 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_share/driver.go:88::MakeDir:88:23 |
+
+### Version 8
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 166 | Golang | junegunn__fzf | function | src/terminal.go:2526::Loop:2526:20 |
+| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
+| 5 | 106 | Ocaml | bcpierce00__unison | function | src/uigtk2.ml:2584::createToplevelWindow:2584:5 |
+| 6 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 7 | 102 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:38::ConvertClaudeRequestToAntigravity:38:6 |
+| 8 | 94 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:56::main:56:6 |
+| 9 | 88 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
+| 10 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:25::Config:25:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:29::GetAddition:29:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:48::Drop:48:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:17::CreateTime:17:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:463::chunksProducer:463:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:29::Config:29:19 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:33::GetAddition:33:19 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:65::Drop:65:19 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_open/types.go:14::Thumb:14:15 |
+
+### Version 9
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 209 | Golang | junegunn__fzf | function | src/terminal.go:3888::Loop:3888:20 |
+| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 118 | Ocaml | bcpierce00__unison | function | src/uigtk3.ml:2784::createToplevelWindow:2784:5 |
+| 5 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
+| 6 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 7 | 99 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:88::ConvertClaudeRequestToAntigravity:88:6 |
+| 8 | 93 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:56::main:56:6 |
+| 9 | 88 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:15::ConvertOpenAIResponsesRequestToGemini:15:6 |
+| 10 | 87 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/openai/gemini/openai_gemini_request.go:22::ConvertGeminiRequestToOpenAI:22:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:25::Config:25:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:29::GetAddition:29:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:48::Drop:48:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:17::CreateTime:17:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:463::chunksProducer:463:6 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:29::Config:29:19 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:33::GetAddition:33:19 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:65::Drop:65:19 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_open/types.go:14::Thumb:14:15 |
+
+### Version 10
+
+#### Max
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 263 | Golang | junegunn__fzf | function | src/terminal.go:5921::Loop:5921:20 |
+| 2 | 148 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_lifter.ml:365::to_ir:365:11 |
+| 3 | 128 | Ocaml | BinaryAnalysisPlatform__bap | function | plugins/x86/x86_disasm.ml:420::get_opcode:420:7 |
+| 4 | 120 | Ocaml | bcpierce00__unison | function | src/uigtk3.ml:2976::createToplevelWindow:2976:5 |
+| 5 | 115 | Golang | router-for-me__CLIProxyAPI | function | cmd/server/main.go:69::main:69:6 |
+| 6 | 109 | Golang | junegunn__fzf | function | src/core.go:55::Run:55:6 |
+| 7 | 107 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/claude/gemini/claude_gemini_request.go:48::ConvertGeminiRequestToClaude:48:6 |
+| 8 | 103 | Ocaml | airbus-seclab__bincat | function | ocaml/src/disassembly/core_x86.ml:2650::decode:2650:13 |
+| 9 | 103 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/antigravity/claude/antigravity_claude_request.go:256::ConvertClaudeRequestToAntigravity:256:6 |
+| 10 | 89 | Golang | router-for-me__CLIProxyAPI | function | internal/translator/gemini/openai/responses/gemini_openai-responses_request.go:16::ConvertOpenAIResponsesRequestToGemini:16:6 |
+
+#### Min
+
+| rank | value | language | codebase | level | location |
+| ---: | ---: | --- | --- | --- | --- |
+| 1 | 0 | Golang | AlistGo__alist | function | cmd/storage.go:58::Init:58:16 |
+| 2 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:25::Config:25:18 |
+| 3 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:29::GetAddition:29:18 |
+| 4 | 0 | Golang | AlistGo__alist | function | drivers/115/driver.go:48::Drop:48:18 |
+| 5 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:18::CreateTime:18:19 |
+| 6 | 0 | Golang | AlistGo__alist | function | drivers/115/types.go:26::Thumb:26:19 |
+| 7 | 0 | Golang | AlistGo__alist | function | drivers/115/util.go:492::chunksProducer:492:6 |
+| 8 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:29::Config:29:19 |
+| 9 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:33::GetAddition:33:19 |
+| 10 | 0 | Golang | AlistGo__alist | function | drivers/115_open/driver.go:65::Drop:65:19 |

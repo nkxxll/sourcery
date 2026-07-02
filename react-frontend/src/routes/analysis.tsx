@@ -188,9 +188,19 @@ const ANALYSIS_METRICS: MetricOption[] = [
     description: 'Average function outdegree within each file.',
   },
   {
+    key: 'mean_unique_outdegree_per_file',
+    label: 'Mean Unique Outdegree/File',
+    description: 'Average unique function outdegree within each file.',
+  },
+  {
     key: 'mean_indegree_per_file',
     label: 'Mean Indegree/File',
     description: 'Average function indegree within each file.',
+  },
+  {
+    key: 'mean_unique_indegree_per_file',
+    label: 'Mean Unique Indegree/File',
+    description: 'Average unique function indegree within each file.',
   },
   {
     key: 'mean_cyclomatic_per_function_per_file',
@@ -219,9 +229,19 @@ const ANALYSIS_METRICS: MetricOption[] = [
     description: 'Indegree for each function.',
   },
   {
+    key: 'unique_indegree',
+    label: 'Function Unique Indegree',
+    description: 'Unique indegree for each function.',
+  },
+  {
     key: 'outdegree',
     label: 'Function Outdegree',
     description: 'Outdegree for each function.',
+  },
+  {
+    key: 'unique_outdegree',
+    label: 'Function Unique Outdegree',
+    description: 'Unique outdegree for each function.',
   },
   {
     key: 'halstead_unique_operators',

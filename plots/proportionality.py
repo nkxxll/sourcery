@@ -233,6 +233,44 @@ def safe_corr(method, x: pd.Series, y: pd.Series) -> tuple[float, float]:
     return float(result.statistic), float(result.pvalue)
 
 
+def correlation_stats(prefix: str, x: pd.Series, y: pd.Series) -> dict[str, float]:
+    pearson_r, pearson_p = safe_corr(stats.pearsonr, x, y)
+    spearman_r, spearman_p = safe_corr(stats.spearmanr, x, y)
+    return {
+        f"{prefix}_pearson_r": pearson_r,
+        f"{prefix}_pearson_p": pearson_p,
+        f"{prefix}_spearman_r": spearman_r,
+        f"{prefix}_spearman_p": spearman_p,
+    }
+
+
+def model_correlation_stats(
+    x: pd.Series, y: pd.Series, min_observations: int
+) -> dict[str, float]:
+    empty = pd.Series(dtype=float)
+    result = {
+        **correlation_stats("linear", x, y),
+        **correlation_stats("origin", x, y),
+    }
+
+    log_log_positive = (x > 0) & (y > 0)
+    log_log_x = x[log_log_positive].map(math.log)
+    log_log_y = y[log_log_positive].map(math.log)
+    if len(log_log_x) < min_observations:
+        log_log_x = empty
+        log_log_y = empty
+    result.update(correlation_stats("log_log", log_log_x, log_log_y))
+
+    exponential_positive = y > 0
+    exponential_x = x[exponential_positive]
+    exponential_y = y[exponential_positive].map(math.log)
+    if len(exponential_x) < min_observations:
+        exponential_x = empty
+        exponential_y = empty
+    result.update(correlation_stats("exponential", exponential_x, exponential_y))
+    return result
+
+
 def confidence_intervals(
     column_prefix: str,
     estimate: float,
@@ -533,6 +571,11 @@ def analyze(df: pd.DataFrame, min_observations: int, alpha: float) -> pd.DataFra
                         pd.Series(dtype=float),
                         min_observations,
                     )
+                    model_correlations = model_correlation_stats(
+                        pd.Series(dtype=float),
+                        pd.Series(dtype=float),
+                        min_observations,
+                    )
                     rows.append(
                         {
                             "metric_level": level,
@@ -544,6 +587,7 @@ def analyze(df: pd.DataFrame, min_observations: int, alpha: float) -> pd.DataFra
                             "pearson_p": math.nan,
                             "spearman_r": math.nan,
                             "spearman_p": math.nan,
+                            **model_correlations,
                             **regression,
                             **log_log,
                             **exponential,
@@ -559,6 +603,7 @@ def analyze(df: pd.DataFrame, min_observations: int, alpha: float) -> pd.DataFra
                 y = language_pairs["metric_value"].astype(float)
                 pearson_r, pearson_p = safe_corr(stats.pearsonr, x, y)
                 spearman_r, spearman_p = safe_corr(stats.spearmanr, x, y)
+                model_correlations = model_correlation_stats(x, y, min_observations)
                 row = {
                     "metric_level": level,
                     LANGUAGE_COL: language,
@@ -569,6 +614,7 @@ def analyze(df: pd.DataFrame, min_observations: int, alpha: float) -> pd.DataFra
                     "pearson_p": pearson_p,
                     "spearman_r": spearman_r,
                     "spearman_p": spearman_p,
+                    **model_correlations,
                     **regression_stats(x, y),
                     **log_log_stats(x, y, min_observations),
                     **exponential_stats(x, y, min_observations),
@@ -624,6 +670,14 @@ def write_report(results: pd.DataFrame, output_path: Path, alpha: float) -> None
                     "n",
                     "pearson_r",
                     "spearman_r",
+                    "linear_pearson_r",
+                    "linear_spearman_r",
+                    "origin_pearson_r",
+                    "origin_spearman_r",
+                    "log_log_pearson_r",
+                    "log_log_spearman_r",
+                    "exponential_pearson_r",
+                    "exponential_spearman_r",
                     "best_regression_model",
                     "best_regression_r2",
                     "best_regression_slope_ci95_low",

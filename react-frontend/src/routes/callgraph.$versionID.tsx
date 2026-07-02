@@ -45,10 +45,14 @@ type VersionFunction = {
       }
     }
     function_calls?: FunctionCall[]
+    function_calls_with_lsp_definition?: FunctionCall[]
     syntax_function_calls?: FunctionCall[]
+    references?: FunctionCall[]
     functions_called?: string[]
     indegree?: number
+    unique_indegree?: number
     outdegree?: number
+    unique_outdegree?: number
   }
   created_at: string
 }
