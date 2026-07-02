@@ -1,0 +1,155 @@
+lines_of_code: 55
+blank_lines: 9
+bracket_lines_of_code: 12
+comment_lines_of_code: 0
+effective_lines_of_code_with_brackets: 46
+effective_lines_of_code: 34
+total_cyclomatic: 11
+total_halstead: unique_operators=13 unique_operands=42 operators=34 operands=114 length=148 vocabulary=55 calculated_length=274.583 volume=855.641 difficulty=17.643 effort=15095.956 time_seconds=838.664 bugs=0.285214
+maintainability_index: three_property=68.442 four_property=68.442 visual_studio=40.024 comment_percentage=0.000
+functions:
+
+
+digraph CallGraph {
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:formatMessage:26:6"
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:fmt.Println:4:2"
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:fmt.Println:4:2"
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:repeatAdd:20:6"
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:logIfPositive:40:6"
+	"main:9:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:subsaturated:46:6"
+	"repeatAdd:20:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:add:16:6"
+	"repeatAdd:20:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:add:16:6"
+	"repeatAdd:20:1" -> "/home/nkxxll/.local/share/mise/installs/go/1.26.4/src/builtin/builtin.go:len:179:6"
+	"formatMessage:26:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:sum:32:6"
+	"formatMessage:26:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:strings.ToUpper:6:2"
+	"formatMessage:26:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:strings.Join:6:2"
+	"formatMessage:26:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:strconv.Itoa:5:2"
+	"sum:32:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:add:16:6"
+	"logIfPositive:40:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:fmt.Println:4:2"
+	"logIfPositive:40:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:strconv.Itoa:5:2"
+	"unusedHelper:53:1" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go:strings.TrimSpace:6:2"
+}
+
+  - main:9..14 length=5 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=9:1 end=9:1
+    indegree=0 unique_indegree=0 outdegree=6 unique_outdegree=5
+    halstead: unique_operators=2 unique_operands=15 operators=2 operands=20 length=22 vocabulary=17 calculated_length=60.603 volume=89.924 difficulty=1.333 effort=119.899 time_seconds=6.661 bugs=0.029975
+    maintainability_index: three_property=118.349 four_property=118.349 visual_studio=69.210 comment_percentage=0.000
+    function_arguments: ["message"]
+    syntax_function_calls: count=6
+      - name="formatMessage" file=test_fixtures/random_tests/main.go line=10 column=13
+      - name="fmt.Println" file=test_fixtures/random_tests/main.go line=11 column=2
+      - name="fmt.Println" file=test_fixtures/random_tests/main.go line=12 column=2
+      - name="repeatAdd" file=test_fixtures/random_tests/main.go line=12 column=14
+      - name="logIfPositive" file=test_fixtures/random_tests/main.go line=13 column=2
+      - name="subsaturated" file=test_fixtures/random_tests/main.go line=13 column=16
+    function_calls_with_lsp_definition: count=6
+      - name="formatMessage" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=26 column=6
+      - name="fmt.Println" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=4 column=2
+      - name="fmt.Println" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=4 column=2
+      - name="repeatAdd" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=20 column=6
+      - name="logIfPositive" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=40 column=6
+      - name="subsaturated" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=46 column=6
+    function_calls_without_lsp_definition: count=0
+    references: count=0
+  - add:16..18 length=2 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=16:1 end=16:1
+    indegree=3 unique_indegree=1 outdegree=0 unique_outdegree=0
+    halstead: unique_operators=3 unique_operands=4 operators=3 operands=8 length=11 vocabulary=7 calculated_length=12.755 volume=30.881 difficulty=3.000 effort=92.643 time_seconds=5.147 bugs=0.010294
+    maintainability_index: three_property=135.136 four_property=135.136 visual_studio=79.027 comment_percentage=0.000
+    function_arguments: []
+    syntax_function_calls: count=0
+    function_calls_with_lsp_definition: count=0
+    function_calls_without_lsp_definition: count=0
+    references: count=3
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=21 column=11
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=22 column=12
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=35 column=11
+  - repeatAdd:20..24 length=4 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=20:1 end=20:1
+    indegree=1 unique_indegree=1 outdegree=3 unique_outdegree=2
+    halstead: unique_operators=3 unique_operands=8 operators=4 operands=18 length=22 vocabulary=11 calculated_length=28.755 volume=76.107 difficulty=3.375 effort=256.863 time_seconds=14.270 bugs=0.025369
+    maintainability_index: three_property=122.170 four_property=122.170 visual_studio=71.444 comment_percentage=0.000
+    function_arguments: ["a", "b", "first"]
+    syntax_function_calls: count=3
+      - name="add" file=test_fixtures/random_tests/main.go line=21 column=11
+      - name="add" file=test_fixtures/random_tests/main.go line=22 column=12
+      - name="len" file=test_fixtures/random_tests/main.go line=22 column=23
+    function_calls_with_lsp_definition: count=3
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=16 column=6
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=16 column=6
+      - name="len" file=/home/nkxxll/.local/share/mise/installs/go/1.26.4/src/builtin/builtin.go line=179 column=6
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="repeatAdd" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=12 column=14
+  - formatMessage:26..30 length=4 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=26:1 end=26:1
+    indegree=1 unique_indegree=1 outdegree=4 unique_outdegree=4
+    halstead: unique_operators=3 unique_operands=14 operators=4 operands=21 length=25 vocabulary=17 calculated_length=58.058 volume=102.187 difficulty=2.250 effort=229.920 time_seconds=12.773 bugs=0.034062
+    maintainability_index: three_property=120.638 four_property=120.638 visual_studio=70.548 comment_percentage=0.000
+    function_arguments: ["values", "label", "total"]
+    syntax_function_calls: count=4
+      - name="sum" file=test_fixtures/random_tests/main.go line=27 column=11
+      - name="strings.ToUpper" file=test_fixtures/random_tests/main.go line=28 column=11
+      - name="strings.Join" file=test_fixtures/random_tests/main.go line=29 column=9
+      - name="strconv.Itoa" file=test_fixtures/random_tests/main.go line=29 column=38
+    function_calls_with_lsp_definition: count=4
+      - name="sum" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=32 column=6
+      - name="strings.ToUpper" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=6 column=2
+      - name="strings.Join" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=6 column=2
+      - name="strconv.Itoa" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=5 column=2
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="formatMessage" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=10 column=13
+  - sum:32..38 length=6 cyclomatic=2 cyclomatic_match_as_single_branch=2
+    definition_position_range: start=32:1 end=32:1
+    indegree=1 unique_indegree=1 outdegree=1 unique_outdegree=1
+    halstead: unique_operators=6 unique_operands=8 operators=7 operands=14 length=21 vocabulary=14 calculated_length=39.510 volume=79.954 difficulty=5.250 effort=419.761 time_seconds=23.320 bugs=0.026651
+    maintainability_index: three_property=116.233 four_property=116.233 visual_studio=67.972 comment_percentage=0.000
+    function_arguments: ["total", "value"]
+    syntax_function_calls: count=1
+      - name="add" file=test_fixtures/random_tests/main.go line=35 column=11
+    function_calls_with_lsp_definition: count=1
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=16 column=6
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="sum" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=27 column=11
+  - logIfPositive:40..44 length=4 cyclomatic=2 cyclomatic_match_as_single_branch=2
+    definition_position_range: start=40:1 end=40:1
+    indegree=1 unique_indegree=1 outdegree=2 unique_outdegree=2
+    halstead: unique_operators=3 unique_operands=8 operators=3 operands=10 length=13 vocabulary=11 calculated_length=28.755 volume=44.973 difficulty=1.875 effort=84.324 time_seconds=4.685 bugs=0.014991
+    maintainability_index: three_property=124.676 four_property=124.676 visual_studio=72.910 comment_percentage=0.000
+    function_arguments: ["value"]
+    syntax_function_calls: count=2
+      - name="fmt.Println" file=test_fixtures/random_tests/main.go line=42 column=3
+      - name="strconv.Itoa" file=test_fixtures/random_tests/main.go line=42 column=15
+    function_calls_with_lsp_definition: count=2
+      - name="fmt.Println" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=4 column=2
+      - name="strconv.Itoa" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=5 column=2
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="logIfPositive" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=13 column=2
+  - subsaturated:46..51 length=5 cyclomatic=2 cyclomatic_match_as_single_branch=2
+    definition_position_range: start=46:1 end=46:1
+    indegree=1 unique_indegree=1 outdegree=0 unique_outdegree=0
+    halstead: unique_operators=5 unique_operands=5 operators=7 operands=12 length=19 vocabulary=10 calculated_length=23.219 volume=63.117 difficulty=6.000 effort=378.700 time_seconds=21.039 bugs=0.021039
+    maintainability_index: three_property=119.960 four_property=119.960 visual_studio=70.152 comment_percentage=0.000
+    function_arguments: []
+    syntax_function_calls: count=0
+    function_calls_with_lsp_definition: count=0
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="subsaturated" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=13 column=16
+  - unusedHelper:53..55 length=2 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=53:1 end=53:1
+    indegree=0 unique_indegree=0 outdegree=1 unique_outdegree=1
+    halstead: unique_operators=2 unique_operands=5 operators=2 operands=7 length=9 vocabulary=7 calculated_length=13.610 volume=25.266 difficulty=1.400 effort=35.373 time_seconds=1.965 bugs=0.008422
+    maintainability_index: three_property=136.179 four_property=136.179 visual_studio=79.637 comment_percentage=0.000
+    function_arguments: ["input"]
+    syntax_function_calls: count=1
+      - name="strings.TrimSpace" file=test_fixtures/random_tests/main.go line=54 column=9
+    function_calls_with_lsp_definition: count=1
+      - name="strings.TrimSpace" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/main.go line=6 column=2
+    function_calls_without_lsp_definition: count=0
+    references: count=0
+comments:

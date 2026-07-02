@@ -69,6 +69,7 @@ class Language(StrEnum):
     GO = "Golang"
     OCAML = "Ocaml"
 
+
 @dataclass
 class MetricsData:
     """Interactive wrapper around the raw and version metric CSV files."""
@@ -106,8 +107,11 @@ class MetricsData:
         value: float | None = None,
         op: Literal["==", "=", "!=", "<", "<=", ">", ">="] = "==",
         language: str | Language | None = None,
+        version: int | Literal["all"] | None = None,
         random: bool = False,
         seed: int | None = 0,
+        distribute_by_project: bool = False,
+        file_extension: str | None = None,
         columns: list[str] | None = None,
     ) -> pd.DataFrame:
         """Return rows matching a metric query.
@@ -122,10 +126,19 @@ class MetricsData:
             language_query = _normalize(_language_value(language))
             df = df[df[correlation.LANGUAGE_COL].map(_normalize) == language_query]
 
+        df = _filter_file_extension(df, file_extension)
+
+        if version is not None and version != "all":
+            version_col = "version_number" if "version_number" in df.columns else correlation.VERSION_COL
+            df[version_col] = pd.to_numeric(df[version_col], errors="coerce")
+            df = df[df[version_col] == version]
+
         if value is not None:
             df = _filter_value(df, value, op)
 
-        if random:
+        if distribute_by_project:
+            df = _sample_evenly_by_project(df, count, random=random, seed=seed)
+        elif random:
             count = min(count, len(df))
             df = df.sample(n=count, random_state=seed)
         else:
@@ -135,6 +148,57 @@ class MetricsData:
         selected_columns = [col for col in selected_columns if col in df.columns]
         return df[selected_columns].reset_index(drop=True)
 
+    def sample_median_by_language(
+        self,
+        count: int = 20,
+        metric: str = "function_length",
+        level: str = "function",
+        input_index: int = 10,
+        languages: list[str | Language] | None = None,
+        random: bool = False,
+        seed: int | None = 0,
+        file_extension: str | None = None,
+        columns: list[str] | None = None,
+    ) -> pd.DataFrame:
+        """Sample rows at the summary median for each language/input index."""
+        level_name = normalize_level(level)
+        metric_key = self.resolve_metric(metric, level=level_name)
+        summary = pd.read_csv(self.root / f"metrics_by_language_{level_name}.csv")
+        median_rows = summary[
+            (summary[correlation.METRIC_LEVEL_COL] == level_name)
+            & (summary[correlation.METRIC_KEY] == metric_key)
+            & (summary["input_index"] == input_index)
+        ].copy()
+
+        if languages is not None:
+            language_queries = {_normalize(_language_value(item)) for item in languages}
+            median_rows = median_rows[
+                median_rows[correlation.LANGUAGE_COL].map(_normalize).isin(language_queries)
+            ]
+
+        samples = []
+        for _, row in median_rows.sort_values(correlation.LANGUAGE_COL).iterrows():
+            language = row[correlation.LANGUAGE_COL]
+            median = row["median"]
+            sample = self.sample(
+                count=count,
+                metric=metric_key,
+                level=level_name,
+                value=median,
+                language=language,
+                version=input_index,
+                random=random,
+                seed=seed,
+                file_extension=file_extension,
+                columns=columns,
+            )
+            sample.insert(0, "median", median)
+            samples.append(sample)
+
+        if not samples:
+            return pd.DataFrame(columns=columns or DEFAULT_SAMPLE_COLUMNS)
+        return pd.concat(samples, ignore_index=True)
+
     def plot_model(
         self,
         metric: str,
@@ -142,6 +206,7 @@ class MetricsData:
         language: str | Language | None = None,
         model: str | None = None,
         loc_metric: str | None = None,
+        file_extension: str | None = None,
         ax: plt.Axes | None = None,
     ) -> plt.Axes:
         """Plot real data and a fitted model for one metric/language/level."""
@@ -162,6 +227,7 @@ class MetricsData:
             language = _language_value(language)
 
         language_df = df[df[correlation.LANGUAGE_COL] == language]
+        language_df = _filter_file_extension(language_df, file_extension)
         if language_df.empty:
             raise ValueError(
                 f"no {level_name} metric data found for language {language!r}"
@@ -223,6 +289,7 @@ class MetricsData:
         level: str = "version",
         languages: list[str | Language] | None = None,
         model: str | None = None,
+        file_extension: str | None = None,
     ) -> plt.Figure:
         """Plot a metric model for each requested language."""
         level_name = normalize_level(level)
@@ -232,7 +299,14 @@ class MetricsData:
         fig, axes = plt.subplots(len(languages), 1, figsize=(8, 4 * len(languages)))
         axes = np.atleast_1d(axes)
         for ax, language in zip(axes, languages, strict=False):
-            self.plot_model(metric, level_name, language, model=model, ax=ax)
+            self.plot_model(
+                metric,
+                level_name,
+                language,
+                model=model,
+                file_extension=file_extension,
+                ax=ax,
+            )
         return fig
 
     def plot_file_spread_to_loc(
@@ -243,6 +317,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         log: bool = False,
+        file_extension: str | None = None,
     ) -> plt.Figure:
         """Plot file-level metric spreads against file lines_of_code."""
         if language is not None and languages is not None:
@@ -250,6 +325,7 @@ class MetricsData:
 
         metrics = metrics or FILE_HALSTEAD_OPERATOR_OPERAND_METRICS
         file_metrics = self._metrics_for_level("file")
+        file_metrics = _filter_file_extension(file_metrics, file_extension)
         if language is not None:
             languages = [language]
 
@@ -304,6 +380,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         log: bool = False,
+        file_extension: str | None = None,
     ) -> plt.Figure:
         """Plot Go and OCaml file-level Halstead spreads side by side."""
         return self.plot_file_spread_to_loc(
@@ -312,6 +389,7 @@ class MetricsData:
             alpha=alpha,
             s=s,
             log=log,
+            file_extension=file_extension,
         )
 
     def plot_function_spread_to_loc(
@@ -322,6 +400,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         log: bool = False,
+        file_extension: str | None = None,
     ) -> plt.Figure:
         """Plot function-level metric spreads against function_length."""
         return self._plot_spread_to_loc(
@@ -335,6 +414,7 @@ class MetricsData:
             alpha=alpha,
             s=s,
             log=log,
+            file_extension=file_extension,
         )
 
     def plot_go_ocaml_function_spread_to_loc(
@@ -343,6 +423,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         log: bool = False,
+        file_extension: str | None = None,
     ) -> plt.Figure:
         """Plot Go and OCaml function-level Halstead spreads side by side."""
         return self.plot_function_spread_to_loc(
@@ -351,6 +432,7 @@ class MetricsData:
             alpha=alpha,
             s=s,
             log=log,
+            file_extension=file_extension,
         )
 
     def _plot_spread_to_loc(
@@ -365,17 +447,21 @@ class MetricsData:
         alpha: float,
         s: float,
         log: bool,
+        file_extension: str | None,
     ) -> plt.Figure:
         if language is not None and languages is not None:
             raise ValueError("use either language=... or languages=..., not both")
 
         metrics = metrics or default_metrics
         level_metrics = self._metrics_for_level(level)
+        level_metrics = _filter_file_extension(level_metrics, file_extension)
         if language is not None:
             languages = [language]
 
         languages = [_language_value(item) for item in languages] if languages else None
-        resolved_metrics = [self.resolve_metric(metric, level=level) for metric in metrics]
+        resolved_metrics = [
+            self.resolve_metric(metric, level=level) for metric in metrics
+        ]
 
         if languages:
             return self._plot_spread_grid(
@@ -449,8 +535,7 @@ class MetricsData:
                     language_metrics, "file", correlation.LOC_METRIC_FILE, metric_key
                 )
                 paired = paired[
-                    np.isfinite(paired["loc"])
-                    & np.isfinite(paired["metric_value"])
+                    np.isfinite(paired["loc"]) & np.isfinite(paired["metric_value"])
                 ]
                 if log:
                     paired = paired[(paired["loc"] > 0) & (paired["metric_value"] > 0)]
@@ -503,8 +588,7 @@ class MetricsData:
                     language_metrics, level, loc_metric, metric_key
                 )
                 paired = paired[
-                    np.isfinite(paired["loc"])
-                    & np.isfinite(paired["metric_value"])
+                    np.isfinite(paired["loc"]) & np.isfinite(paired["metric_value"])
                 ]
                 if log:
                     paired = paired[(paired["loc"] > 0) & (paired["metric_value"] > 0)]
@@ -524,10 +608,15 @@ class MetricsData:
         fig.tight_layout()
         return fig
 
-    def correlations(self, level: str = "version") -> pd.DataFrame:
+    def correlations(
+        self,
+        level: str = "version",
+        file_extension: str | None = None,
+    ) -> pd.DataFrame:
         """Calculate the same correlation/model table as correlation.py for a level."""
         level_name = normalize_level(level)
         df = self._metrics_for_level(level_name)
+        df = _filter_file_extension(df, file_extension)
         result = correlation.spearman_for_metric_language(
             df, LOC_METRIC_BY_LEVEL[level_name], level_name
         )
@@ -560,8 +649,11 @@ class MetricsData:
         value: float | None = None,
         op: Literal["==", "=", "!=", "<", "<=", ">", ">="] = "==",
         language: str | Language | None = None,
+        version: int | Literal["all"] | None = None,
         random: bool = False,
         seed: int | None = 0,
+        distribute_by_project: bool = False,
+        file_extension: str | None = None,
         columns: list[str] | None = None,
         url_col: str = "github_url",
     ) -> pd.DataFrame:
@@ -574,8 +666,11 @@ class MetricsData:
             value=value,
             op=op,
             language=language,
+            version=version,
             random=random,
             seed=seed,
+            distribute_by_project=distribute_by_project,
+            file_extension=file_extension,
             columns=sample_columns,
         )
         rows = self.with_github_urls(
@@ -583,6 +678,285 @@ class MetricsData:
         )
         print_urls(rows, url_col=url_col)
         return rows
+
+    def sample_median_urls_by_language(
+        self,
+        count: int = 20,
+        metric: str = "function_length",
+        level: str = "function",
+        input_index: int = 10,
+        languages: list[str | Language] | None = None,
+        random: bool = False,
+        seed: int | None = 0,
+        file_extension: str | None = None,
+        columns: list[str] | None = None,
+        url_col: str = "github_url",
+    ) -> pd.DataFrame:
+        """Sample median rows per language, add GitHub URLs, print them, and return rows."""
+        sample_columns = _columns_for_url_generation(columns)
+        rows = self.sample_median_by_language(
+            count=count,
+            metric=metric,
+            level=level,
+            input_index=input_index,
+            languages=languages,
+            random=random,
+            seed=seed,
+            file_extension=file_extension,
+            columns=sample_columns,
+        )
+        rows = self.with_github_urls(
+            rows, resolve_refs=True, strict=True, url_col=url_col
+        )
+        print_urls(rows, url_col=url_col)
+        return rows
+
+    def file_loc_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        file_extension: str | None = None,
+    ) -> pd.DataFrame:
+        """Join file-level lines_of_code to file change counts."""
+        return self._file_metric_change_counts(
+            correlation.LOC_METRIC_FILE,
+            "lines_of_code",
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+
+    def file_cyclomatic_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        file_extension: str | None = None,
+    ) -> pd.DataFrame:
+        """Join file-level total_cyclomatic to file change counts."""
+        return self._file_metric_change_counts(
+            "total_cyclomatic",
+            "total_cyclomatic",
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+
+    def _file_metric_change_counts(
+        self,
+        metric_key: str,
+        value_col: str,
+        change_counts: pd.DataFrame | None,
+        language: str | Language | None,
+        version: int | Literal["latest", "all"],
+        file_extension: str | None,
+    ) -> pd.DataFrame:
+        change_counts = (
+            change_counts
+            if change_counts is not None
+            else load_file_change_counts(self.root)
+        )
+        metric_rows = self.raw_metrics[
+            (self.raw_metrics[correlation.METRIC_LEVEL_COL] == "file")
+            & (self.raw_metrics[correlation.METRIC_KEY] == metric_key)
+        ].copy()
+        metric_rows = _filter_file_extension(metric_rows, file_extension)
+        change_counts = _filter_file_extension(change_counts, file_extension)
+
+        if language is not None:
+            language_query = _normalize(_language_value(language))
+            metric_rows = metric_rows[
+                metric_rows[correlation.LANGUAGE_COL].map(_normalize) == language_query
+            ]
+            if correlation.LANGUAGE_COL in change_counts.columns:
+                change_counts = change_counts[
+                    change_counts[correlation.LANGUAGE_COL].map(_normalize)
+                    == language_query
+                ]
+
+        metric_codebases = set(metric_rows["codebase_id"].dropna())
+        change_count_codebases = set(change_counts["codebase_id"].dropna())
+        missing_from_change_counts = sorted(metric_codebases - change_count_codebases)
+        missing_from_metric = sorted(change_count_codebases - metric_codebases)
+        if missing_from_change_counts or missing_from_metric:
+            scope = f" for {_language_value(language)}" if language is not None else ""
+            details = []
+            if missing_from_change_counts:
+                details.append(
+                    "missing from file change counts: "
+                    + ", ".join(missing_from_change_counts)
+                )
+            if missing_from_metric:
+                details.append(
+                    f"missing from file {metric_key} metrics: "
+                    + ", ".join(missing_from_metric)
+                )
+            raise ValueError("codebase mismatch" + scope + "; " + "; ".join(details))
+
+        metric_rows = metric_rows.rename(columns={correlation.VALUE_COL: value_col})
+        metric_rows[value_col] = pd.to_numeric(metric_rows[value_col], errors="coerce")
+        metric_rows = metric_rows.dropna(subset=["codebase_id", "file_path", value_col])
+
+        version_col = (
+            "version_number"
+            if "version_number" in metric_rows.columns
+            else correlation.VERSION_COL
+        )
+        if version == "latest":
+            metric_rows[version_col] = pd.to_numeric(
+                metric_rows[version_col], errors="coerce"
+            )
+            metric_rows = metric_rows.sort_values(version_col).drop_duplicates(
+                ["codebase_id", "file_path"], keep="last"
+            )
+        elif version != "all":
+            metric_rows[version_col] = pd.to_numeric(
+                metric_rows[version_col], errors="coerce"
+            )
+            metric_rows = metric_rows[metric_rows[version_col] == version]
+
+        cols = [
+            col
+            for col in [
+                "codebase_id",
+                "codebase_name",
+                correlation.LANGUAGE_COL,
+                "version_id",
+                "version_number",
+                "sample_number",
+                "file_path",
+                value_col,
+            ]
+            if col in metric_rows.columns
+        ]
+        joined = metric_rows[cols].merge(
+            change_counts[["codebase_id", "file_path", "change_count"]],
+            on=["codebase_id", "file_path"],
+            how="inner",
+        )
+        joined["change_count"] = pd.to_numeric(joined["change_count"], errors="coerce")
+        return joined.dropna(subset=[value_col, "change_count"]).reset_index(drop=True)
+
+    def file_loc_change_correlation(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        file_extension: str | None = None,
+    ) -> dict[str, float]:
+        """Return Pearson and Spearman correlation between LOC and change count."""
+        paired = self.file_loc_change_counts(
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+        return loc_change_correlation(paired)
+
+    def file_cyclomatic_change_correlation(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        file_extension: str | None = None,
+    ) -> dict[str, float]:
+        """Return Pearson and Spearman correlation between cyclomatic and change count."""
+        paired = self.file_cyclomatic_change_counts(
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+        return metric_change_correlation(paired, "total_cyclomatic")
+
+    def plot_file_loc_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        log: bool = False,
+        alpha: float = 0.25,
+        s: float = 10,
+        file_extension: str | None = None,
+    ) -> plt.Axes:
+        """Plot file lines_of_code against lifetime file change_count."""
+        paired = self.file_loc_change_counts(
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+        ax = plt.subplots(figsize=(8, 5))[1]
+        plot_data = paired
+        if log:
+            plot_data = paired[
+                (paired["lines_of_code"] > 0) & (paired["change_count"] > 0)
+            ]
+        ax.scatter(
+            plot_data["lines_of_code"], plot_data["change_count"], alpha=alpha, s=s
+        )
+        if log:
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+        stats = loc_change_correlation(plot_data)
+        title = (
+            f"File change count vs lines_of_code, version={version} (n={stats['n']})"
+        )
+        if language is not None:
+            title += f" - {_language_value(language)}"
+        title += f"\nSpearman r={stats['spearman_r']:.3f}, Pearson r={stats['pearson_r']:.3f}"
+        ax.set_title(title)
+        ax.set_xlabel("lines_of_code")
+        ax.set_ylabel("change_count")
+        ax.grid(True, alpha=0.25)
+        ax.figure.tight_layout()
+        return ax
+
+    def plot_file_cyclomatic_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        language: str | Language | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        log: bool = False,
+        alpha: float = 0.25,
+        s: float = 10,
+        file_extension: str | None = None,
+    ) -> plt.Axes:
+        """Plot file total_cyclomatic against lifetime file change_count."""
+        paired = self.file_cyclomatic_change_counts(
+            change_counts=change_counts,
+            language=language,
+            version=version,
+            file_extension=file_extension,
+        )
+        ax = plt.subplots(figsize=(8, 5))[1]
+        plot_data = paired
+        if log:
+            plot_data = paired[
+                (paired["total_cyclomatic"] > 0) & (paired["change_count"] > 0)
+            ]
+        ax.scatter(
+            plot_data["total_cyclomatic"], plot_data["change_count"], alpha=alpha, s=s
+        )
+        if log:
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+        stats = metric_change_correlation(plot_data, "total_cyclomatic")
+        title = (
+            f"File change count vs total_cyclomatic, version={version} (n={stats['n']})"
+        )
+        if language is not None:
+            title += f" - {_language_value(language)}"
+        title += f"\nSpearman r={stats['spearman_r']:.3f}, Pearson r={stats['pearson_r']:.3f}"
+        ax.set_title(title)
+        ax.set_xlabel("total_cyclomatic")
+        ax.set_ylabel("change_count")
+        ax.grid(True, alpha=0.25)
+        ax.figure.tight_layout()
+        return ax
 
     def resolve_metric(self, query: str, level: str | None = None) -> str:
         """Resolve a metric key from a key, label, or human-ish search string."""
@@ -643,7 +1017,7 @@ def load_data(root: str | Path = ".") -> MetricsData:
     raw_paths = sorted(
         path
         for path in root.glob("metrics*.csv")
-        if path.stem == "metrics" or path.stem.removeprefix("metrics").isdigit()
+        if path.stem.removeprefix("metrics").isdigit()
     )
     raw_metrics = correlation.load_raw_metrics(raw_paths)
     version_metrics = correlation.load_metrics_csv(root / "version-metrics.csv")
@@ -668,6 +1042,16 @@ def sample(*args, **kwargs) -> pd.DataFrame:
 def sample_urls(*args, **kwargs) -> pd.DataFrame:
     """Convenience shortcut for data().sample_urls(...)."""
     return data().sample_urls(*args, **kwargs)
+
+
+def sample_median_by_language(*args, **kwargs) -> pd.DataFrame:
+    """Convenience shortcut for data().sample_median_by_language(...)."""
+    return data().sample_median_by_language(*args, **kwargs)
+
+
+def sample_median_urls_by_language(*args, **kwargs) -> pd.DataFrame:
+    """Convenience shortcut for data().sample_median_urls_by_language(...)."""
+    return data().sample_median_urls_by_language(*args, **kwargs)
 
 
 def plot_model(*args, **kwargs) -> plt.Axes:
@@ -698,6 +1082,36 @@ def plot_function_spread_to_loc(*args, **kwargs) -> plt.Figure:
 def plot_go_ocaml_function_spread_to_loc(*args, **kwargs) -> plt.Figure:
     """Convenience shortcut for data().plot_go_ocaml_function_spread_to_loc(...)."""
     return data().plot_go_ocaml_function_spread_to_loc(*args, **kwargs)
+
+
+def file_loc_change_counts(*args, **kwargs) -> pd.DataFrame:
+    """Convenience shortcut for data().file_loc_change_counts(...)."""
+    return data().file_loc_change_counts(*args, **kwargs)
+
+
+def file_cyclomatic_change_counts(*args, **kwargs) -> pd.DataFrame:
+    """Convenience shortcut for data().file_cyclomatic_change_counts(...)."""
+    return data().file_cyclomatic_change_counts(*args, **kwargs)
+
+
+def file_loc_change_correlation(*args, **kwargs) -> dict[str, float]:
+    """Convenience shortcut for data().file_loc_change_correlation(...)."""
+    return data().file_loc_change_correlation(*args, **kwargs)
+
+
+def file_cyclomatic_change_correlation(*args, **kwargs) -> dict[str, float]:
+    """Convenience shortcut for data().file_cyclomatic_change_correlation(...)."""
+    return data().file_cyclomatic_change_correlation(*args, **kwargs)
+
+
+def plot_file_loc_change_counts(*args, **kwargs) -> plt.Axes:
+    """Convenience shortcut for data().plot_file_loc_change_counts(...)."""
+    return data().plot_file_loc_change_counts(*args, **kwargs)
+
+
+def plot_file_cyclomatic_change_counts(*args, **kwargs) -> plt.Axes:
+    """Convenience shortcut for data().plot_file_cyclomatic_change_counts(...)."""
+    return data().plot_file_cyclomatic_change_counts(*args, **kwargs)
 
 
 def metric_names(level: str | None = None) -> pd.DataFrame:
@@ -739,6 +1153,95 @@ def with_github_urls(
         for (_, row), row_ref in zip(result.iterrows(), row_refs, strict=False)
     ]
     return result
+
+
+def load_file_change_counts(root: str | Path = ".") -> pd.DataFrame:
+    """Load file-change-count CSVs and normalize file_path/change_count columns."""
+    root = Path(root)
+    paths = sorted(root.glob("file-change-counts*.csv"))
+    if not paths:
+        raise ValueError(f"no file-change-counts*.csv files found in {root}")
+
+    frames = []
+    for path in paths:
+        df = pd.read_csv(path)
+        required = {"codebase_id", "file", "change_count"}
+        missing = required - set(df.columns)
+        if missing:
+            raise ValueError(
+                f"CSV {path} is missing required columns: " + ", ".join(sorted(missing))
+            )
+        df = df.rename(columns={"file": "file_path"})
+        df["change_count"] = pd.to_numeric(df["change_count"], errors="coerce")
+        df = df.dropna(subset=["codebase_id", "file_path", "change_count"])
+        path_words = set(_normalize(path.stem).split())
+        language = None
+        if "go" in path_words:
+            language = "Golang"
+        elif "ocaml" in path_words:
+            language = "Ocaml"
+        if language is not None:
+            df[correlation.LANGUAGE_COL] = language
+        frames.append(
+            df[
+                [
+                    col
+                    for col in [
+                        "codebase_id",
+                        "file_path",
+                        "change_count",
+                        correlation.LANGUAGE_COL,
+                    ]
+                    if col in df.columns
+                ]
+            ]
+        )
+
+    if not frames:
+        return pd.DataFrame(columns=["codebase_id", "file_path", "change_count"])
+    return pd.concat(frames, ignore_index=True)
+
+
+def loc_change_correlation(df: pd.DataFrame) -> dict[str, float]:
+    """Calculate LOC/change_count Pearson and Spearman correlations."""
+    return metric_change_correlation(df, "lines_of_code")
+
+
+def metric_change_correlation(df: pd.DataFrame, metric_col: str) -> dict[str, float]:
+    """Calculate metric/change_count Pearson and Spearman correlations."""
+    required = {metric_col, "change_count"}
+    missing = required - set(df.columns)
+    if missing:
+        raise ValueError(
+            "correlation dataframe is missing column(s): " + ", ".join(sorted(missing))
+        )
+
+    paired = df[[metric_col, "change_count"]].dropna()
+    paired = paired[
+        np.isfinite(paired[metric_col]) & np.isfinite(paired["change_count"])
+    ]
+    if (
+        len(paired) < 3
+        or paired[metric_col].nunique() < 2
+        or paired["change_count"].nunique() < 2
+    ):
+        return {
+            "n": int(len(paired)),
+            "pearson_r": np.nan,
+            "pearson_p": np.nan,
+            "spearman_r": np.nan,
+            "spearman_p": np.nan,
+        }
+
+    pearson = correlation.stats.pearsonr(paired[metric_col], paired["change_count"])
+    spearman = correlation.stats.spearmanr(paired[metric_col], paired["change_count"])
+    return {
+        "n": int(len(paired)),
+        "pearson_r": float(pearson.statistic),
+        "pearson_p": float(pearson.pvalue),
+        "spearman_r": float(spearman.statistic),
+        "spearman_p": float(spearman.pvalue),
+    }
 
 
 def print_urls(df: pd.DataFrame, url_col: str = "github_url") -> None:
@@ -801,9 +1304,7 @@ def _github_refs(
     return pd.Series(["HEAD"] * len(df), index=df.index)
 
 
-def _resolve_row_ref(
-    row: pd.Series, strict: bool, sourcery_db: str | Path
-) -> str:
+def _resolve_row_ref(row: pd.Series, strict: bool, sourcery_db: str | Path) -> str:
     codebase_id = row.get("codebase_id")
     if _is_blank(codebase_id):
         if strict:
@@ -940,6 +1441,47 @@ def _filter_value(
     if op == ">=":
         return df[values >= value]
     raise ValueError(f"unknown operator {op!r}")
+
+
+def _filter_file_extension(
+    df: pd.DataFrame,
+    file_extension: str | None,
+) -> pd.DataFrame:
+    if file_extension is None:
+        return df
+    if "file_path" not in df.columns:
+        raise ValueError("cannot filter by file extension; dataframe is missing file_path")
+
+    extension = str(file_extension).strip()
+    if not extension:
+        return df
+    if not extension.startswith("."):
+        extension = f".{extension}"
+
+    return df[df["file_path"].fillna("").astype(str).str.endswith(extension)].copy()
+
+
+def _sample_evenly_by_project(
+    df: pd.DataFrame, count: int, random: bool, seed: int | None
+) -> pd.DataFrame:
+    if "codebase_id" not in df.columns:
+        raise ValueError("cannot distribute sample by project; dataframe is missing codebase_id")
+
+    count = min(count, len(df))
+    if count <= 0:
+        return df.head(0)
+
+    if random:
+        df = df.sample(frac=1, random_state=seed)
+
+    sampled = df.copy()
+    sampled["_project_rank"] = sampled.groupby("codebase_id", dropna=False).cumcount()
+    sampled["_project_order"] = sampled.groupby("codebase_id", dropna=False).ngroup()
+    return (
+        sampled.sort_values(["_project_rank", "_project_order"])
+        .head(count)
+        .drop(columns=["_project_rank", "_project_order"])
+    )
 
 
 def _best_model_name(model_results: dict[str, float]) -> str:

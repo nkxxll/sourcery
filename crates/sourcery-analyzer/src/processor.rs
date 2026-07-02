@@ -6,6 +6,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use ecow::EcoString;
+use serde_json::json;
 use sourcery_lsp_client::{Position, Range as LspRange, SharedSocket, decode_document_text};
 use tracing::{debug, info, warn};
 use tree_sitter::{Node, Tree};
@@ -383,7 +384,10 @@ impl<'processor> Processor<'processor> {
     }
 
     /// filters inline comments automatically
-    fn comment_lines_in_span_that_are_not_inline(function_span: CodeLineSpan, comments: &[CommentAnalysis]) -> u64 {
+    fn comment_lines_in_span_that_are_not_inline(
+        function_span: CodeLineSpan,
+        comments: &[CommentAnalysis],
+    ) -> u64 {
         comments
             .iter()
             .filter_map(|comment| {
@@ -460,7 +464,7 @@ pub struct FunctionAnalysis {
     pub function_length: usize,
     pub cyclomatic: u64,
     pub cyclomatic_match_as_single_branch: u64,
-    pub functions_called: Vec<FunctionCall>,
+    pub syntax_function_calls: Vec<FunctionCall>,
     pub references: Vec<FunctionCall>,
     pub enriched_calls: Vec<FunctionCall>,
     pub halstead: Option<HalsteadMetrics>,
@@ -521,6 +525,17 @@ pub struct FunctionCall {
     pub name: EcoString,
     pub pos: CodePosition,
     pub file: PathBuf,
+}
+
+impl FunctionCall {
+    pub fn to_json(&self) -> serde_json::Value {
+        json!({
+            "name": self.name.to_string(),
+            "file": self.file.display().to_string(),
+            "line": self.pos.line,
+            "column": self.pos.column,
+        })
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -599,11 +614,25 @@ impl Analysis {
             self.effective_lines_of_code
         ));
         res.push_str(&format!("total_cyclomatic: {}\n", self.total_cyclomatic));
+        res.push_str(&format!("total_halstead: {}\n", self.total_halstead));
+        if let Some(mi) = self.maintainability_index {
+            res.push_str(&format!(
+                "maintainability_index: three_property={:.3} four_property={:.3} visual_studio={:.3} comment_percentage={:.3}\n",
+                mi.three_property, mi.four_property, mi.visual_studio, mi.comment_percentage,
+            ));
+        } else {
+            res.push_str("maintainability_index: None\n");
+        }
 
         res.push_str("functions:\n");
         res.push_str(&self.print_call_graph());
         for function in &self.functions {
             let name = &function.function_name;
+            let outdegree = function.syntax_function_calls.len();
+            let unique_outdegree = count_unique_call_names(&function.syntax_function_calls);
+            let indegree = function.references.len();
+            let unique_indegree = count_unique_call_names(&function.references);
+            let unresolved_calls = unresolved_syntax_calls(function);
             res.push_str(&format!(
                 "  - {}:{}..{} length={} cyclomatic={} cyclomatic_match_as_single_branch={}\n",
                 name,
@@ -613,13 +642,50 @@ impl Analysis {
                 function.cyclomatic,
                 function.cyclomatic_match_as_single_branch,
             ));
+            res.push_str(&format!(
+                "    definition_position_range: start={}:{} end={}:{}\n",
+                function.definition_position_range.start.line,
+                function.definition_position_range.start.column,
+                function.definition_position_range.end.line,
+                function.definition_position_range.end.column,
+            ));
+            res.push_str(&format!(
+                "    indegree={} unique_indegree={} outdegree={} unique_outdegree={}\n",
+                indegree, unique_indegree, outdegree, unique_outdegree,
+            ));
             if let Some(halstead) = function.halstead {
                 res.push_str(&format!("    halstead: {halstead}\n"));
+            } else {
+                res.push_str("    halstead: None\n");
+            }
+            if let Some(mi) = function.maintainability_index {
+                res.push_str(&format!(
+                    "    maintainability_index: three_property={:.3} four_property={:.3} visual_studio={:.3} comment_percentage={:.3}\n",
+                    mi.three_property, mi.four_property, mi.visual_studio, mi.comment_percentage,
+                ));
+            } else {
+                res.push_str("    maintainability_index: None\n");
             }
             res.push_str(&format!(
                 "    function_arguments: {:?}\n",
                 function.function_arguments
             ));
+            append_function_call_list(
+                &mut res,
+                "syntax_function_calls",
+                &function.syntax_function_calls,
+            );
+            append_function_call_list(
+                &mut res,
+                "function_calls_with_lsp_definition",
+                &function.enriched_calls,
+            );
+            append_function_call_list(
+                &mut res,
+                "function_calls_without_lsp_definition",
+                &unresolved_calls,
+            );
+            append_function_call_list(&mut res, "references", &function.references);
         }
 
         res.push_str("comments:\n");
@@ -658,7 +724,7 @@ impl Analysis {
             let line = function.definition_position_range.start.line;
             let column = function.definition_position_range.start.column;
             let calls = if function.enriched_calls.is_empty() {
-                &function.functions_called
+                &function.syntax_function_calls
             } else {
                 &function.enriched_calls
             };
@@ -674,6 +740,47 @@ impl Analysis {
         }
         res.push_str("}\n\n");
         res
+    }
+}
+
+fn count_unique_call_names(calls: &[FunctionCall]) -> usize {
+    calls
+        .iter()
+        .map(|call| call.name.as_str())
+        .collect::<HashSet<_>>()
+        .len()
+}
+
+fn unresolved_syntax_calls(function: &FunctionAnalysis) -> Vec<FunctionCall> {
+    let mut resolved_counts: HashMap<&str, usize> = HashMap::new();
+    for call in &function.enriched_calls {
+        *resolved_counts.entry(call.name.as_str()).or_default() += 1;
+    }
+
+    let mut unresolved = Vec::new();
+    for call in &function.syntax_function_calls {
+        if let Some(count) = resolved_counts.get_mut(call.name.as_str()) {
+            *count -= 1;
+            if *count == 0 {
+                resolved_counts.remove(call.name.as_str());
+            }
+        } else {
+            unresolved.push(call.clone());
+        }
+    }
+    unresolved
+}
+
+fn append_function_call_list(res: &mut String, label: &str, calls: &[FunctionCall]) {
+    res.push_str(&format!("    {label}: count={}\n", calls.len()));
+    for call in calls {
+        res.push_str(&format!(
+            "      - name={:?} file={} line={} column={}\n",
+            call.name,
+            call.file.display(),
+            call.pos.line,
+            call.pos.column,
+        ));
     }
 }
 
@@ -1387,7 +1494,7 @@ impl<'processor> AstProcessor<'processor> {
             );
             let mut ref_socket = socket.clone();
             let call_positions = fa
-                .functions_called
+                .syntax_function_calls
                 .iter()
                 .map(|f| (f.name.clone(), f.pos.to_lsp_position()));
             let function_line = range.start.line + 1;
@@ -1670,7 +1777,7 @@ impl<'processor> AstProcessor<'processor> {
                 function_length: definition_line_span.line_length(),
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
-                functions_called: Vec::new(),
+                syntax_function_calls: Vec::new(),
                 references: Vec::new(),
                 enriched_calls: Vec::new(),
                 halstead: None,
@@ -1734,7 +1841,7 @@ impl<'processor> AstProcessor<'processor> {
             function.cyclomatic = frame.cyclomatic_counts.cyclomatic();
             function.cyclomatic_match_as_single_branch =
                 frame.cyclomatic_counts.cyclomatic_match_as_single_branch();
-            function.functions_called = frame.function_calls;
+            function.syntax_function_calls = frame.function_calls;
             debug!("function arguments are: {:?}", frame.function_arguments);
             function.function_arguments = frame.function_arguments;
         }
@@ -2009,7 +2116,7 @@ let run value =
         let ast_processor = AstProcessor::new(&profile, source, file, uri);
 
         let analysis = processor.analyze(&ast_processor).unwrap();
-        let call = &analysis.functions[0].functions_called[0];
+        let call = &analysis.functions[0].syntax_function_calls[0];
 
         assert_eq!(call.name.as_ref(), "helper");
         assert_eq!(call.pos.line, 3);
@@ -2066,7 +2173,8 @@ let run value =
             end_line: 8,
         };
 
-        let comment_lines = Processor::comment_lines_in_span_that_are_not_inline(function_span, &comments);
+        let comment_lines =
+            Processor::comment_lines_in_span_that_are_not_inline(function_span, &comments);
 
         assert_eq!(comment_lines, 2);
     }
@@ -2347,7 +2455,7 @@ func main() {
                 function_length: 3,
                 cyclomatic: 1,
                 cyclomatic_match_as_single_branch: 1,
-                functions_called: vec![],
+                syntax_function_calls: vec![],
                 references: vec![],
                 enriched_calls: vec![],
                 halstead: Some(HalsteadMetrics::from_counts(1, 2, 3, 4)),

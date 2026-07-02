@@ -1,0 +1,16 @@
+/target
+/test_fixtures
+mindloom/*
+analytics/*
+.env
+**/__pycache__/**
+stats.txt
+toanalyze
+
+_opam
+bin
+app.log
+
+.envrc
+
+**/metrics*.csv

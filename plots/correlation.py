@@ -34,7 +34,7 @@ def raw_metrics_csv_paths() -> list[Path]:
     return sorted(
         path
         for path in Path(".").glob("metrics*.csv")
-        if path.stem == "metrics" or path.stem.removeprefix("metrics").isdigit()
+        if path.stem.removeprefix("metrics").isdigit()
     )
 
 

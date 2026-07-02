@@ -4,6 +4,8 @@ members = [
     "crates/sourcery-analyzer",
     "crates/sourcery-web",
     "crates/sourcery-lsp-client",
+    "crates/sourcery-change-count",
+    "crates/sourcery-callgraph-dabble",
 ]
 default-members = ["crates/sourcery-db", "crates/sourcery-analyzer"]
 resolver = "2"

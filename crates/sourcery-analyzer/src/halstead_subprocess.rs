@@ -270,7 +270,7 @@ mod tests {
             function_length: 1,
             cyclomatic: 0,
             cyclomatic_match_as_single_branch: 0,
-            functions_called: vec![],
+            syntax_function_calls: vec![],
             references: vec![],
             enriched_calls: vec![],
             halstead: None,

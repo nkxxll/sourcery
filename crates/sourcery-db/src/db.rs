@@ -293,6 +293,20 @@ pub async fn list_codebases(pool: &PgPool) -> Result<Vec<Codebase>> {
     Ok(rows)
 }
 
+pub async fn list_codebases_by_commit(pool: &PgPool, commit_hash: &str) -> Result<Vec<Codebase>> {
+    let rows = sqlx::query_as::<_, Codebase>(
+        "SELECT DISTINCT c.*
+         FROM codebases c
+         JOIN versions v ON v.codebase_id = c.id
+         WHERE v.commit_hash = $1
+         ORDER BY c.created_at",
+    )
+    .bind(commit_hash)
+    .fetch_all(pool)
+    .await?;
+    Ok(rows)
+}
+
 pub async fn list_codebases_grouped_by_language(
     pool: &PgPool,
 ) -> Result<BTreeMap<String, Vec<Codebase>>> {
@@ -593,7 +607,9 @@ pub async fn list_analysis_metric_samples(
                 NULL::integer AS function_end_line,
                 CASE
                     WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
+                    WHEN $3 = 'mean_unique_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'unique_outdegree')::double precision), 0)
                     WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
+                    WHEN $3 = 'mean_unique_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'unique_indegree')::double precision), 0)
                     WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
                     WHEN $3 = 'maintainability_index_three_property' THEN max((fs.metrics #>> '{maintainability_index,three_property}')::double precision)
                     WHEN $3 = 'maintainability_index_four_property' THEN max((fs.metrics #>> '{maintainability_index,four_property}')::double precision)
@@ -636,7 +652,9 @@ pub async fn list_analysis_metric_samples(
                 NULL::integer AS function_end_line,
                 CASE
                     WHEN $3 = 'mean_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'outdegree')::double precision), 0)
+                    WHEN $3 = 'mean_unique_outdegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'unique_outdegree')::double precision), 0)
                     WHEN $3 = 'mean_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'indegree')::double precision), 0)
+                    WHEN $3 = 'mean_unique_indegree_per_file' THEN COALESCE(avg((fn.metrics ->> 'unique_indegree')::double precision), 0)
                     WHEN $3 = 'mean_cyclomatic_per_function_per_file' THEN COALESCE(avg((fn.metrics ->> 'cyclomatic')::double precision), 0)
                     WHEN $3 = 'maintainability_index_three_property' THEN max((f.metrics #>> '{maintainability_index,three_property}')::double precision)
                     WHEN $3 = 'maintainability_index_four_property' THEN max((f.metrics #>> '{maintainability_index,four_property}')::double precision)

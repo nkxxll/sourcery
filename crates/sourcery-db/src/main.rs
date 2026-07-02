@@ -74,7 +74,12 @@ const ANALYSIS_METRICS: &[(&str, &str)] = &[
     ),
     ("total_halstead_bugs", "Total Halstead Bugs/File"),
     ("mean_outdegree_per_file", "Mean Outdegree/File"),
+    (
+        "mean_unique_outdegree_per_file",
+        "Mean Unique Outdegree/File",
+    ),
     ("mean_indegree_per_file", "Mean Indegree/File"),
+    ("mean_unique_indegree_per_file", "Mean Unique Indegree/File"),
     (
         "mean_cyclomatic_per_function_per_file",
         "Mean Function Cyclomatic/File",
@@ -86,7 +91,9 @@ const ANALYSIS_METRICS: &[(&str, &str)] = &[
         "Function Cyclomatic Match As Single Branch",
     ),
     ("indegree", "Function Indegree"),
+    ("unique_indegree", "Function Unique Indegree"),
     ("outdegree", "Function Outdegree"),
+    ("unique_outdegree", "Function Unique Outdegree"),
     (
         "halstead_unique_operators",
         "Function Halstead Unique Operators",
@@ -564,7 +571,9 @@ async fn main() -> anyhow::Result<()> {
             codebase_ids,
             outfile,
         } => {
-            let codebase_ids = codebase_ids.into_iter().map(|c| Uuid::parse_str(&c).expect("codebase id should be parsable as uuid"));
+            let codebase_ids = codebase_ids
+                .into_iter()
+                .map(|c| Uuid::parse_str(&c).expect("codebase id should be parsable as uuid"));
             let mut writer = BufWriter::new(File::create(outfile)?);
             writeln!(
                 writer,

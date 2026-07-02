@@ -11,7 +11,7 @@ use ecow::EcoString;
 use git2::Oid;
 use regex::Regex;
 use serde_json::json;
-use sourcery_db::{Codebase, PgPool};
+use sourcery_db::{Codebase, File, PgPool};
 use sourcery_lsp_client::Server;
 use std::sync::OnceLock;
 use tokio::{sync::Semaphore, task::JoinSet};
@@ -762,17 +762,8 @@ async fn analyze_and_store_changed_files(
     Ok(metrics_by_path)
 }
 
-async fn store_file_analysis(
-    pool: &PgPool,
-    version: &db::Version,
-    file_path: &EcoString,
-    language: &ProgrammingLanguage,
-    analysis: &Analysis,
-    source: &str,
-    newline_map: &NewLineMap,
-) -> Result<StoredFileAnalysis> {
-    let language_name = format!("{language:?}").to_ascii_lowercase();
-    let file_metrics = FileMetrics {
+fn build_file_metrics(analysis: &Analysis) -> FileMetrics {
+    FileMetrics {
         lines_of_code: analysis.lines_of_code,
         effective_lines_of_code_with_brackets: analysis.effective_lines_of_code_with_brackets,
         effective_lines_of_code: analysis.effective_lines_of_code,
@@ -781,7 +772,18 @@ async fn store_file_analysis(
         total_cyclomatic: analysis.total_cyclomatic,
         total_halstead: analysis.total_halstead,
         maintainability_index: analysis.maintainability_index,
-    };
+    }
+}
+async fn inser_file_metrics_delete_old_functions(
+    pool: &PgPool,
+    language: &ProgrammingLanguage,
+    version: &db::Version,
+    file_path: &EcoString,
+    analysis: &Analysis,
+) -> Result<(File, FileMetrics)> {
+    let language_name = format!("{language:?}").to_ascii_lowercase();
+    let file_metrics = build_file_metrics(analysis);
+
     let file = db::insert_file(
         pool,
         version.id,
@@ -791,16 +793,49 @@ async fn store_file_analysis(
     )
     .await?;
     db::delete_functions_by_file(pool, file.id).await?;
+    Ok((file, file_metrics))
+}
 
+fn build_unique_function_calls(syntax_function_calls: &[FunctionCall]) -> Vec<FunctionCall> {
+    let mut unique_calls_map = BTreeMap::new();
+
+    for call in syntax_function_calls {
+        unique_calls_map.insert(call.name.clone(), call);
+    }
+    unique_calls_map.into_values().cloned().collect()
+}
+
+async fn store_file_analysis(
+    pool: &PgPool,
+    version: &db::Version,
+    file_path: &EcoString,
+    language: &ProgrammingLanguage,
+    analysis: &Analysis,
+    source: &str,
+    newline_map: &NewLineMap,
+) -> Result<StoredFileAnalysis> {
+    let (file, file_metrics) =
+        inser_file_metrics_delete_old_functions(pool, language, version, file_path, analysis)
+            .await?;
     for func in &analysis.functions {
-        let calls = graph_function_calls(func);
-        let functions_called: Vec<String> = calls
-            .iter()
-            .map(|call| call.name.clone())
-            .collect::<BTreeSet<_>>()
-            .into_iter()
-            .collect();
-        let function_calls: Vec<serde_json::Value> = calls
+        let syntax_calls = &func.syntax_function_calls;
+        let lsp_calls = &func.enriched_calls;
+        let lsp_references = &func.references;
+
+        let outdegree: u64 = u64::try_from(syntax_calls.len()).expect("outdegree bigger than u64");
+
+        let unique_calls: Vec<FunctionCall> = build_unique_function_calls(syntax_calls);
+
+        let unique_outdegree: u64 =
+            u64::try_from(unique_calls.len()).expect("outdegree bigger than u64");
+
+        //
+        // these are the unique function calls with the information whether they have been resoved
+        // by lsp or not
+        //
+        let calls_with_found_definition = graph_function_calls(func);
+
+        let calls_with_found_definition_json: Vec<serde_json::Value> = calls_with_found_definition
             .iter()
             .map(|call| {
                 json!({
@@ -812,54 +847,34 @@ async fn store_file_analysis(
                 })
             })
             .collect();
-        let syntax_function_calls: Vec<serde_json::Value> = func
-            .functions_called
-            .iter()
-            .map(|call| {
-                json!({
-                    "name": call.name.to_string(),
-                    "file": call.file.display().to_string(),
-                    "line": call.pos.line,
-                    "column": call.pos.column,
-                })
-            })
-            .collect();
-        // @TODO
-        let outdegree = u64::try_from(functions_called.len()).context("outdegree exceeds u64")?;
 
-        let references: Vec<serde_json::Value> = analysis
-            .functions
+        let syntax_function_calls: Vec<serde_json::Value> = func
+            .syntax_function_calls
             .iter()
-            .filter(|candidate| candidate.function_name != func.function_name)
-            .filter(|candidate| {
-                graph_function_calls(candidate)
-                    .into_iter()
-                    .any(|called| called.name == func.function_name)
-            })
-            .map(|candidate| {
-                let line = candidate.definition_position_range.start.line;
-                let column = candidate.definition_position_range.start.column;
-                let name = candidate.function_name.to_string();
-                let file = file_path.to_string();
-                let key = format!("{file}:{line}:{column}:{name}");
-                (
-                    key,
-                    json!({
-                        "name": name,
-                        "file": file,
-                        "line": line,
-                        "column": column,
-                    }),
-                )
-            })
-            .collect::<BTreeMap<_, _>>()
-            .into_iter()
-            .map(|(_, reference)| reference)
+            .map(|call| call.to_json())
             .collect();
+
+        let references: Vec<serde_json::Value> = func
+            .references
+            .iter()
+            .map(|reference| reference.to_json())
+            .collect();
+
         let indegree = u64::try_from(references.len()).context("indegree exceeds u64")?;
+        let unique_indegree = lsp_references
+            .iter()
+            .map(|r| r.name.clone())
+            .collect::<BTreeSet<_>>()
+            .iter()
+            .collect::<Vec<_>>()
+            .len();
 
         // Function names may repeat by namespace, so include location.
         let unique_name = func.name.with_location(source, newline_map)?;
+
+        let lsp_calls_json: Vec<serde_json::Value> =
+            lsp_calls.iter().map(|c| c.to_json()).collect();
+
         let mut function_metrics = json!({
             "function_length": func.function_length,
             "cyclomatic": func.cyclomatic,
@@ -874,12 +889,15 @@ async fn store_file_analysis(
                     "column": func.definition_position_range.end.column,
                 },
             },
-            "functions_called": functions_called,
-            "function_calls": function_calls,
+            "functions_called": unique_calls.iter().map(|call| call.name.to_string()).collect::<Vec<String>>(),
+            "function_calls": calls_with_found_definition_json,
+            "function_calls_with_lsp_definition": lsp_calls_json,
             "syntax_function_calls": syntax_function_calls,
             "references": references,
             "indegree": indegree,
+            "unique_indegree": unique_indegree,
             "outdegree": outdegree,
+            "unique_outdegree": unique_outdegree,
             "maintainability_index": func.maintainability_index.map(|mi| mi.to_json()),
         });
         if let Some(halstead) = func.halstead {
@@ -930,7 +948,7 @@ fn graph_function_calls(function: &FunctionAnalysis) -> Vec<GraphFunctionCall> {
     }
 
     let mut unresolved_names = BTreeSet::new();
-    for call in &function.functions_called {
+    for call in &function.syntax_function_calls {
         let name = call.name.to_string();
         if enhanced_names.contains(&name) || !unresolved_names.insert(name.clone()) {
             continue;

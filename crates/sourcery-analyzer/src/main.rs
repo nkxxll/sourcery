@@ -25,7 +25,6 @@ pub enum SubCommand {
     },
     Sample {
         path: String,
-        #[arg(long, default_value = "10")]
         samples: usize,
         programming_language: Option<ProgrammingLanguage>,
     },

@@ -1,0 +1,49 @@
+=== Go
+
+Median function length: 11
+
+1. https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/internal/op/setting.go#L184-L195
+2. https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/examples/plugin/frontend-auth-exclusive/go/main.go#L122-L133
+3. https://github.com/spf13/cobra/blob/ad460ea8f249db69c943a365fb84f3a59042d54e/bash_completions.go#L683-L694
+4. https://github.com/junegunn/fzf/blob/dea72834ed35b5d56634075fc7793aa4b9b1d697/src/chunklist.go#L104-L115
+5. https://github.com/charmbracelet/bubbletea/blob/a23da80847e6fc928febc62114f761403ac5d2f1/cursed_renderer.go#L766-L777
+6. https://github.com/wagoodman/dive/blob/d6c691947f8fda635c952a17ee3b7555379d58f0/cmd/dive/cli/internal/ui/v1/view/status.go#L30-L41
+7. https://github.com/nektos/act/blob/4f411281417e88660bea1c1a1749aa71ae0bd60f/pkg/model/workflow.go#L279-L290
+8. https://github.com/go-gorm/gorm/blob/d0ee5e2296150d691364c5f4f7f2b32abde04545/statement.go#L516-L527
+9. https://github.com/gin-gonic/gin/blob/d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11/gin.go#L630-L641
+10. https://github.com/FiloSottile/mkcert/blob/d7ab78de71ad2e4d965446a6083ebb48150f0533/main.go#L345-L356
+11. https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/drivers/baidu_photo/utils.go#L244-L255
+12. https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/auth/gemini/gemini_token.go#L93-L104
+13. https://github.com/spf13/cobra/blob/ad460ea8f249db69c943a365fb84f3a59042d54e/command.go#L547-L558
+14. https://github.com/junegunn/fzf/blob/dea72834ed35b5d56634075fc7793aa4b9b1d697/src/terminal.go#L8274-L8285
+15. https://github.com/charmbracelet/bubbletea/blob/a23da80847e6fc928febc62114f761403ac5d2f1/examples/textarea/main.go#L30-L41
+16. https://github.com/wagoodman/dive/blob/d6c691947f8fda635c952a17ee3b7555379d58f0/dive/filetree/file_node.go#L125-L136
+17. https://github.com/nektos/act/blob/4f411281417e88660bea1c1a1749aa71ae0bd60f/pkg/runner/step_action_remote.go#L185-L196
+18. https://github.com/go-gorm/gorm/blob/d0ee5e2296150d691364c5f4f7f2b32abde04545/tests/joins_test.go#L467-L478
+19. https://github.com/gin-gonic/gin/blob/d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11/context_test.go#L1286-L1297
+20. https://github.com/FiloSottile/mkcert/blob/d7ab78de71ad2e4d965446a6083ebb48150f0533/cert.go#L37-L48
+
+=== OCaml
+
+Median function length: 3
+
+1. https://github.com/comby-tools/comby/blob/3b6bdff7bc3b50361b621da9db030152772e7e6b/test/common/test_integration.ml#L9-L12
+2. https://github.com/fastpack/fastpack/blob/173e0a412474baefd1f0f22597274730a74f475d/FastpackTest/Test.ml#L34-L37
+3. https://github.com/camlworks/dream/blob/2ce65e1010f2501f9319e8735eec8e1eeb676d4e/src/graphql/graphql.ml#L81-L84
+4. https://github.com/batsh-dev-team/Batsh/blob/e38abb082deb38fc2942248a4fd855a79d2a35ca/src/bash.ml#L12-L15
+5. https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/core/src/float.ml#L118-L121
+6. https://github.com/bcpierce00/unison/blob/273ec6298cd7f97f038ea8667701691c29b1b48f/src/sortri.ml#L94-L97
+7. https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/plugins/disassemble/disassemble_main.ml#L436-L439
+8. https://github.com/airbus-seclab/bincat/blob/5d0ee3b56867059427eb0f4123c4d9de0b8059dd/ocaml/src/utils/dump.ml#L16-L19
+9. https://github.com/austral/austral/blob/0962d2a8a5d77f7daacd7f696819520733f4897d/lib/TypeClasses.ml#L37-L40
+10. https://github.com/astrada/google-drive-ocamlfuse/blob/6076cd802709191528a227a9e5e0823f2c708ec8/bin/gdfuseFuse.ml#L70-L73
+11. https://github.com/comby-tools/comby/blob/3b6bdff7bc3b50361b621da9db030152772e7e6b/lib/app/vendored/patdiff/lib/src/configuration.ml#L367-L370
+12. https://github.com/camlworks/dream/blob/2ce65e1010f2501f9319e8735eec8e1eeb676d4e/src/server/router.ml#L100-L103
+13. https://github.com/batsh-dev-team/Batsh/blob/e38abb082deb38fc2942248a4fd855a79d2a35ca/src/bash_compile.ml#L241-L244
+14. https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/core/src/float_with_finite_only_serialization.ml#L29-L32
+15. https://github.com/bcpierce00/unison/blob/273ec6298cd7f97f038ea8667701691c29b1b48f/src/uigtk3.ml#L976-L979
+16. https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/lib/knowledge/bap_knowledge.ml#L2594-L2597
+17. https://github.com/airbus-seclab/bincat/blob/5d0ee3b56867059427eb0f4123c4d9de0b8059dd/ocaml/src/npk/newspeak/lowspeak.ml#L566-L569
+18. https://github.com/austral/austral/blob/0962d2a8a5d77f7daacd7f696819520733f4897d/lib/Env.ml#L629-L632
+19. https://github.com/astrada/google-drive-ocamlfuse/blob/6076cd802709191528a227a9e5e0823f2c708ec8/src/cache.ml#L58-L61
+20. https://github.com/comby-tools/comby/blob/3b6bdff7bc3b50361b621da9db030152772e7e6b/lib/app/vendored/patdiff/kernel/src/output.ml#L11-L14

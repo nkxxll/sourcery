@@ -6,6 +6,7 @@ from matplotlib.ticker import AutoMinorLocator, MaxNLocator, ScalarFormatter
 
 from core import warn
 from core import (
+    CYCLOMATIC_METRIC,
     INPUT_INDEX_COL,
     LANGUAGE_COL,
     METRIC_COL,
@@ -16,6 +17,12 @@ from core import (
 
 DEFAULT_OUTPUT_PATH = Path("metrics_over_versions.png")
 COMPARISON_LANGUAGES = ["Golang", "Ocaml"]
+CYCLOMATIC_METRICS = [
+    CYCLOMATIC_METRIC,
+    "mean_cyclomatic_per_function_per_file",
+    "cyclomatic_per_line",
+]
+OCAML_ML_ONLY_SUFFIX = " (Ocaml .ml only)"
 
 
 def plot_metric_evolution_by_version(
@@ -24,6 +31,7 @@ def plot_metric_evolution_by_version(
     output_path: Path = DEFAULT_OUTPUT_PATH,
 ) -> None:
     metric_level = chart_metric_level(df)
+    df, metric_names = add_ocaml_ml_only_cyclomatic_rows(df, metric_names, metric_level)
     languages = sorted(df[LANGUAGE_COL].dropna().unique())
     if not languages:
         raise ValueError("No languages found for line chart")
@@ -169,6 +177,54 @@ def plot_metric_evolution_by_version(
     plt.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(output_path, dpi=200, bbox_inches="tight")
     pd.DataFrame(chart_rows).to_csv(chart_data_output_path(output_path), index=False)
+
+
+def add_ocaml_ml_only_cyclomatic_rows(
+    df: pd.DataFrame,
+    metric_names: list[str],
+    metric_level: str,
+) -> tuple[pd.DataFrame, list[str]]:
+    if metric_level != "file" or "file_path" not in df.columns:
+        return df, metric_names
+
+    extra_rows = []
+    expanded_metric_names = []
+    for metric_name in metric_names:
+        expanded_metric_names.append(metric_name)
+        if metric_name not in CYCLOMATIC_METRICS:
+            continue
+
+        ml_only_rows = ocaml_ml_only_cyclomatic_df(df, metric_name).copy()
+        golang_rows = df[
+            (df[LANGUAGE_COL] == "Golang") & (df[METRIC_COL] == metric_name)
+        ].copy()
+        if ml_only_rows.empty or golang_rows.empty:
+            continue
+
+        ml_only_metric_name = f"{metric_name}{OCAML_ML_ONLY_SUFFIX}"
+        ml_only_rows[METRIC_COL] = ml_only_metric_name
+        golang_rows[METRIC_COL] = ml_only_metric_name
+        extra_rows.extend([golang_rows, ml_only_rows])
+        expanded_metric_names.append(ml_only_metric_name)
+
+    if not extra_rows:
+        return df, metric_names
+
+    return pd.concat([df, *extra_rows], ignore_index=True), expanded_metric_names
+
+
+def ocaml_ml_only_cyclomatic_df(
+    df: pd.DataFrame,
+    metric_name: str,
+) -> pd.DataFrame:
+    if "file_path" not in df.columns:
+        return df.iloc[0:0].copy()
+
+    return df[
+        (df[LANGUAGE_COL] == "Ocaml")
+        & (df[METRIC_COL] == metric_name)
+        & df["file_path"].fillna("").astype(str).str.endswith(".ml")
+    ].copy()
 
 
 def line_chart_rows(

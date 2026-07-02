@@ -1651,6 +1651,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "sourcery-change-count"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "dotenvy",
+ "git2",
+ "sourcery-db",
+ "tokio",
+]
+
+[[package]]
 name = "sourcery-db"
 version = "0.1.0"
 dependencies = [

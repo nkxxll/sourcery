@@ -1,0 +1,183 @@
+lines_of_code: 29
+blank_lines: 9
+bracket_lines_of_code: 0
+comment_lines_of_code: 0
+effective_lines_of_code_with_brackets: 20
+effective_lines_of_code: 20
+total_cyclomatic: 10
+total_halstead: unique_operators=10 unique_operands=36 operators=38 operands=79 length=117 vocabulary=46 calculated_length=219.337 volume=646.257 difficulty=10.972 effort=7090.873 time_seconds=393.937 bugs=0.215419
+maintainability_index: three_property=80.500 four_property=80.500 visual_studio=47.076 comment_percentage=0.000
+functions:
+
+
+digraph CallGraph {
+	"sum:5:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml:List.fold_left:1:1"
+	"describe:7:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:sum:5:5"
+	"describe:7:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/string.ml:String.uppercase_ascii:1:1"
+	"describe:7:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:string_of_int:265:5"
+	"repeat_add:11:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:add:3:5"
+	"repeat_add:11:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:add:3:5"
+	"repeat_add:11:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml:List.length:1:1"
+	"( ! ):15:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:not:82:10"
+	"log_if_positive:17:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:print_endline:491:5"
+	"log_if_positive:17:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:string_of_int:265:5"
+	"unused_helper:20:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/string.ml:String.trim:1:1"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:describe:7:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:print_endline:491:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:print_endline:491:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:string_of_int:265:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:repeat_add:11:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:log_if_positive:17:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml:sub:1:5"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml:ignore:228:10"
+	"run:22:5" -> "/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml:List.is_empty:1:1"
+}
+
+  - sub:1..1 length=0 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=1:5 end=1:5
+    indegree=2 unique_indegree=1 outdegree=0 unique_outdegree=0
+    halstead: unique_operators=3 unique_operands=3 operators=3 operands=5 length=8 vocabulary=6 calculated_length=9.510 volume=20.680 difficulty=2.500 effort=51.699 time_seconds=2.872 bugs=0.006893
+    maintainability_index: three_property=155.018 four_property=155.018 visual_studio=90.654 comment_percentage=0.000
+    function_arguments: []
+    syntax_function_calls: count=0
+    function_calls_with_lsp_definition: count=0
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="sub" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=1 column=5
+      - name="sub" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=26 column=20
+  - add:3..3 length=0 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=3:5 end=3:5
+    indegree=4 unique_indegree=1 outdegree=0 unique_outdegree=0
+    halstead: unique_operators=2 unique_operands=3 operators=2 operands=5 length=7 vocabulary=5 calculated_length=6.755 volume=16.253 difficulty=1.667 effort=27.089 time_seconds=1.505 bugs=0.005418
+    maintainability_index: three_property=156.271 four_property=156.271 visual_studio=91.386 comment_percentage=0.000
+    function_arguments: []
+    syntax_function_calls: count=0
+    function_calls_with_lsp_definition: count=0
+    function_calls_without_lsp_definition: count=0
+    references: count=4
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=3 column=5
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=5 column=33
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=12 column=15
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=13 column=3
+  - sum:5..5 length=0 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=5:5 end=5:5
+    indegree=2 unique_indegree=1 outdegree=1 unique_outdegree=1
+    halstead: unique_operators=1 unique_operands=6 operators=1 operands=7 length=8 vocabulary=7 calculated_length=15.510 volume=22.459 difficulty=0.583 effort=13.101 time_seconds=0.728 bugs=0.007486
+    maintainability_index: three_property=154.589 four_property=154.589 visual_studio=90.403 comment_percentage=0.000
+    function_arguments: ["add", "values"]
+    syntax_function_calls: count=1
+      - name="List.fold_left" file=test_fixtures/random_tests/test.ml line=5 column=18
+    function_calls_with_lsp_definition: count=1
+      - name="List.fold_left" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml line=1 column=1
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="sum" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=5 column=5
+      - name="sum" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=8 column=15
+  - describe:7..9 length=2 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=7:5 end=7:5
+    indegree=2 unique_indegree=1 outdegree=3 unique_outdegree=3
+    halstead: unique_operators=4 unique_operands=9 operators=6 operands=12 length=18 vocabulary=13 calculated_length=36.529 volume=66.608 difficulty=2.667 effort=177.621 time_seconds=9.868 bugs=0.022203
+    maintainability_index: three_property=131.139 four_property=131.139 visual_studio=76.689 comment_percentage=0.000
+    function_arguments: ["values", "label", "total"]
+    syntax_function_calls: count=3
+      - name="sum" file=test_fixtures/random_tests/test.ml line=8 column=15
+      - name="String.uppercase_ascii" file=test_fixtures/random_tests/test.ml line=9 column=3
+      - name="string_of_int" file=test_fixtures/random_tests/test.ml line=9 column=40
+    function_calls_with_lsp_definition: count=3
+      - name="sum" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=5 column=5
+      - name="String.uppercase_ascii" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/string.ml line=1 column=1
+      - name="string_of_int" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=265 column=5
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="describe" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=7 column=5
+      - name="describe" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=23 column=17
+  - repeat_add:11..13 length=2 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=11:5 end=11:5
+    indegree=2 unique_indegree=1 outdegree=3 unique_outdegree=2
+    halstead: unique_operators=3 unique_operands=7 operators=4 operands=13 length=17 vocabulary=10 calculated_length=24.406 volume=56.473 difficulty=2.786 effort=157.317 time_seconds=8.740 bugs=0.018824
+    maintainability_index: three_property=131.997 four_property=131.997 visual_studio=77.191 comment_percentage=0.000
+    function_arguments: ["a", "b", "first", "length", "a", "b", "a", "b"]
+    syntax_function_calls: count=3
+      - name="add" file=test_fixtures/random_tests/test.ml line=12 column=15
+      - name="add" file=test_fixtures/random_tests/test.ml line=13 column=3
+      - name="List.length" file=test_fixtures/random_tests/test.ml line=13 column=14
+    function_calls_with_lsp_definition: count=3
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=3 column=5
+      - name="add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=3 column=5
+      - name="List.length" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml line=1 column=1
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="repeat_add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=11 column=5
+      - name="repeat_add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=25 column=33
+  - ( ! ):15..15 length=0 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=15:5 end=15:5
+    indegree=0 unique_indegree=0 outdegree=1 unique_outdegree=1
+    halstead: unique_operators=2 unique_operands=2 operators=2 operands=3 length=5 vocabulary=4 calculated_length=4.000 volume=10.000 difficulty=1.500 effort=15.000 time_seconds=0.833 bugs=0.003333
+    maintainability_index: three_property=158.797 four_property=158.797 visual_studio=92.863 comment_percentage=0.000
+    function_arguments: ["a"]
+    syntax_function_calls: count=1
+      - name="not" file=test_fixtures/random_tests/test.ml line=15 column=15
+    function_calls_with_lsp_definition: count=1
+      - name="not" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=82 column=10
+    function_calls_without_lsp_definition: count=0
+    references: count=0
+  - log_if_positive:17..18 length=1 cyclomatic=2 cyclomatic_match_as_single_branch=2
+    definition_position_range: start=17:5 end=17:5
+    indegree=2 unique_indegree=1 outdegree=2 unique_outdegree=2
+    halstead: unique_operators=4 unique_operands=5 operators=4 operands=7 length=11 vocabulary=9 calculated_length=19.610 volume=34.869 difficulty=2.800 effort=97.634 time_seconds=5.424 bugs=0.011623
+    maintainability_index: three_property=140.843 four_property=140.843 visual_studio=82.364 comment_percentage=0.000
+    function_arguments: ["string_of_int", "value", "value"]
+    syntax_function_calls: count=2
+      - name="print_endline" file=test_fixtures/random_tests/test.ml line=18 column=21
+      - name="string_of_int" file=test_fixtures/random_tests/test.ml line=18 column=36
+    function_calls_with_lsp_definition: count=2
+      - name="print_endline" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=491 column=5
+      - name="string_of_int" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=265 column=5
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="log_if_positive" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=17 column=5
+      - name="log_if_positive" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=26 column=3
+  - unused_helper:20..20 length=0 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=20:5 end=20:5
+    indegree=1 unique_indegree=1 outdegree=1 unique_outdegree=1
+    halstead: unique_operators=1 unique_operands=4 operators=1 operands=5 length=6 vocabulary=5 calculated_length=8.000 volume=13.932 difficulty=0.625 effort=8.707 time_seconds=0.484 bugs=0.004644
+    maintainability_index: three_property=157.072 four_property=157.072 visual_studio=91.855 comment_percentage=0.000
+    function_arguments: ["input"]
+    syntax_function_calls: count=1
+      - name="String.trim" file=test_fixtures/random_tests/test.ml line=20 column=27
+    function_calls_with_lsp_definition: count=1
+      - name="String.trim" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/string.ml line=1 column=1
+    function_calls_without_lsp_definition: count=0
+    references: count=1
+      - name="unused_helper" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=20 column=5
+  - run:22..27 length=5 cyclomatic=1 cyclomatic_match_as_single_branch=1
+    definition_position_range: start=22:5 end=22:5
+    indegree=2 unique_indegree=1 outdegree=9 unique_outdegree=8
+    halstead: unique_operators=4 unique_operands=17 operators=5 operands=21 length=26 vocabulary=21 calculated_length=77.487 volume=114.200 difficulty=2.471 effort=282.142 time_seconds=15.675 bugs=0.038067
+    maintainability_index: three_property=117.106 four_property=117.106 visual_studio=68.483 comment_percentage=0.000
+    function_arguments: ["message", "string_of_int", "repeat_add", "repeat_add", "sub", "is_empty"]
+    syntax_function_calls: count=9
+      - name="describe" file=test_fixtures/random_tests/test.ml line=23 column=17
+      - name="print_endline" file=test_fixtures/random_tests/test.ml line=24 column=3
+      - name="print_endline" file=test_fixtures/random_tests/test.ml line=25 column=3
+      - name="string_of_int" file=test_fixtures/random_tests/test.ml line=25 column=18
+      - name="repeat_add" file=test_fixtures/random_tests/test.ml line=25 column=33
+      - name="log_if_positive" file=test_fixtures/random_tests/test.ml line=26 column=3
+      - name="sub" file=test_fixtures/random_tests/test.ml line=26 column=20
+      - name="ignore" file=test_fixtures/random_tests/test.ml line=27 column=3
+      - name="List.is_empty" file=test_fixtures/random_tests/test.ml line=27 column=13
+    function_calls_with_lsp_definition: count=9
+      - name="describe" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=7 column=5
+      - name="print_endline" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=491 column=5
+      - name="print_endline" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=491 column=5
+      - name="string_of_int" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=265 column=5
+      - name="repeat_add" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=11 column=5
+      - name="log_if_positive" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=17 column=5
+      - name="sub" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=1 column=5
+      - name="ignore" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/stdlib.ml line=228 column=10
+      - name="List.is_empty" file=/home/nkxxll/git/sourcery/_opam/lib/ocaml/list.ml line=1 column=1
+    function_calls_without_lsp_definition: count=0
+    references: count=2
+      - name="run" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=22 column=5
+      - name="run" file=/home/nkxxll/git/sourcery/test_fixtures/random_tests/test.ml line=29 column=10
+comments:
