@@ -6770,16 +6770,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 18800 | Ocaml | janestreet__core | file | lib/zone.mli |
-| 2 | 6500 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
-| 3 | 4100 | Ocaml | janestreet__core | file | lib/default.mli |
-| 4 | 4000 | Ocaml | janestreet__core | file | lib_test/core_string_speed_test.ml |
-| 5 | 3500 | Ocaml | janestreet__core | file | lib/staged.mli |
-| 6 | 3300 | Ocaml | janestreet__core | file | lib/only_in_test.mli |
-| 7 | 3300 | Ocaml | janestreet__core | file | lib/nano_mutex.mli |
-| 8 | 2500 | Ocaml | janestreet__core | file | lib/bigstring_marshal.mli |
-| 9 | 1400 | Ocaml | janestreet__core | file | lib/core_int63.mli |
-| 10 | 1150 | Ocaml | janestreet__core | file | lib/union_find.mli |
+| 1 | 95.23809523809524 | Ocaml | janestreet__core | file | lib_test/core_string_speed_test.ml |
+| 2 | 94.44444444444444 | Ocaml | bcpierce00__unison | function | src/transfer.ml:497::logMeasures:497:7 |
+| 3 | 86.66666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
+| 4 | 85.36585365853658 | Ocaml | janestreet__core | file | lib/staged.mli |
+| 5 | 85 | Ocaml | bcpierce00__unison | file | src/ubase/uarg.mli |
+| 6 | 82.45614035087719 | Ocaml | janestreet__core | file | lib/zone.mli |
+| 7 | 80 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 8 | 78.57142857142857 | Ocaml | janestreet__core | file | lib/only_in_test.mli |
+| 9 | 75.86206896551724 | Ocaml | janestreet__core | file | lib/nano_mutex.mli |
+| 10 | 73.21428571428571 | Ocaml | janestreet__core | file | lib/default.mli |
 
 #### Min
 
@@ -6802,16 +6802,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 72200 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/doc.go |
-| 2 | 35900 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/index/doc.go |
-| 3 | 20900 | Golang | nektos__act | file | vendor/github.com/davecgh/go-spew/spew/doc.go |
-| 4 | 14500 | Golang | nektos__act | file | vendor/github.com/src-d/gcfg/doc.go |
-| 5 | 12700 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/idxfile/doc.go |
-| 6 | 12100 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config/doc.go |
-| 7 | 12000 | Golang | nektos__act | file | vendor/github.com/soniakeys/graph/doc.go |
-| 8 | 8900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_abi.ml |
-| 9 | 6966.666666666667 | Ocaml | janestreet__core | file | lib/zone.mli |
-| 10 | 6900 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/gitignore/doc.go |
+| 1 | 100 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/doc.go |
+| 2 | 100 | Golang | nektos__act | file | vendor/github.com/src-d/gcfg/doc.go |
+| 3 | 100 | Golang | nektos__act | file | vendor/github.com/docker/docker/errdefs/doc.go |
+| 4 | 99.72375690607734 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/doc.go |
+| 5 | 99.72222222222224 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/index/doc.go |
+| 6 | 99.21875 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/idxfile/doc.go |
+| 7 | 99.18032786885246 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/config/doc.go |
+| 8 | 99.0521327014218 | Golang | nektos__act | file | vendor/github.com/davecgh/go-spew/spew/doc.go |
+| 9 | 98.57142857142858 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/gitignore/doc.go |
+| 10 | 98.51116625310172 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsysnum_freebsd_arm.go |
 
 #### Min
 
@@ -6834,16 +6834,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 51200 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 2 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 3 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 4 | 6500 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
-| 5 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
-| 6 | 3200 | Ocaml | BinaryAnalysisPlatform__bap | file | src/symbols.mli |
-| 7 | 2800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_build/bap_build.mli |
-| 8 | 2475 | Ocaml | janestreet__core | file | src/zone.mli |
-| 9 | 2000 | Ocaml | airbus-seclab__bincat | file | ocaml/src/fixpoint/stubs.mli |
-| 10 | 1800 | Ocaml | janestreet__core | file | src/timing_wheel_float.mli |
+| 1 | 94.44444444444444 | Ocaml | bcpierce00__unison | function | src/transfer.ml:529::logMeasures:529:7 |
+| 2 | 90 | Ocaml | janestreet__core | file | src/timing_wheel_float.mli |
+| 3 | 88.88888888888889 | Ocaml | bcpierce00__unison | file | src/system.ml |
+| 4 | 86.66666666666667 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
+| 5 | 86.66666666666667 | Golang | AlistGo__alist | function | server/webdav/prop.go:408::findContentType:408:6 |
+| 6 | 85.71428571428571 | Ocaml | bcpierce00__unison | file | src/ubase/uarg.mli |
+| 7 | 84.21052631578947 | Ocaml | bcpierce00__unison | function | src/ubase/prefs.ml:199::createBoolWithDefault:199:5 |
+| 8 | 84.21052631578947 | Ocaml | bcpierce00__unison | file | src/linktext.ml |
+| 9 | 84.21052631578947 | Ocaml | bcpierce00__unison | file | src/linkgtk2.ml |
+| 10 | 84.21052631578947 | Ocaml | bcpierce00__unison | file | src/linkgtk.ml |
 
 #### Min
 
@@ -6866,16 +6866,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 51300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 2 | 26200 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 3 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 4 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 5 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 6 | 6500 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
-| 7 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
-| 8 | 3200 | Ocaml | BinaryAnalysisPlatform__bap | file | src/symbols.mli |
-| 9 | 2800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_build/bap_build.mli |
-| 10 | 2700 | Ocaml | austral__austral | file | lib/ImportResolution.mli |
+| 1 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/patdiff_core.mli |
+| 2 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/output.mli |
+| 3 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/html_output.mli |
+| 4 | 100 | Golang | gin-gonic__gin | file | doc.go |
+| 5 | 95.28301886792453 | Golang | junegunn__fzf | file | src/algo/normalize.go |
+| 6 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
+| 7 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
+| 8 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
+| 9 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/cir2npkil.mli |
+| 10 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.mli |
 
 #### Min
 
@@ -6898,16 +6898,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 119600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 51300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 3 | 26200 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 4 | 26100 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_lisp/bap_lisp__context.mli |
-| 5 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 6 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 7 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 8 | 6500 | Ocaml | bcpierce00__unison | file | src/ubase/uprintf.mli |
-| 9 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
-| 10 | 3200 | Ocaml | janestreet__core | file | src/nano_mutex.mli |
+| 1 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/patdiff_core.mli |
+| 2 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/output.mli |
+| 3 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/html_output.mli |
+| 4 | 100 | Golang | gin-gonic__gin | file | doc.go |
+| 5 | 95.28301886792453 | Golang | junegunn__fzf | file | src/algo/normalize.go |
+| 6 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
+| 7 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
+| 8 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
+| 9 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/cir2npkil.mli |
+| 10 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.mli |
 
 #### Min
 
@@ -6930,16 +6930,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 123800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 51500 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 3 | 23600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 4 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 5 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 6 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 7 | 6300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus_track_visited/bap_primus_track_visited.mli |
-| 8 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
-| 9 | 2800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_build/bap_build.mli |
-| 10 | 2700 | Ocaml | austral__austral | file | lib/ImportResolution.mli |
+| 1 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/patdiff_core.mli |
+| 2 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/output.mli |
+| 3 | 100 | Ocaml | comby-tools__comby | file | lib/app/vendored/patdiff/kernel/src/html_output.mli |
+| 4 | 100 | Golang | gin-gonic__gin | file | doc.go |
+| 5 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
+| 6 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
+| 7 | 92.5925925925926 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
+| 8 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/cir2npkil.mli |
+| 9 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.mli |
+| 10 | 92.3076923076923 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.mli |
 
 #### Min
 
@@ -6962,16 +6962,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 123800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 57700 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_c/bap_c_abi.mli |
-| 3 | 51800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 4 | 23600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 5 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 6 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 7 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 8 | 8700 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_demangle/bap_demangle.mli |
-| 9 | 6300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus_track_visited/bap_primus_track_visited.mli |
-| 10 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
+| 1 | 100 | Ocaml | janestreet__core | file | core/test/src/hashtbl_unit_tests.mli |
+| 2 | 100 | Ocaml | janestreet__core | file | core/src/validated.mli |
+| 3 | 100 | Ocaml | janestreet__core | file | core/src/univ_map.mli |
+| 4 | 100 | Ocaml | janestreet__core | file | core/src/quickcheckable.mli |
+| 5 | 100 | Ocaml | janestreet__core | file | core/src/quickcheck.mli |
+| 6 | 100 | Ocaml | janestreet__core | file | core/src/immediate_option.mli |
+| 7 | 100 | Ocaml | janestreet__core | file | core/src/identifiable.mli |
+| 8 | 100 | Ocaml | janestreet__core | file | core/src/hexdump.mli |
+| 9 | 100 | Ocaml | janestreet__core | file | core/src/hash_queue.mli |
+| 10 | 100 | Ocaml | janestreet__core | file | core/src/doubly_linked.mli |
 
 #### Min
 
@@ -6994,16 +6994,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 124600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 60600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_c/bap_c_abi.mli |
-| 3 | 51800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 4 | 23600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 5 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 6 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 7 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 8 | 8700 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_demangle/bap_demangle.mli |
-| 9 | 6300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus_track_visited/bap_primus_track_visited.mli |
-| 10 | 3900 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/primus_loader/primus_loader_basic.mli |
+| 1 | 100 | Ocaml | janestreet__core | file | univ_map/src/univ_map.mli |
+| 2 | 100 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.mli |
+| 3 | 100 | Ocaml | janestreet__core | file | core/src/validated.mli |
+| 4 | 100 | Ocaml | janestreet__core | file | core/src/quickcheckable.mli |
+| 5 | 100 | Ocaml | janestreet__core | file | core/src/quickcheck.mli |
+| 6 | 100 | Ocaml | janestreet__core | file | core/src/immediate_option.mli |
+| 7 | 100 | Ocaml | janestreet__core | file | core/src/identifiable.mli |
+| 8 | 100 | Ocaml | janestreet__core | file | core/src/hexdump.mli |
+| 9 | 100 | Ocaml | janestreet__core | file | core/src/hash_queue.mli |
+| 10 | 100 | Ocaml | janestreet__core | file | core/src/doubly_linked.mli |
 
 #### Min
 
@@ -7026,16 +7026,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 124600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 60600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_c/bap_c_abi.mli |
-| 3 | 51800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 4 | 23600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 5 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 6 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 7 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 8 | 8700 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_demangle/bap_demangle.mli |
-| 9 | 6300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus_track_visited/bap_primus_track_visited.mli |
-| 10 | 6200 | Ocaml | janestreet__core | file | core/src/memo.mli |
+| 1 | 100 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.mli |
+| 2 | 100 | Ocaml | janestreet__core | file | core/src/validated.mli |
+| 3 | 100 | Ocaml | janestreet__core | file | core/src/timezone.mli |
+| 4 | 100 | Ocaml | janestreet__core | file | core/src/quickcheckable.mli |
+| 5 | 100 | Ocaml | janestreet__core | file | core/src/quickcheck.mli |
+| 6 | 100 | Ocaml | janestreet__core | file | core/src/immediate_option.mli |
+| 7 | 100 | Ocaml | janestreet__core | file | core/src/identifiable.mli |
+| 8 | 100 | Ocaml | janestreet__core | file | core/src/hexdump.mli |
+| 9 | 100 | Ocaml | janestreet__core | file | core/src/hash_queue.mli |
+| 10 | 100 | Ocaml | janestreet__core | file | core/src/doubly_linked.mli |
 
 #### Min
 
@@ -7058,16 +7058,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 124600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_main/bap_main.mli |
-| 2 | 60600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_c/bap_c_abi.mli |
-| 3 | 51800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/ogre/ogre.mli |
-| 4 | 23600 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp_context.mli |
-| 5 | 21800 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bare/bare.mli |
-| 6 | 13900 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/text_tags/text_tags.mli |
-| 7 | 10300 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_language/bap_language.mli |
-| 8 | 8700 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_demangle/bap_demangle.mli |
-| 9 | 8600 | Golang | charmbracelet__bubbletea | file | examples/simple/main_test.go |
-| 10 | 6800 | Ocaml | janestreet__core | file | core/src/memo.mli |
+| 1 | 100 | Ocaml | janestreet__core | file | core/test/hashtbl_unit_tests.mli |
+| 2 | 100 | Ocaml | janestreet__core | file | core/src/validated.mli |
+| 3 | 100 | Ocaml | janestreet__core | file | core/src/timezone.mli |
+| 4 | 100 | Ocaml | janestreet__core | file | core/src/stable_string.mli |
+| 5 | 100 | Ocaml | janestreet__core | file | core/src/quickcheckable.mli |
+| 6 | 100 | Ocaml | janestreet__core | file | core/src/quickcheck.mli |
+| 7 | 100 | Ocaml | janestreet__core | file | core/src/immediate_option.mli |
+| 8 | 100 | Ocaml | janestreet__core | file | core/src/identifiable.mli |
+| 9 | 100 | Ocaml | janestreet__core | file | core/src/hexdump.mli |
+| 10 | 100 | Ocaml | janestreet__core | file | core/src/hash_queue.mli |
 
 #### Min
 
@@ -7092,31 +7092,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uitext.mli |
-| 2 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk2.mli |
-| 3 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk.mli |
-| 4 | 205.52553044885565 | Ocaml | bcpierce00__unison | file | src/linktk.ml |
-| 5 | 205.52553044885565 | Ocaml | bcpierce00__unison | file | src/linktext.ml |
-| 6 | 205.52553044885565 | Ocaml | bcpierce00__unison | file | src/linkgtk2.ml |
-| 7 | 205.52553044885565 | Ocaml | bcpierce00__unison | file | src/linkgtk.ml |
-| 8 | 205.38919525157692 | Ocaml | bcpierce00__unison | file | src/strings.mli |
-| 9 | 200.44266575517264 | Ocaml | janestreet__core | file | lib/core_int63.mli |
-| 10 | 198.02063414166932 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:2018::unload:2018:7 |
+| 1 | 198.02063414166932 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:2018::unload:2018:7 |
+| 2 | 189.36499034549635 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 3 | 179.84327124058294 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:2332::fix_dir:2332:11 |
+| 4 | 177.2214197710661 | Ocaml | janestreet__core | file | lib/with_return.mli |
+| 5 | 176.9778650982953 | Ocaml | camlworks__dream | file | src/fw/type.ml |
+| 6 | 176.50408311349815 | Ocaml | bcpierce00__unison | function | src/fspath.ml:27::isRootDir:27:5 |
+| 7 | 176.03864055094238 | Ocaml | bcpierce00__unison | function | src/update.ml:383::setArchiveLocal:383:5 |
+| 8 | 175.03595978673616 | Ocaml | astrada__google-drive-ocamlfuse | function | setup.ml:3538::configure:3538:7 |
+| 9 | 171.4741940959256 | Ocaml | janestreet__core | function | setup.ml:2004::fix_dir:2004:11 |
+| 10 | 170.77 | Ocaml | janestreet__core | function | setup.ml:6033::setup:6033:5 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -234.9605306330599 | Ocaml | janestreet__core | file | setup.ml |
-| 2 | -189.35671361903465 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 3 | -119.23335657737196 | Ocaml | janestreet__core | file | lib/core_set.ml |
-| 4 | -97.08018896058944 | Ocaml | bcpierce00__unison | file | src/uigtk.ml |
-| 5 | -82.89078946872456 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
-| 6 | -76.78251733843177 | Ocaml | janestreet__core | file | lib/core_list.ml |
-| 7 | -76.16072045519418 | Ocaml | bcpierce00__unison | file | private/update-broken.ml |
-| 8 | -68.27980115190026 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 9 | -64.93886044915666 | Ocaml | janestreet__core | file | lib/core_hashtbl.ml |
-| 10 | -62.21713533496144 | Ocaml | janestreet__core | file | lib/zone.ml |
+| 1 | -225.8491316695333 | Ocaml | janestreet__core | file | setup.ml |
+| 2 | -186.823338510542 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 3 | -126.63437343936558 | Ocaml | bcpierce00__unison | file | src/uigtk.ml |
+| 4 | -112.68488608782502 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 5 | -105.88892735039838 | Ocaml | janestreet__core | file | lib/core_set.ml |
+| 6 | -104.79127787428972 | Ocaml | bcpierce00__unison | file | private/update-broken.ml |
+| 7 | -90.87002475401376 | Ocaml | janestreet__core | file | lib/core_string.ml |
+| 8 | -88.48862338401604 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 9 | -74.53221077594772 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
+| 10 | -70.52171896906765 | Ocaml | bcpierce00__unison | file | src/props.ml |
 
 ### Version 2
 
@@ -7124,31 +7124,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 217.3939874859914 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/doc.go |
-| 2 | 216.97839509212605 | Golang | nektos__act | file | vendor/github.com/src-d/gcfg/types/doc.go |
-| 3 | 216.97839509212605 | Golang | gin-gonic__gin | file | deprecated.go |
-| 4 | 216.6370967026741 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband/doc.go |
-| 5 | 214.8592164621373 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/packfile/doc.go |
-| 6 | 211.4970457035133 | Golang | nektos__act | file | vendor/github.com/sirupsen/logrus/doc.go |
-| 7 | 210.2551143518428 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/doc.go |
-| 8 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk.mli |
-| 9 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 10 | 206.89219922863572 | Golang | nektos__act | file | vendor/github.com/stretchr/testify/assert/doc.go |
+| 1 | 189.36499034549635 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/doc.go |
+| 2 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/client/client.go:955::getUserAgent:955:6 |
+| 3 | 182.50291548161263 | Golang | nektos__act | file | vendor/github.com/src-d/gcfg/types/doc.go |
+| 4 | 181.8398759229025 | Golang | nektos__act | function | vendor/golang.org/x/text/unicode/norm/forminfo.go:107::BoundaryAfter:107:21 |
+| 5 | 181.8398759229025 | Golang | FiloSottile__mkcert | function | vendor/golang.org/x/text/unicode/norm/forminfo.go:105::BoundaryAfter:105:21 |
+| 6 | 180.59578510997784 | Golang | nektos__act | function | vendor/github.com/docker/docker/pkg/archive/archive_windows.go:49::getInodeFromStat:49:6 |
+| 7 | 180.04791042855717 | Golang | nektos__act | function | vendor/gopkg.in/src-d/go-billy.v4/util/glob.go:94::hasMeta:94:6 |
+| 8 | 180.04791042855717 | Golang | nektos__act | function | vendor/github.com/docker/docker/pkg/mount/mountinfo_windows.go:3::parseMountTable:3:6 |
+| 9 | 179.83879482204367 | Golang | nektos__act | function | vendor/github.com/hashicorp/hcl/hcl/ast/ast.go:110::Pos:110:22 |
+| 10 | 179.81791042855713 | Ocaml | bcpierce00__unison | function | src/update.ml:1152::badFilename:1152:5 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -253.33288007394628 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -215.57072944659583 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_marshal.go |
-| 3 | -181.22273375673765 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_x86.ml |
-| 4 | -175.71529183981738 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go |
-| 5 | -168.4624240240524 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -242.03307445496384 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -220.9589655749772 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_marshal.go |
+| 3 | -188.85531591371432 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_x86.ml |
+| 4 | -179.57561799775385 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go |
+| 5 | -168.50423049886697 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 6 | -168.43478618283075 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 7 | -163.79751484702984 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64.go |
-| 8 | -163.79751484702984 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64le.go |
-| 9 | -161.1279808454335 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_mips.go |
-| 10 | -161.1279808454335 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_mipsle.go |
+| 7 | -164.71167057732055 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64.go |
+| 8 | -164.71167057732055 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_ppc64le.go |
+| 9 | -161.94552850524548 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_mips.go |
+| 10 | -161.94552850524548 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_linux_mipsle.go |
 
 ### Version 3
 
@@ -7156,31 +7156,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 2 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk.mli |
-| 3 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 4 | 206.88514202832624 | Ocaml | janestreet__core | file | test/ofday_unit_tests_v1.mli |
-| 5 | 192.8278961881573 | Golang | FiloSottile__mkcert | file | go110min.go |
-| 6 | 184.5461621381719 | Ocaml | airbus-seclab__bincat | file | ocaml/src/utils/exceptions.ml |
-| 7 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:130::ensureHeadersCaptured:130:33 |
-| 8 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
-| 9 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
-| 10 | 182.117404927928 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_strings/bap_strings_scanner.mli |
+| 1 | 189.36499034549635 | Golang | FiloSottile__mkcert | file | vendor/howett.net/plist/doc.go |
+| 2 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:130::ensureHeadersCaptured:130:33 |
+| 3 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 4 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 5 | 181.8398759229025 | Golang | FiloSottile__mkcert | function | vendor/golang.org/x/text/unicode/norm/forminfo.go:105::BoundaryAfter:105:21 |
+| 6 | 181.49475422386 | Golang | router-for-me__CLIProxyAPI | function | internal/client/openai-compatibility_client.go:409::SaveTokenToFile:409:37 |
+| 7 | 181.49475422386 | Golang | router-for-me__CLIProxyAPI | function | internal/client/gemini_client.go:430::GetUserAgent:430:24 |
+| 8 | 181.49475422386 | Golang | router-for-me__CLIProxyAPI | function | internal/client/gemini-cli_client.go:860::GetUserAgent:860:27 |
+| 9 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:40::Rmdir:40:15 |
+| 10 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:35::Unlink:35:15 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -282.0960796358434 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -206.1008203750109 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -181.22273375673765 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 4 | -168.4624240240524 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -267.0023919465855 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -222.8509139652016 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -188.85531591371432 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 4 | -168.50423049886697 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 5 | -168.43478618283075 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 6 | -134.26292033792376 | Ocaml | janestreet__core | file | src/core_unix.ml |
-| 7 | -127.56840296986462 | Ocaml | janestreet__core | file | src/iobuf.ml |
-| 8 | -121.46442534287787 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
-| 9 | -119.15387505507712 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
-| 10 | -105.8701628642122 | Ocaml | airbus-seclab__bincat | file | ocaml/src/domains/unrel.ml |
+| 6 | -153.9778195627452 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 7 | -134.80446869078872 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
+| 8 | -128.68572874265368 | Ocaml | airbus-seclab__bincat | file | ocaml/src/domains/unrel.ml |
+| 9 | -128.40223976320226 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
+| 10 | -126.98182848216764 | Ocaml | bcpierce00__unison | file | src/uigtk.ml |
 
 ### Version 4
 
@@ -7188,31 +7188,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 2 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk.mli |
-| 3 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 4 | 206.88514202832624 | Ocaml | janestreet__core | file | test/bin/ofday_unit_tests_v1.mli |
-| 5 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 6 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 7 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 8 | 190.46312420811483 | Ocaml | airbus-seclab__bincat | file | ocaml/src/data-struct/code.mli |
-| 9 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:607::geminiCLIClientMetadata:607:6 |
-| 10 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:130::ensureHeadersCaptured:130:33 |
+| 1 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:607::geminiCLIClientMetadata:607:6 |
+| 2 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:130::ensureHeadersCaptured:130:33 |
+| 3 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 4 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 5 | 182.4990409178397 | Ocaml | fastpack__fastpack | file | Fastpack/Version.ml |
+| 6 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:40::Rmdir:40:15 |
+| 7 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:35::Unlink:35:15 |
+| 8 | 179.5522974935746 | Golang | AlistGo__alist | function | pkg/utils/fn_limiter_test.go:28::myFunction:28:16 |
+| 9 | 179.5522974935746 | Golang | AlistGo__alist | function | pkg/utils/fn_limiter_test.go:11::myFunction:11:6 |
+| 10 | 179.3087428208038 | Golang | AlistGo__alist | function | internal/fuse/fs.go:55::Readlink:55:15 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -313.8421901693568 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -206.7675266544479 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -184.0757125276909 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 4 | -168.98093199174266 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -299.4959915082762 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -225.24252733706308 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -191.2500961982822 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 4 | -169.02263085646445 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 5 | -168.95336740886134 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 6 | -158.06377123101254 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 7 | -152.46735876111455 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 8 | -151.76835417721108 | Ocaml | janestreet__core | file | src/core_unix.ml |
-| 9 | -149.96638054099245 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/newspeak.ml |
-| 10 | -139.42490295047068 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 6 | -159.2566358323432 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 7 | -158.08330635490432 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
+| 8 | -151.39962829429322 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
+| 9 | -147.6780558393105 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
+| 10 | -141.19736314303407 | Ocaml | janestreet__core | file | src/core_unix.ml |
 
 ### Version 5
 
@@ -7220,31 +7220,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 2 | 209.7696644143026 | Ocaml | bcpierce00__unison | file | src/uigtk.mli |
-| 3 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 4 | 206.88514202832624 | Ocaml | janestreet__core | file | test/bin/ofday_unit_tests_v1.mli |
-| 5 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 6 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 7 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 8 | 195.4846788536021 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/riscVImports.ml |
-| 9 | 190.46312420811483 | Ocaml | airbus-seclab__bincat | file | ocaml/src/data-struct/code.mli |
-| 10 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:659::geminiCLIClientMetadata:659:6 |
+| 1 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:659::geminiCLIClientMetadata:659:6 |
+| 2 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:132::ensureHeadersCaptured:132:33 |
+| 3 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 4 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 5 | 180.33440775702616 | Golang | AlistGo__alist | function | drivers/mega/types.go:27::GetHash:27:20 |
+| 6 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:40::Rmdir:40:15 |
+| 7 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:35::Unlink:35:15 |
+| 8 | 179.3087428208038 | Golang | AlistGo__alist | function | internal/fuse/fs.go:55::Readlink:55:15 |
+| 9 | 179.09783634488997 | Golang | AlistGo__alist | function | internal/fuse/fs.go:130::Opendir:130:15 |
+| 10 | 178.87537718454394 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/powerpc/powerpc_utils.mli |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -206.6637690722048 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 2 | -184.0750441901796 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 3 | -168.98093199174266 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -225.23433076083165 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 2 | -191.24942786077085 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 3 | -169.02263085646445 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -168.95336740886134 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -161.5417344202986 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
-| 6 | -158.06377123101254 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 7 | -155.20891082911854 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 8 | -152.46735876111455 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 9 | -152.2467804319319 | Ocaml | janestreet__core | file | src/core_unix.ml |
-| 10 | -150.62598785946352 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 5 | -165.99092252785186 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 6 | -165.71570944872943 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 7 | -162.53143581631426 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 8 | -158.08330635490432 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
+| 9 | -152.11220653672 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
+| 10 | -151.39962829429322 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
 
 ### Version 6
 
@@ -7252,31 +7252,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | camlworks__dream | file | example/z-playground/runtime/examples.ml |
-| 2 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 3 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 4 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 5 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 6 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 7 | 195.4846788536021 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/riscVImports.ml |
-| 8 | 190.46312420811483 | Ocaml | airbus-seclab__bincat | file | ocaml/src/data-struct/code.mli |
-| 9 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:694::geminiCLIClientMetadata:694:6 |
-| 10 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:176::ensureHeadersCaptured:176:33 |
+| 1 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:694::geminiCLIClientMetadata:694:6 |
+| 2 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:176::ensureHeadersCaptured:176:33 |
+| 3 | 182.5342391645501 | Golang | junegunn__fzf | function | src/tui/light_windows.go:89::openTtyIn:89:6 |
+| 4 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 5 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 6 | 181.72475422386003 | Golang | nektos__act | file | pkg/container/host_environment_test.go |
+| 7 | 180.33440775702616 | Golang | AlistGo__alist | function | drivers/mega/types.go:27::GetHash:27:20 |
+| 8 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:40::Rmdir:40:15 |
+| 9 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:35::Unlink:35:15 |
+| 10 | 179.3087428208038 | Golang | AlistGo__alist | function | internal/fuse/fs.go:55::Readlink:55:15 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -206.77506959401563 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 2 | -184.09293767812449 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 3 | -169.23807055672864 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -225.28107967141975 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 2 | -191.2673213487157 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 3 | -169.27971582387892 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -169.210540042951 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -161.97258181898223 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
-| 6 | -159.74833337864112 | Ocaml | janestreet__core | file | src/core_unix.ml |
-| 7 | -158.06377123101254 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 8 | -156.93591336254084 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 9 | -152.46735876111455 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
-| 10 | -149.96638054099245 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/newspeak.ml |
+| 5 | -168.93863001381007 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 6 | -165.99092252785186 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 7 | -162.53143581631426 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 8 | -158.08330635490432 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
+| 9 | -152.52971583286873 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
+| 10 | -151.94629337500396 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
 
 ### Version 7
 
@@ -7284,31 +7284,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/month.mli |
-| 2 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/binary_searchable.mli |
-| 3 | 212.47506063933207 | Ocaml | camlworks__dream | file | example/z-playground/runtime/examples.ml |
-| 4 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 5 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 6 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 7 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 8 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 9 | 195.13016579494925 | Ocaml | austral__austral | file | lib/TastUtil.mli |
-| 10 | 190.6998015029193 | Ocaml | austral__austral | file | lib/ImportResolution.mli |
+| 1 | 185.2710878342864 | Golang | router-for-me__CLIProxyAPI | function | internal/runtime/executor/gemini_cli_executor.go:754::geminiCLIClientMetadata:754:6 |
+| 2 | 184.8616558927024 | Ocaml | janestreet__core | file | core/src/info.mli |
+| 3 | 183.86517961290585 | Ocaml | janestreet__core | file | core/src/day_of_week.mli |
+| 4 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:187::ensureHeadersCaptured:187:33 |
+| 5 | 182.5342391645501 | Golang | junegunn__fzf | function | src/tui/light_windows.go:94::openTtyIn:94:6 |
+| 6 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 7 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 8 | 181.72475422386003 | Golang | nektos__act | file | pkg/container/host_environment_test.go |
+| 9 | 180.60472469638103 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
+| 10 | 180.33440775702616 | Ocaml | janestreet__core | function | core/src/time_ns.ml:501::of_span_in_seconds:501:9 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -206.84747379644875 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 2 | -186.2837962922897 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 3 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
-| 4 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -161.97258181898223 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
-| 6 | -161.91021340276353 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 7 | -161.21033574838944 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 8 | -160.9952956489293 | Golang | junegunn__fzf | file | src/terminal.go |
-| 9 | -158.06377123101254 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 10 | -152.46735876111455 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
+| 1 | -225.3105185188961 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 2 | -193.14045242585135 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 3 | -179.10020566578083 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 4 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 5 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
+| 6 | -165.99092252785186 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 7 | -164.97106535469482 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
+| 8 | -162.53143581631426 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 9 | -158.08330635490432 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/typedC2Cir.ml |
+| 10 | -154.986242646766 | Golang | junegunn__fzf | file | src/terminal.go |
 
 ### Version 8
 
@@ -7316,31 +7316,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/month.mli |
-| 2 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/binary_searchable.mli |
-| 3 | 212.47506063933207 | Ocaml | camlworks__dream | file | example/z-playground/runtime/examples.ml |
-| 4 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 5 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 6 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 7 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 8 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 9 | 194.77348014934068 | Ocaml | austral__austral | file | lib/TastUtil.mli |
-| 10 | 190.6998015029193 | Ocaml | austral__austral | file | lib/ImportResolution.mli |
+| 1 | 184.8616558927024 | Ocaml | janestreet__core | file | core/src/info.mli |
+| 2 | 183.86517961290585 | Ocaml | janestreet__core | file | core/src/day_of_week.mli |
+| 3 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:189::ensureHeadersCaptured:189:33 |
+| 4 | 182.5342391645501 | Golang | junegunn__fzf | function | src/tui/light_windows.go:94::openTtyIn:94:6 |
+| 5 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 6 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 7 | 180.60472469638103 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
+| 8 | 180.33440775702616 | Ocaml | janestreet__core | function | core/src/time_ns.ml:510::of_span_in_seconds:510:9 |
+| 9 | 180.33440775702616 | Golang | AlistGo__alist | function | drivers/mega/types.go:27::GetHash:27:20 |
+| 10 | 179.80435575578628 | Golang | AlistGo__alist | function | internal/fuse/fs.go:40::Rmdir:40:15 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -226.9334711809494 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -212.88178452576835 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -204.40677362464805 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 4 | -186.2837962922897 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 5 | -183.0484787299817 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 6 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
-| 7 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 8 | -168.06411107610663 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 9 | -164.6262392421259 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
-| 10 | -161.91021340276353 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 1 | -225.07763437431527 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 2 | -220.4778022075345 | Golang | junegunn__fzf | file | src/terminal.go |
+| 3 | -198.00043964420203 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 4 | -193.14045242585135 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 5 | -191.60510547524285 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 6 | -185.54598429546007 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 7 | -179.10020566578083 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 8 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 9 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
+| 10 | -164.97106535469482 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
 
 ### Version 9
 
@@ -7348,31 +7348,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/month.mli |
-| 2 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/binary_searchable.mli |
-| 3 | 212.47506063933207 | Ocaml | camlworks__dream | file | example/z-playground/runtime/examples.ml |
-| 4 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 5 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 6 | 203.15791139934623 | Ocaml | bcpierce00__unison | file | src/fs.mli |
-| 7 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 8 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 9 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 10 | 194.77348014934068 | Ocaml | austral__austral | file | lib/TastUtil.mli |
+| 1 | 184.8616558927024 | Ocaml | janestreet__core | file | core/src/info.mli |
+| 2 | 183.86517961290585 | Ocaml | janestreet__core | file | core/src/day_of_week.mli |
+| 3 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:191::ensureHeadersCaptured:191:33 |
+| 4 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 5 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 6 | 181.8398759229025 | Ocaml | bcpierce00__unison | function | src/props.ml:1606::gcKeep:1606:7 |
+| 7 | 180.88228243844685 | Golang | junegunn__fzf | function | src/tui/light_windows.go:94::openTtyIn:94:6 |
+| 8 | 180.60472469638103 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
+| 9 | 180.33440775702616 | Ocaml | janestreet__core | function | core/src/time_ns.ml:585::of_span_in_seconds:585:9 |
+| 10 | 180.33440775702616 | Ocaml | bcpierce00__unison | function | src/uitext.ml:895::restoreSig:895:9 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -381.8214216589884 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -252.04551838138815 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 3 | -240.69245478364851 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
-| 4 | -191.2916809458657 | Golang | junegunn__fzf | file | src/options.go |
-| 5 | -186.2837962922897 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 6 | -182.59573591992785 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 7 | -169.61078860339833 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 8 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
-| 9 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 10 | -168.08141238596735 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 1 | -374.14211696564416 | Golang | junegunn__fzf | file | src/terminal.go |
+| 2 | -250.5640720834573 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
+| 3 | -246.2817658565883 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 4 | -193.14045242585135 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 5 | -191.6198155274853 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 6 | -191.03197085052588 | Golang | junegunn__fzf | file | src/options.go |
+| 7 | -185.56328560532083 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 8 | -179.10376934381864 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 9 | -179.05341986250306 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 10 | -174.29325210739898 | Golang | router-for-me__CLIProxyAPI | file | internal/runtime/executor/claude_executor.go |
 
 ### Version 10
 
@@ -7380,31 +7380,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/month.mli |
-| 2 | 212.47506063933207 | Ocaml | janestreet__core | file | core/src/info.mli |
-| 3 | 212.47506063933207 | Ocaml | camlworks__dream | file | example/z-playground/runtime/examples.ml |
-| 4 | 212.47506063933207 | Ocaml | bcpierce00__unison | file | src/system.mli |
-| 5 | 208.6093179474687 | Ocaml | bcpierce00__unison | file | src/test.mli |
-| 6 | 203.15791139934623 | Ocaml | bcpierce00__unison | file | src/fs.mli |
-| 7 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/newspeak/npk2lpk.mli |
-| 8 | 200.0441810602429 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/bare2C.mli |
-| 9 | 197.9630593392025 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/csyntax2TypedC.mli |
-| 10 | 194.77348014934068 | Ocaml | austral__austral | file | lib/TastUtil.mli |
+| 1 | 184.8616558927024 | Ocaml | janestreet__core | file | core/src/day_of_week.mli |
+| 2 | 184.8190648325712 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
+| 3 | 182.96340415948723 | Golang | router-for-me__CLIProxyAPI | function | internal/api/middleware/response_writer.go:192::ensureHeadersCaptured:192:33 |
+| 4 | 182.5342391645501 | Golang | go-gorm__gorm | function | utils/utils.go:39::CallerFrame:39:6 |
+| 5 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:15::Destroy:15:15 |
+| 6 | 182.5342391645501 | Golang | AlistGo__alist | function | internal/fuse/fs.go:10::Init:10:15 |
+| 7 | 181.8398759229025 | Ocaml | bcpierce00__unison | function | src/props.ml:1555::gcKeep:1555:7 |
+| 8 | 180.33440775702616 | Ocaml | janestreet__core | function | core/src/time_ns.ml:650::of_span_in_seconds:650:9 |
+| 9 | 180.33440775702616 | Ocaml | bcpierce00__unison | function | src/uitext.ml:948::restoreSig:948:9 |
+| 10 | 180.33440775702616 | Golang | AlistGo__alist | function | drivers/mega/types.go:27::GetHash:27:20 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -556.017074100089 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -331.36547983601054 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 3 | -267.30478047749455 | Golang | junegunn__fzf | file | src/options.go |
-| 4 | -257.6394568610775 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
+| 1 | -550.4625667450201 | Golang | junegunn__fzf | file | src/terminal.go |
+| 2 | -327.26047081557743 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 3 | -266.65176390153994 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
+| 4 | -266.5797441437546 | Golang | junegunn__fzf | file | src/options.go |
 | 5 | -212.61448087705656 | Golang | junegunn__fzf | function | src/terminal.go:5921::Loop:5921:20 |
-| 6 | -185.80534157808512 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 7 | -182.59573591992785 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 8 | -180.13422702694012 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/service.go |
-| 9 | -177.94053834733973 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
-| 10 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 6 | -192.75648696767936 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 7 | -191.6198155274853 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 8 | -185.56328560532083 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 9 | -179.10376934381864 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 10 | -175.35813152740408 | Ocaml | bcpierce00__unison | file | src/uitext.ml |
 
 ## Maintainability Index Three Property
 
@@ -7429,16 +7429,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -235.2636747975407 | Ocaml | janestreet__core | file | setup.ml |
-| 2 | -198.05247996693416 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 3 | -90.65487143359196 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
-| 4 | -88.73950443957705 | Ocaml | bcpierce00__unison | file | src/update.ml |
-| 5 | -82.02490823198518 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 6 | -79.36876510405094 | Ocaml | bcpierce00__unison | file | src/uigtk.ml |
-| 7 | -77.60312579087724 | Ocaml | janestreet__core | file | lib/core_set.ml |
-| 8 | -63.996906218159374 | Ocaml | janestreet__core | file | lib/core_unix.ml |
-| 9 | -63.69994563033888 | Ocaml | janestreet__core | file | lib/core_list.ml |
-| 10 | -57.00347537962786 | Ocaml | bcpierce00__unison | file | private/update-broken.ml |
+| 1 | -237.78835919007503 | Ocaml | janestreet__core | file | setup.ml |
+| 2 | -198.7915207575813 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 3 | -93.51794433823184 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 4 | -93.21810031807324 | Ocaml | bcpierce00__unison | file | src/ubase/rx.ml |
+| 5 | -86.4159424060132 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 6 | -83.3489480055568 | Ocaml | bcpierce00__unison | file | src/uigtk.ml |
+| 7 | -81.57512889562513 | Ocaml | janestreet__core | file | lib/core_set.ml |
+| 8 | -67.51360529873728 | Ocaml | janestreet__core | file | lib/core_unix.ml |
+| 9 | -67.38890023180814 | Ocaml | janestreet__core | file | lib/core_list.ml |
+| 10 | -61.077323851326526 | Ocaml | janestreet__core | file | lib/core_string.ml |
 
 ### Version 2
 
@@ -7449,28 +7449,28 @@
 | 1 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:266::ocamlfind:266:7 |
 | 2 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:263::find_syntaxes:263:7 |
 | 3 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:251::split_nl:251:7 |
-| 4 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/doc.go |
-| 5 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/storer/doc.go |
-| 6 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband/doc.go |
-| 7 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/doc.go |
-| 8 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/packfile/doc.go |
-| 9 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/objfile/doc.go |
-| 10 | 167.39563466108828 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/index/doc.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/yandex/util.go |
+| 5 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2480::libc_statfs_trampoline:2480:6 |
+| 6 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2460::libc_stat_trampoline:2460:6 |
+| 7 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2440::libc_lstat_trampoline:2440:6 |
+| 8 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2420::libc_getfsstat_trampoline:2420:6 |
+| 9 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2404::libc_fstatfs_trampoline:2404:6 |
+| 10 | 167.1656346610883 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2389::libc_fstatat_trampoline:2389:6 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -228.1701673153384 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -169.1044168357841 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_marshal.go |
-| 3 | -168.4624240240524 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -230.9761711784864 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -171.0976053986277 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_marshal.go |
+| 3 | -168.50423049886697 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -168.43478618283075 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -152.2089781948993 | Golang | nektos__act | file | vendor/golang.org/x/sys/windows/zsyscall_windows.go |
-| 6 | -140.62880039622533 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_x86.ml |
-| 7 | -127.4583128986244 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go |
-| 8 | -119.49398112401038 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/decoder.ml |
-| 9 | -115.14056185461044 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_darwin_386.go |
-| 10 | -115.10151810859811 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_darwin_amd64.go |
+| 5 | -153.63165870332955 | Golang | nektos__act | file | vendor/golang.org/x/sys/windows/zsyscall_windows.go |
+| 6 | -142.21418483367498 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_disasm/bap_disasm_x86.ml |
+| 7 | -129.6824567896649 | Golang | nektos__act | file | vendor/github.com/gogo/protobuf/proto/table_unmarshal.go |
+| 8 | -123.24439333156616 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_darwin_386.go |
+| 9 | -123.20534958555383 | Golang | nektos__act | file | vendor/golang.org/x/sys/unix/zsyscall_darwin_amd64.go |
+| 10 | -122.73872925867964 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/decoder.ml |
 
 ### Version 3
 
@@ -7483,26 +7483,26 @@
 | 3 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:325::find_syntaxes:325:7 |
 | 4 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:317::ocamlfind:317:7 |
 | 5 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:308::split_nl:308:7 |
-| 6 | 167.39563466108828 | Golang | FiloSottile__mkcert | file | vendor/howett.net/plist/doc.go |
-| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -261.22704719093224 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -171.64118359067322 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -170.18922066638487 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
-| 4 | -168.4624240240524 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -264.9722955771571 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -174.87633780918082 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -173.99831423949996 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
+| 4 | -168.50423049886697 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 5 | -168.43478618283075 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 6 | -140.62880039622533 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 7 | -111.91121782049451 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp.ml |
-| 8 | -107.69530303796633 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
-| 9 | -100.87294283817226 | Ocaml | janestreet__core | file | src/iobuf.ml |
-| 10 | -99.87460135292127 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 6 | -142.21418483367498 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 7 | -114.77785594585458 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_primus/bap_primus_lisp.ml |
+| 8 | -110.67093809418824 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_lifter.ml |
+| 9 | -105.49562615551606 | Ocaml | janestreet__core | file | src/iobuf.ml |
+| 10 | -104.43810836193782 | Ocaml | bcpierce00__unison | file | src/update.ml |
 
 ### Version 4
 
@@ -7519,22 +7519,22 @@
 | 7 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:591::split_nl:591:7 |
 | 8 | 170.77 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:519::var_choose:519:7 |
 | 9 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 10 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -288.55317217126355 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 2 | -177.72090087815224 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
-| 3 | -174.8992144425021 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 4 | -168.98093199174266 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -292.1132918421121 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
+| 2 | -181.70699241177545 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/x86.ml |
+| 3 | -178.1647375009797 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 4 | -169.02263085646445 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 5 | -168.95336740886134 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 6 | -142.55406252596396 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 7 | -119.44020054992582 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 8 | -116.92237475282184 | Ocaml | janestreet__core | file | src/schedule_v5.ml |
-| 9 | -110.96966627153604 | Ocaml | janestreet__core | file | src/core_unix.ml |
-| 10 | -110.22489678412045 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_types/bap_helpers.ml |
+| 6 | -144.12108247459247 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 7 | -121.4329421955489 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
+| 8 | -118.57548371393752 | Ocaml | janestreet__core | file | src/schedule_v5.ml |
+| 9 | -116.61741643159324 | Ocaml | BinaryAnalysisPlatform__bap | file | lib/bap_types/bap_helpers.ml |
+| 10 | -114.14883065992416 | Ocaml | janestreet__core | file | src/core_unix.ml |
 
 ### Version 5
 
@@ -7545,28 +7545,28 @@
 | 1 | 167.39563466108828 | Ocaml | janestreet__core | file | syslog/src/import.ml |
 | 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/util.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -202.13174719459585 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 2 | -174.9591609052173 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -168.98093199174266 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -206.2445146445088 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 2 | -178.22380754216522 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -169.02263085646445 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -168.95336740886134 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -142.5533941884526 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 6 | -141.95248545203015 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 7 | -120.61078686754595 | Ocaml | bcpierce00__unison | file | src/update.ml |
-| 8 | -120.16559573026834 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
-| 9 | -119.44020054992582 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
-| 10 | -118.1770215672272 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
+| 5 | -144.12041413708113 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 6 | -143.70554552320192 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 7 | -124.99686498686424 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 8 | -122.90195547591648 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 9 | -121.4329421955489 | Ocaml | airbus-seclab__bincat | file | ocaml/src/npk/c2newspeak/gotoElimination.ml |
+| 10 | -121.30695512588744 | Ocaml | airbus-seclab__bincat | file | ocaml/src/loaders/elf_core.ml |
 
 ### Version 6
 
@@ -7576,29 +7576,29 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 3 | 167.39563466108828 | Golang | spf13__cobra | file | cobra/cmd/project_test.go |
-| 4 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/util.go |
+| 3 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/ftp/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -204.52201543263283 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 2 | -174.97853725076095 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -169.23807055672864 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -208.60374059419607 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 2 | -178.2406694702927 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -169.27971582387892 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -169.210540042951 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -146.53313886640342 | Golang | junegunn__fzf | file | src/terminal.go |
-| 6 | -142.5712876763975 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 7 | -141.95248545203015 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 8 | -122.94903374340704 | Ocaml | astrada__google-drive-ocamlfuse | file | src/drive.ml |
-| 9 | -120.60254049424498 | Ocaml | bcpierce00__unison | file | src/update.ml |
-| 10 | -120.16559573026834 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
+| 5 | -147.9866412999841 | Golang | junegunn__fzf | file | src/terminal.go |
+| 6 | -144.13830762502602 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 7 | -143.70554552320192 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 8 | -124.99686498686424 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 9 | -124.17689394119346 | Ocaml | astrada__google-drive-ocamlfuse | file | src/drive.ml |
+| 10 | -122.90195547591648 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/powerpc.ml |
 
 ### Version 7
 
@@ -7609,28 +7609,28 @@
 | 1 | 167.39563466108828 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
 | 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 167.39563466108828 | Golang | spf13__cobra | file | cobra/cmd/project_test.go |
-| 5 | 167.39563466108828 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 6 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -211.3055732095575 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 2 | -174.98982365328666 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 3 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -215.25101705908585 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 2 | -178.25028175246243 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 3 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 4 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 5 | -165.42987451101766 | Golang | junegunn__fzf | file | src/terminal.go |
-| 6 | -147.3105260891715 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 7 | -144.13602139480406 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
-| 8 | -141.96324599709533 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 9 | -140.3472881121608 | Ocaml | astrada__google-drive-ocamlfuse | file | src/drive.ml |
-| 10 | -132.87005374877003 | Golang | junegunn__fzf | file | src/options.go |
+| 5 | -167.13671486467445 | Golang | junegunn__fzf | file | src/terminal.go |
+| 6 | -149.1907846911863 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 7 | -145.69018239430926 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 8 | -143.70554552320192 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 9 | -141.92782889941168 | Ocaml | astrada__google-drive-ocamlfuse | file | src/drive.ml |
+| 10 | -134.01177982457307 | Golang | junegunn__fzf | file | src/options.go |
 
 ### Version 8
 
@@ -7641,28 +7641,28 @@
 | 1 | 167.39563466108828 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
 | 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 167.39563466108828 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 5 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -224.97018281455587 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -211.3055732095575 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 3 | -206.2841889756847 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 4 | -172.4829014931594 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
-| 5 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -226.68179840774613 | Golang | junegunn__fzf | file | src/terminal.go |
+| 2 | -215.25101705908585 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 3 | -208.0524019803343 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 4 | -175.58403592167193 | Ocaml | bcpierce00__unison | file | src/uigtk2.ml |
+| 5 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 6 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 7 | -165.55010816044268 | Golang | junegunn__fzf | file | src/options.go |
-| 8 | -154.24108268166378 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 9 | -144.63171740002093 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers/management/auth_files.go |
-| 10 | -144.13602139480406 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 7 | -166.73126209233018 | Golang | junegunn__fzf | file | src/options.go |
+| 8 | -156.17462477021667 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 9 | -146.64214583361263 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers/management/auth_files.go |
+| 10 | -145.69018239430926 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
 
 ### Version 9
 
@@ -7671,30 +7671,30 @@
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 167.39563466108828 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
-| 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system/win/system_impl.ml |
-| 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system/generic/system_impl.ml |
-| 4 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system.ml |
-| 5 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
-| 6 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 7 | 167.39563466108828 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 8 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | internal/message/ws.go |
+| 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
+| 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -354.4838494351907 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -258.579532192924 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 3 | -236.3841421015529 | Golang | junegunn__fzf | file | src/options.go |
-| 4 | -211.2895598459379 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 5 | -197.6020343013931 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
-| 6 | -170.8812447791662 | Ocaml | bcpierce00__unison | file | src/update.ml |
-| 7 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 1 | -356.4242713560409 | Golang | junegunn__fzf | file | src/terminal.go |
+| 2 | -260.2617865489144 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 3 | -237.5603368412589 | Golang | junegunn__fzf | file | src/options.go |
+| 4 | -215.25458073712363 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 5 | -200.65512473796048 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
+| 6 | -175.09647549264497 | Ocaml | bcpierce00__unison | file | src/update.ml |
+| 7 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 8 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 9 | -154.2583839915245 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
-| 10 | -144.13602139480406 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
+| 9 | -156.19192608007742 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/armv7.ml |
+| 10 | -145.69018239430926 | Ocaml | BinaryAnalysisPlatform__bap | file | plugins/x86/x86_disasm.ml |
 
 ### Version 10
 
@@ -7702,31 +7702,31 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system/win/system_impl.ml |
-| 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system/generic/system_impl.ml |
-| 3 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/system.ml |
-| 4 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
-| 5 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 6 | 167.39563466108828 | Golang | wagoodman__dive | file | cmd/dive/cli/internal/ui/v1/viewmodel/config.go |
-| 7 | 167.39563466108828 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 8 | 167.39563466108828 | Golang | gin-gonic__gin | file | doc.go |
-| 9 | 167.39563466108828 | Golang | charmbracelet__bubbletea | file | examples/simple/main_test.go |
-| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
+| 1 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
+| 2 | 167.39563466108828 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
+| 3 | 167.39563466108828 | Golang | wagoodman__dive | file | cmd/dive/cli/internal/ui/v1/viewmodel/config.go |
+| 4 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 167.39563466108828 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | -511.1226182393973 | Golang | junegunn__fzf | file | src/terminal.go |
-| 2 | -352.58350369159746 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
-| 3 | -309.4379559317705 | Golang | junegunn__fzf | file | src/options.go |
-| 4 | -213.6598667514357 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
-| 5 | -211.2895598459379 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
-| 6 | -179.01674514357097 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers/management/auth_files.go |
+| 1 | -513.3040946690614 | Golang | junegunn__fzf | file | src/terminal.go |
+| 2 | -354.18526879891044 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/auth/conductor.go |
+| 3 | -310.55999119515184 | Golang | junegunn__fzf | file | src/options.go |
+| 4 | -216.6782011127978 | Ocaml | bcpierce00__unison | file | src/uigtk3.ml |
+| 5 | -215.25458073712363 | Ocaml | airbus-seclab__bincat | file | ocaml/src/disassembly/core_x86.ml |
+| 6 | -180.7310465711733 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers/management/auth_files.go |
 | 7 | -176.70073152099891 | Golang | junegunn__fzf | function | src/terminal.go:5921::Loop:5921:20 |
-| 8 | -169.48782124315005 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
+| 8 | -169.50834056191616 | Ocaml | astrada__google-drive-ocamlfuse | file | src/mime.ml |
 | 9 | -169.46060990038708 | Ocaml | astrada__google-drive-ocamlfuse | function | src/mime.ml:3::map_filename_to_mime_type:3:5 |
-| 10 | -167.20885064780543 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/service.go |
+| 10 | -169.28153793244388 | Golang | router-for-me__CLIProxyAPI | file | sdk/cliproxy/service.go |
 
 ## Maintainability Index Visual Studio
 
@@ -7754,13 +7754,13 @@
 | 1 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/text_parser.go |
 | 2 | 0 | Golang | router-for-me__CLIProxyAPI | file | internal/api/handlers.go |
 | 3 | 0 | Ocaml | astrada__google-drive-ocamlfuse | file | setup.ml |
-| 4 | 0 | Ocaml | bcpierce00__unison | file | private/remote0.ml |
-| 5 | 0 | Ocaml | bcpierce00__unison | file | private/update-broken.ml |
-| 6 | 0 | Ocaml | bcpierce00__unison | file | src/files.ml |
-| 7 | 0 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 8 | 0 | Ocaml | bcpierce00__unison | file | src/osx.ml |
-| 9 | 0 | Ocaml | bcpierce00__unison | file | src/props.ml |
-| 10 | 0 | Ocaml | bcpierce00__unison | file | src/recon.ml |
+| 4 | 0 | Ocaml | bcpierce00__unison | file | private/newidea.ml |
+| 5 | 0 | Ocaml | bcpierce00__unison | file | private/remote0.ml |
+| 6 | 0 | Ocaml | bcpierce00__unison | file | private/update-broken.ml |
+| 7 | 0 | Ocaml | bcpierce00__unison | file | src/files.ml |
+| 8 | 0 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
+| 9 | 0 | Ocaml | bcpierce00__unison | file | src/osx.ml |
+| 10 | 0 | Ocaml | bcpierce00__unison | file | src/props.ml |
 
 ### Version 2
 
@@ -7771,28 +7771,28 @@
 | 1 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:266::ocamlfind:266:7 |
 | 2 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:263::find_syntaxes:263:7 |
 | 3 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:251::split_nl:251:7 |
-| 4 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/utils/merkletrie/doc.go |
-| 5 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/storer/doc.go |
-| 6 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/sideband/doc.go |
-| 7 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/protocol/packp/doc.go |
-| 8 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/packfile/doc.go |
-| 9 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/objfile/doc.go |
-| 10 | 97.89218401233234 | Golang | nektos__act | file | vendor/gopkg.in/src-d/go-git.v4/plumbing/format/index/doc.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/yandex/util.go |
+| 5 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2480::libc_statfs_trampoline:2480:6 |
+| 6 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2460::libc_stat_trampoline:2460:6 |
+| 7 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2440::libc_lstat_trampoline:2440:6 |
+| 8 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2420::libc_getfsstat_trampoline:2420:6 |
+| 9 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2404::libc_fstatfs_trampoline:2404:6 |
+| 10 | 97.75768108835572 | Golang | nektos__act | function | vendor/golang.org/x/sys/unix/zsyscall_darwin_arm64.go:2389::libc_fstatat_trampoline:2389:6 |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | drivers/189pc/driver.go |
-| 2 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
-| 6 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/text_parser.go |
-| 7 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/net/idna/idna.go |
-| 8 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/net/idna/tables.go |
-| 9 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/text/transform/transform.go |
-| 10 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/text/unicode/bidi/core.go |
+| 1 | 0 | Golang | AlistGo__alist | file | drivers/189/189.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/189pc/driver.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/alidrive/driver.go |
+| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
+| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
+| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
+| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
+| 8 | 0 | Golang | FiloSottile__mkcert | file | vendor/github.com/DHowett/go-plist/text_parser.go |
+| 9 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/net/idna/idna.go |
+| 10 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/net/idna/tables.go |
 
 ### Version 3
 
@@ -7805,26 +7805,26 @@
 | 3 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:325::find_syntaxes:325:7 |
 | 4 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:317::ocamlfind:317:7 |
 | 5 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:308::split_nl:308:7 |
-| 6 | 97.89218401233234 | Golang | FiloSottile__mkcert | file | vendor/howett.net/plist/doc.go |
-| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
-| 2 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
-| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
-| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
-| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
-| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/xml_test.go |
-| 10 | 0 | Golang | FiloSottile__mkcert | file | vendor/golang.org/x/net/idna/idna.go |
+| 2 | 0 | Golang | AlistGo__alist | file | pkg/aria2/rpc/client.go |
+| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
+| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
+| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
+| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read_test.go |
+| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
+| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
+| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
+| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
 
 ### Version 4
 
@@ -7841,7 +7841,7 @@
 | 7 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:591::split_nl:591:7 |
 | 8 | 99.8654970760234 | Ocaml | astrada__google-drive-ocamlfuse | function | myocamlbuild.ml:519::var_choose:519:7 |
 | 9 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 10 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
 
 #### Min
 
@@ -7849,14 +7849,14 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
 | 2 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
-| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
-| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
-| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
-| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
-| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/xml_test.go |
+| 3 | 0 | Golang | AlistGo__alist | file | pkg/aria2/rpc/client.go |
+| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
+| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
+| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
+| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read_test.go |
+| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
+| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
+| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
 
 ### Version 5
 
@@ -7867,28 +7867,28 @@
 | 1 | 97.89218401233234 | Ocaml | janestreet__core | file | syslog/src/import.ml |
 | 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/util.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
-| 2 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
-| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
-| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
-| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
-| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
-| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/xml_test.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/lanzou/util.go |
+| 3 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
+| 4 | 0 | Golang | AlistGo__alist | file | pkg/aria2/rpc/client.go |
+| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
+| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
+| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
+| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read_test.go |
+| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
+| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
 
 ### Version 6
 
@@ -7898,29 +7898,29 @@
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 3 | 97.89218401233234 | Golang | spf13__cobra | file | cobra/cmd/project_test.go |
-| 4 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/util.go |
+| 3 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/ftp/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
-| 2 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
-| 3 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 4 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
-| 5 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
-| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/lock_test.go |
-| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/webdav.go |
-| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/xml_test.go |
+| 1 | 0 | Golang | AlistGo__alist | file | drivers/139/driver.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/lanzou/util.go |
+| 4 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
+| 5 | 0 | Golang | AlistGo__alist | file | pkg/aria2/rpc/client.go |
+| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
+| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
+| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
+| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read_test.go |
+| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
 
 ### Version 7
 
@@ -7931,28 +7931,28 @@
 | 1 | 97.89218401233234 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
 | 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 97.89218401233234 | Golang | spf13__cobra | file | cobra/cmd/project_test.go |
-| 5 | 97.89218401233234 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 6 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 0 | Golang | AlistGo__alist | file | drivers/115/util.go |
-| 2 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
-| 3 | 0 | Golang | AlistGo__alist | file | drivers/pikpak/util.go |
-| 4 | 0 | Golang | AlistGo__alist | file | drivers/thunder_browser/driver.go |
-| 5 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
-| 6 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
-| 7 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal_test.go |
-| 8 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/read.go |
-| 9 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml.go |
-| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/xml_test.go |
+| 2 | 0 | Golang | AlistGo__alist | file | drivers/139/driver.go |
+| 3 | 0 | Golang | AlistGo__alist | file | drivers/189pc/utils.go |
+| 4 | 0 | Golang | AlistGo__alist | file | drivers/lanzou/util.go |
+| 5 | 0 | Golang | AlistGo__alist | file | drivers/pikpak/util.go |
+| 6 | 0 | Golang | AlistGo__alist | file | drivers/thunder_browser/driver.go |
+| 7 | 0 | Golang | AlistGo__alist | file | drivers/thunderx/driver.go |
+| 8 | 0 | Golang | AlistGo__alist | file | internal/op/fs.go |
+| 9 | 0 | Golang | AlistGo__alist | file | pkg/aria2/rpc/client.go |
+| 10 | 0 | Golang | AlistGo__alist | file | server/webdav/internal/xml/marshal.go |
 
 ### Version 8
 
@@ -7963,13 +7963,13 @@
 | 1 | 97.89218401233234 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
 | 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
 | 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 4 | 97.89218401233234 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 5 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
-| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
@@ -7982,9 +7982,9 @@
 | 5 | 0 | Golang | AlistGo__alist | file | drivers/doubao/util.go |
 | 6 | 0 | Golang | AlistGo__alist | file | drivers/doubao_share/util.go |
 | 7 | 0 | Golang | AlistGo__alist | file | drivers/github/driver.go |
-| 8 | 0 | Golang | AlistGo__alist | file | drivers/pikpak/util.go |
-| 9 | 0 | Golang | AlistGo__alist | file | drivers/thunder/driver.go |
-| 10 | 0 | Golang | AlistGo__alist | file | drivers/thunder_browser/driver.go |
+| 8 | 0 | Golang | AlistGo__alist | file | drivers/lanzou/util.go |
+| 9 | 0 | Golang | AlistGo__alist | file | drivers/pikpak/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/thunder/driver.go |
 
 ### Version 9
 
@@ -7993,15 +7993,15 @@
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
 | 1 | 97.89218401233234 | Ocaml | janestreet__core | file | core/src/immediate_option.ml |
-| 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system/win/system_impl.ml |
-| 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system/generic/system_impl.ml |
-| 4 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system.ml |
-| 5 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
-| 6 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 7 | 97.89218401233234 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 8 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | internal/message/ws.go |
+| 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
+| 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 
@@ -8016,7 +8016,7 @@
 | 7 | 0 | Golang | AlistGo__alist | file | drivers/doubao_share/util.go |
 | 8 | 0 | Golang | AlistGo__alist | file | drivers/github/driver.go |
 | 9 | 0 | Golang | AlistGo__alist | file | drivers/lanzou/util.go |
-| 10 | 0 | Golang | AlistGo__alist | file | drivers/pikpak/util.go |
+| 10 | 0 | Golang | AlistGo__alist | file | drivers/mediafire/util.go |
 
 ### Version 10
 
@@ -8024,16 +8024,16 @@
 
 | rank | value | language | codebase | level | location |
 | ---: | ---: | --- | --- | --- | --- |
-| 1 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system/win/system_impl.ml |
-| 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system/generic/system_impl.ml |
-| 3 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/system.ml |
-| 4 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
-| 5 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
-| 6 | 97.89218401233234 | Golang | wagoodman__dive | file | cmd/dive/cli/internal/ui/v1/viewmodel/config.go |
-| 7 | 97.89218401233234 | Golang | nektos__act | file | pkg/artifactcache/doc.go |
-| 8 | 97.89218401233234 | Golang | gin-gonic__gin | file | doc.go |
-| 9 | 97.89218401233234 | Golang | charmbracelet__bubbletea | file | examples/simple/main_test.go |
-| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | pkg/gowebdav/doc.go |
+| 1 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/win/lwt_win.ml |
+| 2 | 97.89218401233234 | Ocaml | bcpierce00__unison | file | src/lwt/lwt_unix.ml |
+| 3 | 97.89218401233234 | Golang | wagoodman__dive | file | cmd/dive/cli/internal/ui/v1/viewmodel/config.go |
+| 4 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/webdav/types.go |
+| 5 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/uss/types.go |
+| 6 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/trainbit/types.go |
+| 7 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/template/types.go |
+| 8 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/smb/types.go |
+| 9 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/s3/types.go |
+| 10 | 97.89218401233234 | Golang | AlistGo__alist | file | drivers/mopan/types.go |
 
 #### Min
 

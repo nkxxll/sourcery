@@ -1,5 +1,7 @@
-## use this to crop a png to get the right chart of the grid
 
-```bash
-magick input.png -crop 64x64+120+80 output.png
-```
+
+# How to improve the data
+
+- [ ] proportionality prove between the lines of code the cc and the halsteads
+- [ ] what is the outdegree actually is it lsp or not lsp
+- [ ] if lsp then also take the non lsp outdegree then we have the internal and external functions
