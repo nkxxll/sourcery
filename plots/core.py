@@ -47,14 +47,18 @@ def warn_dropped_rows(reason: str, df: pd.DataFrame) -> None:
     warn(f"Dropped {len(df)} row(s) {reason} ({details})")
 
 
-def load_metrics(csv_paths: list[Path], metric_names: list[str]) -> pd.DataFrame:
+def load_metrics(
+    csv_paths: list[Path],
+    metric_names: list[str],
+    extra_metric_names: list[str] | None = None,
+) -> pd.DataFrame:
     df = read_versioned_csvs(
         csv_paths,
         {LANGUAGE_COL, METRIC_LEVEL_COL, METRIC_COL, VALUE_COL},
         use_version_number=True,
     )
 
-    source_metric_names = set(metric_names)
+    source_metric_names = set(metric_names) | set(extra_metric_names or [])
     if ADJUSTED_CYCLOMATIC_METRIC in source_metric_names:
         source_metric_names.update([LINES_OF_CODE_METRIC, CYCLOMATIC_METRIC])
 

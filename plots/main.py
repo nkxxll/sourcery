@@ -1,5 +1,6 @@
 import argparse
 import shutil
+import subprocess
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -26,8 +27,10 @@ from core import (
     load_extremes,
     load_metrics,
     print_medians,
+    VALUE_COL,
 )
 from extremes_report import DEFAULT_OUTPUT_PATH, write_extremes_report
+from normalize_metrics import normalize_metrics_per_kloc
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 
@@ -47,6 +50,15 @@ def parse_args() -> argparse.Namespace:
         help="plot metric mean and median over version files",
     )
     add_chart_args(linechart_parser, LINECHART_OUTPUT_PATH)
+
+    normalized_linechart_parser = subparsers.add_parser(
+        "linechart-normalized",
+        help="plot metric mean and median per 1,000 lines of code over versions",
+    )
+    add_chart_args(
+        normalized_linechart_parser,
+        LINECHART_OUTPUT_PATH.with_name("metrics_per_kloc_over_versions.png"),
+    )
 
     extremes_parser = subparsers.add_parser(
         "extremes",
@@ -188,6 +200,14 @@ def metric_names_for_level(df, metric_names: list[str], metric_level: str) -> li
     return names.to_list()
 
 
+def correct_function_lengths(df: pd.DataFrame) -> pd.DataFrame:
+    function_length_rows = (df[METRIC_LEVEL_COL] == "function") & (
+        df[METRIC_COL] == "function_length"
+    )
+    df.loc[function_length_rows, VALUE_COL] += 1
+    return df
+
+
 if __name__ == "__main__":
     args = parse_args()
 
@@ -214,7 +234,19 @@ if __name__ == "__main__":
         print(f"Wrote extremes report to {args.output}")
         raise SystemExit
 
-    df = load_metrics(args.csv_paths, metric_names)
+    extra_metric_names = None
+    if args.chart == "linechart-normalized":
+        extra_metric_names = [
+            "lines_of_code",
+            "function_length",
+            "total_lines_of_code",
+        ]
+
+    df = load_metrics(args.csv_paths, metric_names, extra_metric_names)
+    df = correct_function_lengths(df)
+
+    if args.chart == "linechart-normalized":
+        df = normalize_metrics_per_kloc(df, metric_names)
 
     if df.empty:
         raise ValueError(f"No rows found for metrics: {metric_names}")

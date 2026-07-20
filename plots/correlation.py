@@ -3,6 +3,7 @@ from pathlib import Path
 from sys import stderr
 
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 from scipy import stats
@@ -20,6 +21,8 @@ MIN_OBSERVATIONS = 3
 SPEARMAN_THRESHOLD = 0.8
 R2_THRESHOLD = 0.8
 VERSION_MODEL_PLOTS_DIR = Path("version_metric_model_plots")
+DEFAULT_GRID_POINT_COLOR = "#1f77b4"
+OCAML_GRID_POINT_COLOR = "#ff7f0e"
 MODEL_NAMES = [
     "linear",
     "sqrt",
@@ -454,6 +457,117 @@ def safe_filename(value: str) -> str:
     return "".join(char if char.isalnum() else "_" for char in value).strip("_").lower()
 
 
+def plot_metric_language_grid(
+    df: pd.DataFrame,
+    level_name: str,
+    lines_of_code_key: str,
+    output_path: Path | None = None,
+) -> Path:
+    """Write a grid with one LOC-versus-metric scatter plot per cell."""
+    required_columns = {LANGUAGE_COL, METRIC_KEY, VALUE_COL}
+    missing_columns = required_columns - set(df.columns)
+    if missing_columns:
+        raise ValueError(
+            "input data is missing required columns: "
+            + ", ".join(sorted(missing_columns))
+        )
+
+    languages = sorted(df[LANGUAGE_COL].dropna().unique())
+    metric_keys = sorted(
+        metric_key
+        for metric_key in df[METRIC_KEY].dropna().unique()
+        if metric_key != lines_of_code_key
+    )
+    if not languages or not metric_keys:
+        raise ValueError(f"no metrics or languages available for {level_name} grid")
+
+    output_path = output_path or Path(
+        f"correlation_metric_language_grid_{level_name}.png"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    figure_width = max(6, 4 * len(languages))
+    figure_height = max(4, 2.8 * len(metric_keys))
+    fig, axes = plt.subplots(
+        len(metric_keys),
+        len(languages),
+        figsize=(figure_width, figure_height),
+        sharex=True,
+        squeeze=False,
+    )
+
+    for column, language in enumerate(languages):
+        axes[0, column].set_title(str(language))
+
+    for row, metric_key in enumerate(metric_keys):
+        for column, language in enumerate(languages):
+            ax = axes[row, column]
+            language_df = df[df[LANGUAGE_COL] == language]
+            paired = build_metric_pairs(
+                language_df, level_name, lines_of_code_key, metric_key
+            )
+            paired = paired[
+                np.isfinite(paired["loc"]) & np.isfinite(paired["metric_value"])
+            ]
+
+            if paired.empty:
+                ax.text(
+                    0.5,
+                    0.5,
+                    "no paired data",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                    color="0.45",
+                )
+            else:
+                ax.scatter(
+                    paired["loc"],
+                    paired["metric_value"],
+                    s=10,
+                    alpha=0.55,
+                    color=(
+                        OCAML_GRID_POINT_COLOR
+                        if language == "Ocaml"
+                        else DEFAULT_GRID_POINT_COLOR
+                    ),
+                )
+
+            ax.set_ylabel(str(metric_key) if column == 0 else "")
+            ax.grid(True, alpha=0.3)
+
+    for ax in axes[-1, :]:
+        ax.set_xlabel(lines_of_code_key)
+
+    legend_handles = [
+        Line2D(
+            [],
+            [],
+            color=(
+                OCAML_GRID_POINT_COLOR
+                if language == "Ocaml"
+                else DEFAULT_GRID_POINT_COLOR
+            ),
+            marker="o",
+            linestyle="None",
+            markersize=6,
+            label=str(language),
+        )
+        for language in languages
+    ]
+    fig.suptitle(f"{level_name.title()} metrics by language")
+    fig.legend(
+        handles=legend_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.96),
+        ncol=len(legend_handles),
+    )
+    fig.tight_layout(rect=(0, 0, 1, 0.93))
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return output_path
+
+
 def plot_version_metric_models(
     df: pd.DataFrame,
     result: pd.DataFrame,
@@ -567,6 +681,9 @@ def main():
     )
     result.to_csv("spearman_r_p_version.csv")
     write_metric_selection_tables(result, "version")
+    plot_metric_language_grid(
+        version_metrics_filtered, "version", LOC_METRIC_VERSION
+    )
     plot_version_metric_models(version_metrics_filtered, result)
 
     # file
@@ -605,6 +722,7 @@ def main():
     )
     result.to_csv("spearman_r_p_file.csv")
     write_metric_selection_tables(result, "file")
+    plot_metric_language_grid(metrics_file_filtered, "file", LOC_METRIC_FILE)
 
     statistics_function = [
         "cyclomatic",
@@ -638,6 +756,9 @@ def main():
     )
     result.to_csv("spearman_r_p_function.csv")
     write_metric_selection_tables(result, "function")
+    plot_metric_language_grid(
+        metrics_function_filtered, "function", LOC_METRIC_FUNCTION
+    )
 
 
 if __name__ == "__main__":
