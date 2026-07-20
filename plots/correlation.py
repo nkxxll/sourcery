@@ -23,6 +23,37 @@ R2_THRESHOLD = 0.8
 VERSION_MODEL_PLOTS_DIR = Path("version_metric_model_plots")
 DEFAULT_GRID_POINT_COLOR = "#1f77b4"
 OCAML_GRID_POINT_COLOR = "#ff7f0e"
+SPLOT_VARIABLES = {
+    # Add a (label, metric_key) pair here when a variable should be included.
+    # None means that the metric is not available at that analysis level.
+    "version": [
+        ("Lines of Code", LOC_METRIC_VERSION),
+        ("Cyclomatic Complexity", "total_cyclomatic"),
+        ("Halstead Operators", "total_halstead_operators"),
+        ("Halstead Operands", "total_halstead_operands"),
+        ("Maintainability index", "total_four_property_maintainability_index"),
+        ("Indegree", None),
+        ("Outdegree", None),
+    ],
+    "file": [
+        ("Lines of Code", LOC_METRIC_FILE),
+        ("Cyclomatic Complexity", "total_cyclomatic"),
+        ("Halstead Operators", "total_halstead_operators"),
+        ("Halstead Operands", "total_halstead_operands"),
+        ("Maintainability index", "maintainability_index_four_property"),
+        ("Indegree", "mean_indegree_per_file"),
+        ("Outdegree", "mean_outdegree_per_file"),
+    ],
+    "function": [
+        ("Lines of Code", LOC_METRIC_FUNCTION),
+        ("Cyclomatic Complexity", "cyclomatic"),
+        ("Halstead Operators", "halstead_operators"),
+        ("Halstead Operands", "halstead_operands"),
+        ("Maintainability index", "maintainability_index_four_property"),
+        ("Indegree", "indegree"),
+        ("Outdegree", "outdegree"),
+    ],
+}
 MODEL_NAMES = [
     "linear",
     "sqrt",
@@ -457,6 +488,91 @@ def safe_filename(value: str) -> str:
     return "".join(char if char.isalnum() else "_" for char in value).strip("_").lower()
 
 
+def metric_matrix_for_splot(
+    df: pd.DataFrame, level_name: str, variables: list[tuple[str, str | None]]
+) -> tuple[pd.DataFrame, list[tuple[str, str]]]:
+    """Return one row per analyzed entity and the configured metrics available."""
+    if "statistic" in df.columns:
+        df = df[df["statistic"] == "Mean"].copy()
+    if "panel" in df.columns:
+        df = df[df["panel"] == df[LANGUAGE_COL]].copy()
+
+    available = [
+        (label, key)
+        for label, key in variables
+        if key is not None and key in set(df[METRIC_KEY].dropna())
+    ]
+    if len(available) < 2:
+        raise ValueError(f"fewer than two configured metrics available for {level_name}")
+
+    key_cols = identity_columns(df, level_name)
+    selected_keys = [key for _, key in available]
+    matrix = (
+        df[df[METRIC_KEY].isin(selected_keys)]
+        .pivot_table(
+            index=key_cols,
+            columns=METRIC_KEY,
+            values=VALUE_COL,
+            aggfunc="first",
+        )
+        .rename(columns=dict((key, label) for label, key in available))
+    )
+    return matrix, available
+
+
+def plot_metric_splot(
+    df: pd.DataFrame,
+    level_name: str,
+    variables: list[tuple[str, str | None]] | None = None,
+    output_path: Path | None = None,
+) -> Path:
+    """Write a scatterplot matrix for the configured variables at one level."""
+    variables = variables or SPLOT_VARIABLES[level_name]
+    matrix, available = metric_matrix_for_splot(df, level_name, variables)
+    labels = [label for label, _ in available]
+    languages = (
+        matrix.index.get_level_values(LANGUAGE_COL)
+        if LANGUAGE_COL in matrix.index.names
+        else pd.Series("all", index=matrix.index)
+    )
+    colors = {
+        language: (OCAML_GRID_POINT_COLOR if language == "Ocaml" else DEFAULT_GRID_POINT_COLOR)
+        for language in pd.unique(languages)
+    }
+
+    output_path = output_path or Path(f"correlation_splot_{level_name}.png")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    size = len(labels)
+    fig, axes = plt.subplots(size, size, figsize=(2.6 * size, 2.6 * size), squeeze=False)
+    for row, y_label in enumerate(labels):
+        for column, x_label in enumerate(labels):
+            ax = axes[row, column]
+            if row == column:
+                for language, color in colors.items():
+                    values = matrix.loc[languages == language, y_label].dropna()
+                    if not values.empty:
+                        ax.hist(values, bins="auto", alpha=0.45, color=color, label=str(language))
+            else:
+                for language, color in colors.items():
+                    points = matrix.loc[languages == language, [x_label, y_label]].dropna()
+                    ax.scatter(points[x_label], points[y_label], s=8, alpha=0.45, color=color)
+            if row == size - 1:
+                ax.set_xlabel(x_label, rotation=35, ha="right")
+            else:
+                ax.set_xlabel("")
+            if column == 0:
+                ax.set_ylabel(y_label)
+            else:
+                ax.set_ylabel("")
+            ax.grid(True, alpha=0.25)
+
+    fig.suptitle(f"{level_name.title()} metric relationships")
+    fig.tight_layout(rect=(0, 0, 1, 0.97))
+    fig.savefig(output_path, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    return output_path
+
+
 def plot_metric_language_grid(
     df: pd.DataFrame,
     level_name: str,
@@ -684,6 +800,7 @@ def main():
     plot_metric_language_grid(
         version_metrics_filtered, "version", LOC_METRIC_VERSION
     )
+    plot_metric_splot(version_metrics_filtered, "version")
     plot_version_metric_models(version_metrics_filtered, result)
 
     # file
@@ -723,6 +840,7 @@ def main():
     result.to_csv("spearman_r_p_file.csv")
     write_metric_selection_tables(result, "file")
     plot_metric_language_grid(metrics_file_filtered, "file", LOC_METRIC_FILE)
+    plot_metric_splot(metrics_file_filtered, "file")
 
     statistics_function = [
         "cyclomatic",
@@ -759,6 +877,7 @@ def main():
     plot_metric_language_grid(
         metrics_function_filtered, "function", LOC_METRIC_FUNCTION
     )
+    plot_metric_splot(metrics_function_filtered, "function")
 
 
 if __name__ == "__main__":

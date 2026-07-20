@@ -267,7 +267,7 @@ if __name__ == "__main__":
                 level_metric_names,
                 level_output_path,
             )
-        elif args.chart == "linechart":
+        elif args.chart in {"linechart", "linechart-normalized"}:
             plot_metric_evolution_by_version(
                 level_df,
                 level_metric_names,
