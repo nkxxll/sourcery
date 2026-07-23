@@ -958,6 +958,129 @@ class MetricsData:
         ax.figure.tight_layout()
         return ax
 
+    def plot_go_ocaml_file_loc_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        log: bool = False,
+        alpha: float = 0.25,
+        s: float = 10,
+        file_extension: str | None = None,
+    ) -> plt.Figure:
+        """Plot Go and OCaml file LOC/change counts with shared axes."""
+        return self._plot_go_ocaml_file_change_counts(
+            metric="lines_of_code",
+            change_counts=change_counts,
+            version=version,
+            log=log,
+            alpha=alpha,
+            s=s,
+            file_extension=file_extension,
+        )
+
+    def plot_go_ocaml_file_cyclomatic_change_counts(
+        self,
+        change_counts: pd.DataFrame | None = None,
+        version: int | Literal["latest", "all"] = "latest",
+        log: bool = False,
+        alpha: float = 0.25,
+        s: float = 10,
+        file_extension: str | None = None,
+    ) -> plt.Figure:
+        """Plot Go and OCaml file cyclomatic/change counts with shared axes."""
+        return self._plot_go_ocaml_file_change_counts(
+            metric="total_cyclomatic",
+            change_counts=change_counts,
+            version=version,
+            log=log,
+            alpha=alpha,
+            s=s,
+            file_extension=file_extension,
+        )
+
+    def _plot_go_ocaml_file_change_counts(
+        self,
+        metric: Literal["lines_of_code", "total_cyclomatic"],
+        change_counts: pd.DataFrame | None,
+        version: int | Literal["latest", "all"],
+        log: bool,
+        alpha: float,
+        s: float,
+        file_extension: str | None,
+    ) -> plt.Figure:
+        data_by_language = {
+            language: (
+                self.file_loc_change_counts(
+                    change_counts=change_counts,
+                    language=language,
+                    version=version,
+                    file_extension=file_extension,
+                )
+                if metric == "lines_of_code"
+                else self.file_cyclomatic_change_counts(
+                    change_counts=change_counts,
+                    language=language,
+                    version=version,
+                    file_extension=file_extension,
+                )
+            )
+            for language in [Language.GO.value, Language.OCAML.value]
+        }
+
+        x_values = []
+        y_values = []
+        plot_data = {}
+        for language, paired in data_by_language.items():
+            values = paired
+            if log:
+                values = values[(values[metric] > 0) & (values["change_count"] > 0)]
+            plot_data[language] = values
+            if not values.empty:
+                x_values.append(values[metric].to_numpy(dtype=float))
+                y_values.append(values["change_count"].to_numpy(dtype=float))
+
+        if not x_values:
+            raise ValueError("no finite Go/OCaml file change-count data found")
+
+        def axis_limits(values: list[np.ndarray]) -> tuple[float, float]:
+            finite_values = np.concatenate(values)
+            finite_values = finite_values[np.isfinite(finite_values)]
+            lower, upper = finite_values.min(), finite_values.max()
+            if log:
+                return (
+                    max(lower / 1.05, np.finfo(float).tiny),
+                    upper * 1.05,
+                )
+            if lower == upper:
+                padding = 0.5 if lower == 0 else abs(lower) * 0.05
+            else:
+                padding = (upper - lower) * 0.05
+            return lower - padding, upper + padding
+
+        x_limits = axis_limits(x_values)
+        y_limits = axis_limits(y_values)
+
+        fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)
+        for ax, (language, values) in zip(axes, plot_data.items(), strict=True):
+            ax.scatter(values[metric], values["change_count"], alpha=alpha, s=s)
+            stats = metric_change_correlation(values, metric)
+            ax.set_title(
+                f"{language} (n={stats['n']})\n"
+                f"Spearman r={stats['spearman_r']:.3f}, Pearson r={stats['pearson_r']:.3f}"
+            )
+            ax.set_xlabel(metric)
+            ax.grid(True, alpha=0.25)
+            if log:
+                ax.set_xscale("log")
+                ax.set_yscale("log")
+
+        axes[0].set_ylabel("change_count")
+        axes[0].set_xlim(*x_limits)
+        axes[0].set_ylim(*y_limits)
+        fig.suptitle(f"File change count vs {metric}, version={version}")
+        fig.tight_layout()
+        return fig
+
     def resolve_metric(self, query: str, level: str | None = None) -> str:
         """Resolve a metric key from a key, label, or human-ish search string."""
         metrics = self.metric_names(level)
@@ -1112,6 +1235,16 @@ def plot_file_loc_change_counts(*args, **kwargs) -> plt.Axes:
 def plot_file_cyclomatic_change_counts(*args, **kwargs) -> plt.Axes:
     """Convenience shortcut for data().plot_file_cyclomatic_change_counts(...)."""
     return data().plot_file_cyclomatic_change_counts(*args, **kwargs)
+
+
+def plot_go_ocaml_file_loc_change_counts(*args, **kwargs) -> plt.Figure:
+    """Convenience shortcut for data().plot_go_ocaml_file_loc_change_counts(...)."""
+    return data().plot_go_ocaml_file_loc_change_counts(*args, **kwargs)
+
+
+def plot_go_ocaml_file_cyclomatic_change_counts(*args, **kwargs) -> plt.Figure:
+    """Convenience shortcut for data().plot_go_ocaml_file_cyclomatic_change_counts(...)."""
+    return data().plot_go_ocaml_file_cyclomatic_change_counts(*args, **kwargs)
 
 
 def metric_names(level: str | None = None) -> pd.DataFrame:
