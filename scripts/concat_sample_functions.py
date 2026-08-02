@@ -18,7 +18,7 @@ COMMENT_PREFIXES = {
     "ocaml": ("(* ", " *)"),
 }
 
-SAMPLE_HEADING_RE = re.compile(r"^===\s+(?P<language>Go|OCaml)\s*$", re.IGNORECASE)
+SAMPLE_HEADING_RE = re.compile(r"^===\s+(?P<language>Go(?:lang)?|OCaml)\s*$", re.IGNORECASE)
 GITHUB_BLOB_RE = re.compile(
     r"^/(?P<owner>[^/]+)/(?P<repo>[^/]+)/blob/(?P<commit>[^/]+)/(?P<path>.+)$"
 )
@@ -80,6 +80,8 @@ def parse_samples(path: Path) -> list[Sample]:
         heading_match = SAMPLE_HEADING_RE.match(line)
         if heading_match is not None:
             current_language = heading_match.group("language").lower()
+            if current_language == "golang":
+                current_language = "go"
             continue
 
         if "https://github.com/" not in line:

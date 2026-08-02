@@ -14,3 +14,7 @@ app.log
 .envrc
 
 **/metrics*.csv
+
+.stfolder
+.stignore
+results

@@ -538,7 +538,7 @@ impl FunctionCall {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub struct CodePosition {
     pub line: usize,
     pub column: usize,
@@ -1589,7 +1589,10 @@ impl<'processor> AstProcessor<'processor> {
                 .iter()
                 .map(|location| {
                     let lsp_range: LspRange = location.range.into();
-                    let path = PathBuf::from(location.uri.path());
+                    let path = location
+                        .uri
+                        .to_file_path()
+                        .unwrap_or_else(|_| PathBuf::from(location.uri.path()));
                     debug!(path = %path.display(), range = %lsp_range, "location range in function call definition");
                     // only debugging
                     let pos = CodePosition::from_lsp_position(lsp_range.start);
@@ -1666,7 +1669,10 @@ impl<'processor> AstProcessor<'processor> {
                 res.iter()
                     .map(|location| {
                         let lsp_range: LspRange = location.range.into();
-                        let path = PathBuf::from(location.uri.path());
+                        let path = location
+                            .uri
+                            .to_file_path()
+                            .unwrap_or_else(|_| PathBuf::from(location.uri.path()));
                         FunctionCall {
                             name: name.clone(),
                             pos: CodePosition::from_lsp_position(lsp_range.start),

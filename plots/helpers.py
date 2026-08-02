@@ -157,6 +157,7 @@ class MetricsData:
         languages: list[str | Language] | None = None,
         random: bool = False,
         seed: int | None = 0,
+        distribute_by_project: bool = False,
         file_extension: str | None = None,
         columns: list[str] | None = None,
     ) -> pd.DataFrame:
@@ -189,6 +190,7 @@ class MetricsData:
                 version=input_index,
                 random=random,
                 seed=seed,
+                distribute_by_project=distribute_by_project,
                 file_extension=file_extension,
                 columns=columns,
             )
@@ -857,6 +859,7 @@ class MetricsData:
         languages: list[str | Language] | None = None,
         random: bool = False,
         seed: int | None = 0,
+        distribute_by_project: bool = False,
         file_extension: str | None = None,
         columns: list[str] | None = None,
         url_col: str = "github_url",
@@ -871,6 +874,7 @@ class MetricsData:
             languages=languages,
             random=random,
             seed=seed,
+            distribute_by_project=distribute_by_project,
             file_extension=file_extension,
             columns=sample_columns,
         )
@@ -1135,6 +1139,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         file_extension: str | None = None,
+        percentile: float = 99.0,
     ) -> plt.Figure:
         """Plot Go and OCaml file LOC/change counts with shared axes."""
         return self._plot_go_ocaml_file_change_counts(
@@ -1142,6 +1147,7 @@ class MetricsData:
             change_counts=change_counts,
             version=version,
             log=log,
+            percentile=percentile,
             alpha=alpha,
             s=s,
             file_extension=file_extension,
@@ -1155,6 +1161,7 @@ class MetricsData:
         alpha: float = 0.25,
         s: float = 10,
         file_extension: str | None = None,
+        percentile: float = 99.0,
     ) -> plt.Figure:
         """Plot Go and OCaml file cyclomatic/change counts with shared axes."""
         return self._plot_go_ocaml_file_change_counts(
@@ -1162,6 +1169,7 @@ class MetricsData:
             change_counts=change_counts,
             version=version,
             log=log,
+            percentile=percentile,
             alpha=alpha,
             s=s,
             file_extension=file_extension,
@@ -1173,10 +1181,14 @@ class MetricsData:
         change_counts: pd.DataFrame | None,
         version: int | Literal["latest", "all"],
         log: bool,
+        percentile: float,
         alpha: float,
         s: float,
         file_extension: str | None,
     ) -> plt.Figure:
+        if not 0 < percentile <= 100:
+            raise ValueError("percentile must be greater than 0 and at most 100")
+
         data_by_language = {
             language: (
                 self.file_loc_change_counts(
@@ -1211,23 +1223,36 @@ class MetricsData:
         if not x_values:
             raise ValueError("no finite Go/OCaml file change-count data found")
 
-        def axis_limits(values: list[np.ndarray]) -> tuple[float, float]:
-            finite_values = np.concatenate(values)
-            finite_values = finite_values[np.isfinite(finite_values)]
-            lower, upper = finite_values.min(), finite_values.max()
-            if log:
-                return (
-                    max(lower / 1.05, np.finfo(float).tiny),
-                    upper * 1.05,
-                )
-            if lower == upper:
-                padding = 0.5 if lower == 0 else abs(lower) * 0.05
-            else:
-                padding = (upper - lower) * 0.05
-            return lower - padding, upper + padding
+        finite_x = np.concatenate(x_values)
+        finite_x = finite_x[np.isfinite(finite_x)]
+        finite_y = np.concatenate(y_values)
+        finite_y = finite_y[np.isfinite(finite_y)]
+        quantile = percentile / 100
+        x_upper_limit = float(np.quantile(finite_x, quantile))
+        y_upper_limit = float(np.quantile(finite_y, quantile))
+        if x_upper_limit <= 0:
+            x_upper_limit = 1.0
+        if y_upper_limit <= 0:
+            y_upper_limit = 1.0
 
-        x_limits = axis_limits(x_values)
-        y_limits = axis_limits(y_values)
+        if log:
+            x_lower_limit = max(
+                float(finite_x.min()) / 1.05, np.finfo(float).tiny
+            )
+            y_lower_limit = max(
+                float(finite_y.min()) / 1.05, np.finfo(float).tiny
+            )
+        else:
+            x_lower_limit = 0.0
+            y_lower_limit = 0.0
+
+        for language, values in plot_data.items():
+            plot_data[language] = values[
+                (values[metric] >= x_lower_limit)
+                & (values[metric] <= x_upper_limit)
+                & (values["change_count"] >= y_lower_limit)
+                & (values["change_count"] <= y_upper_limit)
+            ]
 
         fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), sharex=True, sharey=True)
         for ax, (language, values) in zip(axes, plot_data.items(), strict=True):
@@ -1244,9 +1269,12 @@ class MetricsData:
                 ax.set_yscale("log")
 
         axes[0].set_ylabel("change_count")
-        axes[0].set_xlim(*x_limits)
-        axes[0].set_ylim(*y_limits)
-        fig.suptitle(f"File change count vs {metric}, version={version}")
+        axes[0].set_xlim(x_lower_limit, x_upper_limit)
+        axes[0].set_ylim(y_lower_limit, y_upper_limit)
+        fig.suptitle(
+            f"File change count vs {metric}, version={version} "
+            f"({percentile:g}th-percentile crop)"
+        )
         fig.tight_layout()
         return fig
 

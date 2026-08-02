@@ -7,8 +7,9 @@ from helpers import data
 
 
 DEFAULT_OUTPUT_DIR = Path(".")
-LOC_OUTPUT_NAME = "file_change_count_vs_lines_of_code_go_ocaml.png"
-CYCLOMATIC_OUTPUT_NAME = "file_change_count_vs_total_cyclomatic_go_ocaml.png"
+DEFAULT_PERCENTILE = 99.0
+LOC_OUTPUT_NAME = "file_change_count_vs_lines_of_code_p99_go_ocaml.png"
+CYCLOMATIC_OUTPUT_NAME = "file_change_count_vs_total_cyclomatic_p99_go_ocaml.png"
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,7 +39,16 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Use logarithmic axes, omitting non-positive values.",
     )
-    return parser.parse_args()
+    parser.add_argument(
+        "--percentile",
+        type=float,
+        default=DEFAULT_PERCENTILE,
+        help=f"Percentile used to crop both axes (default: {DEFAULT_PERCENTILE})",
+    )
+    args = parser.parse_args()
+    if not 0 < args.percentile <= 100:
+        parser.error("--percentile must be greater than 0 and at most 100")
+    return args
 
 
 def plot_file_change_counts(
@@ -46,6 +56,7 @@ def plot_file_change_counts(
     output_dir: Path = DEFAULT_OUTPUT_DIR,
     version: int | str = "latest",
     log: bool = False,
+    percentile: float = DEFAULT_PERCENTILE,
 ) -> list[Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     metrics = data(data_dir)
@@ -57,13 +68,13 @@ def plot_file_change_counts(
     plots = [
         (
             metrics.plot_go_ocaml_file_loc_change_counts(
-                version=version_value, log=log
+                version=version_value, log=log, percentile=percentile
             ),
             output_dir / LOC_OUTPUT_NAME,
         ),
         (
             metrics.plot_go_ocaml_file_cyclomatic_change_counts(
-                version=version_value, log=log
+                version=version_value, log=log, percentile=percentile
             ),
             output_dir / CYCLOMATIC_OUTPUT_NAME,
         ),
@@ -83,6 +94,7 @@ if __name__ == "__main__":
         args.output_dir,
         version=args.version,
         log=args.log,
+        percentile=args.percentile,
     )
     for output_path in output_paths:
         print(f"Wrote file change-count scatterplot to {output_path}")

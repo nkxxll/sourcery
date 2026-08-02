@@ -18,6 +18,7 @@ use tokio::{sync::Semaphore, task::JoinSet};
 use tracing::{debug, info, warn};
 
 use crate::{
+    callgraph::{CallgraphCsvSample, CallgraphData, output_csv},
     diff::CommitDiff,
     git_handler::{CommitInfo, SourceRepository},
     halstead_subprocess::HalsteadMetrics,
@@ -39,6 +40,7 @@ pub mod language;
 pub mod processor;
 pub mod progress;
 pub use sourcery_db as db;
+pub mod callgraph;
 
 pub enum FileChangeType {
     CREATED,
@@ -103,7 +105,7 @@ impl State {
         let pl = programming_language.unwrap_or_else(|| {
             guess_repo_language(url).expect("the language could not be determined")
         });
-        let codebase = db::insert_codebase(&pool, &codebase_name, url, &pl.to_string()).await?;
+        let codebase = db::insert_codebase(pool, &codebase_name, url, &pl.to_string()).await?;
         let commits = Self::gather_commits(&sr);
         let number_of_commits = commits.len();
         info!("Found {number_of_commits} commits.");
@@ -125,7 +127,7 @@ impl State {
     fn commit_info(&self, oid: &Oid) -> CommitInfo {
         match self
             .sr
-            .find_commit(&oid)
+            .find_commit(oid)
             .with_context(|| format!("failed to find commit {oid}"))
         {
             Ok(commit) => {
@@ -138,7 +140,7 @@ impl State {
                 CommitInfo {
                     author_name,
                     author_email,
-                    message: message,
+                    message,
                     committed_at,
                     is_fix,
                     hash: commit_hash,
@@ -194,6 +196,82 @@ pub async fn analyze_repo_version(
         0,
     )
     .await
+}
+
+pub async fn analyze_repo_samples_call_graph(
+    path: String,
+    samples: usize,
+    programming_language_option: Option<ProgrammingLanguage>,
+) -> Result<()> {
+    if samples == 0 {
+        return Err(anyhow!("samples must be greater than 0"));
+    }
+    let programming_language = programming_language_option.unwrap_or_else(|| {
+        guess_repo_language(&path).expect("the language could not be determined")
+    });
+    let path_buf = PathBuf::from(&path);
+    let source_repository = SourceRepository::from_path(path_buf.clone())?;
+    let commits = State::gather_commits(&source_repository);
+    let sampled_commits = select_sample_commits(&source_repository, &commits, samples)?;
+    let mut sample_metrics = Vec::new();
+    let codebase_name = SourceRepository::get_repo_base_name(&path).to_string();
+
+    for (index, oid) in sampled_commits.iter().enumerate() {
+        let sample_number = usize_to_i32(index + 1, "sample_number")?;
+        source_repository.checkout_commit(oid)?;
+        let mut callgraph_data = CallgraphData::new();
+        let language_config = LanguageConfig::new(programming_language);
+        let (binary, args) = programming_language.lsp();
+        let mut server = Server::new(&path_buf, binary, args);
+        let mainloop = server.run_main_loop();
+        server.initialize().await;
+        let mut socket = server.socket();
+
+        //
+        // files vector where all the files are collected to later walk instead of walking directly
+        //
+        let mut files = Vec::new();
+
+        walkdir::WalkDir::new(&path_buf)
+            .into_iter()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_type().is_file())
+            .filter(|entry| {
+                language_config.extensions.iter().any(|ext| {
+                    entry
+                        .path()
+                        .extension()
+                        .is_some_and(|file_ext| file_ext == *ext)
+                })
+            })
+            .for_each(|entry| {
+                files.push(entry.path().to_path_buf());
+            });
+
+        for file in files {
+            let uri = socket.open_document(&file).await;
+            let mut processor = Processor::new(&language_config, &file, socket.clone(), uri)?;
+            let analysis = processor.analyze_with_enrichted_stats().await?;
+            callgraph_data.insert(&analysis);
+
+            processor.close_language_server_file().await;
+        }
+        sample_metrics.push(CallgraphCsvSample {
+            codebase_id: String::new(),
+            codebase_name: codebase_name.clone(),
+            programming_language: programming_language.to_string(),
+            version_id: String::new(),
+            version_number: sample_number,
+            sample_number,
+            sample_commit_hash: oid.to_string(),
+            functions: callgraph_data.calculate_unique_indegree(),
+        });
+        server.shutdown(mainloop).await;
+    }
+
+    print!("{}", output_csv(&sample_metrics));
+
+    Ok(())
 }
 
 pub async fn analyze_repo_samples(
@@ -359,7 +437,7 @@ async fn analyze_repo_tree_version(
     version_metrics.total_three_property_maintainability_index = mi.three_property;
     version_metrics.total_four_property_maintainability_index = mi.four_property;
     version_metrics.total_visual_studio_maintainability_index = mi.visual_studio;
-    db::update_version_metrics(&pool, version.id, &version_metrics.to_json(), commit_hash).await?;
+    db::update_version_metrics(pool, version.id, &version_metrics.to_json(), commit_hash).await?;
 
     server.shutdown(mainloop).await;
     Ok(())

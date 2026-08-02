@@ -76,7 +76,8 @@ def select_functions(metrics, language: str) -> pd.DataFrame:
             "function_start_line",
             "function_end_line",
         ],
-        random = True,
+        random=True,
+        distribute_by_project=True,
     ).assign(category="median")
 
     selected = pd.concat([max_rows, median_rows], ignore_index=True)

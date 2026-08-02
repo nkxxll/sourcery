@@ -1,3 +1,4 @@
+import argparse
 import math
 from pathlib import Path
 from sys import stderr
@@ -7,6 +8,14 @@ from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
 from scipy import stats
+
+from plot_callgraph_results import (
+    METRICS_BY_LEVEL as UPDATED_DEGREE_METRICS_BY_LEVEL,
+    VERSION_METRICS as UPDATED_VERSION_METRICS,
+    build_version_metrics,
+    load_results,
+    load_size_metrics,
+)
 
 VALUE_COL = "value"
 METRIC_KEY = "metric_key"
@@ -763,7 +772,163 @@ def plot_version_metric_models(
         plt.close(fig)
 
 
+def updated_degree_pairs(
+    degree_metrics: pd.DataFrame,
+    size_metrics: pd.DataFrame,
+    level_name: str,
+    loc_metric: str,
+    metric_key: str,
+) -> pd.DataFrame:
+    keys = [
+        "project",
+        LANGUAGE_COL,
+        "sample_number",
+        "relative_file_path",
+    ]
+    if level_name == "version":
+        keys = ["project", LANGUAGE_COL, "sample_number"]
+    elif level_name == "function":
+        keys.extend(["function_name", "function_start_line"])
+
+    metric_rows = degree_metrics[
+        (degree_metrics[METRIC_LEVEL_COL] == level_name)
+        & (degree_metrics[METRIC_KEY] == metric_key)
+    ][keys + [VALUE_COL]].rename(columns={VALUE_COL: "metric_value"})
+    loc_rows = size_metrics[
+        (size_metrics[METRIC_LEVEL_COL] == level_name)
+        & (size_metrics[METRIC_KEY] == loc_metric)
+    ][keys + [VALUE_COL]].rename(columns={VALUE_COL: "loc"})
+    return metric_rows.merge(loc_rows, on=keys, how="inner").dropna(
+        subset=["loc", "metric_value"]
+    )
+
+
+def updated_version_loc_metrics(size_metrics: pd.DataFrame) -> pd.DataFrame:
+    file_loc = size_metrics[
+        (size_metrics[METRIC_LEVEL_COL] == "file")
+        & (size_metrics[METRIC_KEY] == LOC_METRIC_FILE)
+    ]
+    version_loc = (
+        file_loc.groupby(
+            ["project", LANGUAGE_COL, "sample_number"],
+            as_index=False,
+            dropna=False,
+        )[VALUE_COL]
+        .sum()
+    )
+    version_loc[METRIC_KEY] = LOC_METRIC_VERSION
+    version_loc[METRIC_LEVEL_COL] = "version"
+    return version_loc
+
+
+def updated_degree_correlations(
+    degree_metrics: pd.DataFrame,
+    size_metrics: pd.DataFrame,
+    level_name: str,
+    loc_metric: str,
+    metric_keys: list[str],
+) -> pd.DataFrame:
+    rows = []
+    for language in sorted(degree_metrics[LANGUAGE_COL].dropna().unique()):
+        for metric_key in metric_keys:
+            pairs = updated_degree_pairs(
+                degree_metrics[degree_metrics[LANGUAGE_COL] == language],
+                size_metrics[size_metrics[LANGUAGE_COL] == language],
+                level_name,
+                loc_metric,
+                metric_key,
+            )
+            rows.append(
+                {
+                    LANGUAGE_COL: language,
+                    METRIC_LEVEL_COL: level_name,
+                    METRIC_KEY: metric_key,
+                    **safe_spearmanr_for_pairs(pairs),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def write_updated_degree_correlations(
+    results_dir: Path,
+    metrics_dir: Path,
+    output_dir: Path,
+) -> None:
+    degree_metrics = load_results(results_dir)
+    size_metrics = load_size_metrics(metrics_dir)
+    version_metrics = build_version_metrics(degree_metrics)
+    version_loc = updated_version_loc_metrics(size_metrics)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    levels = {
+        "version": (
+            version_metrics,
+            version_loc,
+            LOC_METRIC_VERSION,
+            list(UPDATED_VERSION_METRICS.values()),
+        ),
+        "file": (
+            degree_metrics,
+            size_metrics,
+            LOC_METRIC_FILE,
+            UPDATED_DEGREE_METRICS_BY_LEVEL["file"],
+        ),
+        "function": (
+            degree_metrics,
+            size_metrics,
+            LOC_METRIC_FUNCTION,
+            UPDATED_DEGREE_METRICS_BY_LEVEL["function"],
+        ),
+    }
+    combined = []
+    for level_name, (level_degrees, level_sizes, loc_metric, metric_keys) in levels.items():
+        result = updated_degree_correlations(
+            level_degrees,
+            level_sizes,
+            level_name,
+            loc_metric,
+            metric_keys,
+        )
+        result = pd.concat(
+            [result, result.apply(best_model_for_row, axis=1, result_type="expand")],
+            axis=1,
+        )
+        result.to_csv(
+            output_dir / f"updated_degree_correlation_{level_name}.csv", index=False
+        )
+        combined.append(result)
+
+    pd.concat(combined, ignore_index=True).to_csv(
+        output_dir / "updated_degree_correlation_all.csv", index=False
+    )
+
+
+def parse_args() -> argparse.Namespace:
+    root = Path(__file__).resolve().parent.parent
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--updated-degrees",
+        action="store_true",
+        help="calculate correlations only for refreshed degree metrics",
+    )
+    parser.add_argument("--results-dir", type=Path, default=root / "results")
+    parser.add_argument("--metrics-dir", type=Path, default=root / "plots")
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=root / "plots" / "callgraph_results",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    if args.updated_degrees:
+        write_updated_degree_correlations(
+            args.results_dir, args.metrics_dir, args.output_dir
+        )
+        return
+
     raw_metrics = load_raw_metrics(raw_metrics_csv_paths())
     version_metrics = load_metrics_csv("./version-metrics.csv")
 

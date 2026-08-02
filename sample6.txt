@@ -1,0 +1,15 @@
+=== Golang
+
+- https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/drivers/189/driver.go#L46-L80
+- https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/sdk/cliproxy/auth/scheduler_test.go#L127-L149
+- https://github.com/spf13/cobra/blob/ad460ea8f249db69c943a365fb84f3a59042d54e/command.go#L781-L796
+- https://github.com/junegunn/fzf/blob/dea72834ed35b5d56634075fc7793aa4b9b1d697/src/terminal.go#L8328-L8366
+- https://github.com/charmbracelet/bubbletea/blob/a23da80847e6fc928febc62114f761403ac5d2f1/examples/tui-daemon-combo/main.go#L85-L103
+
+=== Ocaml
+
+- https://github.com/comby-tools/comby/blob/3b6bdff7bc3b50361b621da9db030152772e7e6b/lib/app/vendored/camlzip/zip.ml#L618-L645
+- https://github.com/fastpack/fastpack/blob/173e0a412474baefd1f0f22597274730a74f475d/FastpackTest/Resolver.ml#L9-L34
+- https://github.com/camlworks/dream/blob/2ce65e1010f2501f9319e8735eec8e1eeb676d4e/src/server/log.ml#L315-L329
+- https://github.com/batsh-dev-team/Batsh/blob/e38abb082deb38fc2942248a4fd855a79d2a35ca/src/semantic_checker.ml#L17-L26
+- https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/command/src/command.ml#L272-L284

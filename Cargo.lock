@@ -1651,6 +1651,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sourcery-callgraph-dabble"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "tree-sitter",
+ "tree-sitter-go",
+ "tree-sitter-ocaml",
+]
+
+[[package]]
 name = "sourcery-change-count"
 version = "0.1.0"
 dependencies = [
