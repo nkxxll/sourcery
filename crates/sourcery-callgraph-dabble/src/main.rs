@@ -47,6 +47,7 @@ fn main() -> Result<()> {
     };
 
     (state.functions, state.function_lines) = count_functions(root, args.language);
+    (state.functions, state.function_lines) = count_functions(root, args.language);
 
     let mut cursor = root.walk();
     root.children(&mut cursor).for_each(|n| {

@@ -329,7 +329,7 @@ async fn analyze_repo_tree_version(
             .to_string();
         let file_path = EcoString::from(relative_path);
         let stored_analysis = store_file_analysis(
-            &pool,
+            pool,
             &version,
             &file_path,
             &pl,
@@ -854,20 +854,28 @@ async fn store_file_analysis(
             .map(|call| call.to_json())
             .collect();
 
-        let references: Vec<serde_json::Value> = func
-            .references
+        let references: Vec<serde_json::Value> = lsp_references
             .iter()
             .map(|reference| reference.to_json())
             .collect();
 
         let indegree = u64::try_from(references.len()).context("indegree exceeds u64")?;
-        let unique_indegree = lsp_references
-            .iter()
-            .map(|r| r.name.clone())
-            .collect::<BTreeSet<_>>()
-            .iter()
-            .collect::<Vec<_>>()
-            .len();
+        //
+        // @TODO! @WARNING! this is bad
+        // its not as easy as taking the unique names like this:
+        //
+        // let unique_indegree = lsp_references
+        //     .iter()
+        //     .map(|r| r.name.clone())
+        //     .collect::<BTreeSet<_>>()
+        //     .iter()
+        //     .collect::<Vec<_>>()
+        //     .len();
+        //
+        // this is always 0 or 1 depending on whether the indegree is over 1 or the function is a
+        // library function that is never called
+
+        let unique_indegree = calculate_unique_indegree(&analysis.functions, lsp_references);
 
         // Function names may repeat by namespace, so include location.
         let unique_name = func.name.with_location(source, newline_map)?;
@@ -919,6 +927,33 @@ async fn store_file_analysis(
         file,
         metrics: file_metrics,
     })
+}
+
+fn calculate_unique_indegree(
+    function_definitions: &[FunctionAnalysis],
+    lsp_references: &[FunctionCall],
+) -> usize {
+    let mut set: BTreeSet<&str> = BTreeSet::new();
+    for ref_ in lsp_references {
+        for definition in function_definitions {
+            if call_inside_definition(ref_, definition) {
+                set.insert(&definition.function_name);
+            }
+        }
+    }
+    set.len()
+}
+
+/// returns whether the function call is inside the defintion
+/// false if they cross
+/// false if call outside
+fn call_inside_definition(call: &FunctionCall, definition: &FunctionAnalysis) -> bool {
+    if definition.definition_line_span.start_line <= call.pos.line
+        && definition.definition_line_span.end_line >= call.pos.line
+    {
+        return true;
+    }
+    false
 }
 
 struct GraphFunctionCall {

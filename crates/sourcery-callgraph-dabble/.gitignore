@@ -8,7 +8,6 @@ stats.txt
 toanalyze
 
 _opam
-bin
 app.log
 
 .envrc

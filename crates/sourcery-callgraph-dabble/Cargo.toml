@@ -3,11 +3,10 @@ name = "sourcery-callgraph-dabble"
 version = "0.1.0"
 edition = "2024"
 
-[workspace]
-
 [dependencies]
-anyhow = "1.0.102"
-clap = { version = "4.6.0", features = ["derive"] }
-tree-sitter = "0.26.8"
-tree-sitter-go = "0.25.0"
-tree-sitter-ocaml = "0.24.2"
+anyhow.workspace = true
+clap.workspace = true
+
+tree-sitter.workspace = true
+tree-sitter-go.workspace = true
+tree-sitter-ocaml.workspace = true
