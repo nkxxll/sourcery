@@ -1,0 +1,6 @@
+./plots/.venv
+./.git
+./.jj
+./target
+./_opam
+./_build
