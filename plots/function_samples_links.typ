@@ -1,0 +1,23 @@
+- `4.00` `metadataString:373:6`
+  (router-for-me__CLIProxyAPI/internal/runtime/executor/codex_executor.go:373)
+  #link("https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/runtime/executor/codex_executor.go#L373")[GitHub]
+- `4.00` `decodeMsgPack:31:6` (ggin-gonic__gin/binding/msgpack.go:31) #link("https://github.com/gin-gonic/gin/blob/d75fcd4c9ab260e5225de590f1f0f8c0e0e12d11/binding/msgpack.go#L31")[GitHub]
+- `4.00` `testAntigravityResponsesGPTSignature:161:6` (grouter-for-me__CLIProxyAPI/internal/translator/antigravity/openai/responses/antigravity_openai-responses_request_test.go:161) #link("https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/translator/antigravity/openai/responses/antigravity_openai-responses_request_test.go#L161")[GitHub]
+- `4.00` `GetLabelFileBinDingByLabelIdExists:37:6` (gAlistGo__alist/internal/db/label_file_binding.go:37) #link("https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/internal/db/label_file_binding.go#L37")[GitHub]
+- `4.00` `NewHighestWastedBytesRule:129:6` (gwagoodman__dive/cmd/dive/cli/internal/command/ci/rules.go:129) #link("https://github.com/wagoodman/dive/blob/d6c691947f8fda635c952a17ee3b7555379d58f0/cmd/dive/cli/internal/command/ci/rules.go#L129")[GitHub]
+- `4.00` `TestDo:22:6` (gAlistGo__alist/pkg/singleflight/signleflight_test.go:22) #link("https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/pkg/singleflight/signleflight_test.go#L22")[GitHub]
+- `4.00` `TestMinimumNArgs_WithValid__WithInvalidArgs:233:6` (gspf13__cobra/args_test.go:233) #link("https://github.com/spf13/cobra/blob/ad460ea8f249db69c943a365fb84f3a59042d54e/args_test.go#L233")[GitHub]
+- `4.00` `executionSessionIDFromOptions:1290:6` (grouter-for-me__CLIProxyAPI/internal/runtime/executor/codex_websockets_executor.go:1290) #link("https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/runtime/executor/codex_websockets_executor.go#L1290")[GitHub]
+- `4.00` `normalizeLevels:330:6` (grouter-for-me__CLIProxyAPI/internal/thinking/validate.go:330) #link("https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/thinking/validate.go#L330")[GitHub]
+- `4.00` `getSigningKey:824:6` (gAlistGo__alist/drivers/wukong/driver.go:824) #link("https://github.com/AlistGo/alist/blob/d0cec67718d9b0f3750715fe850f6c0ba9e9e87f/drivers/wukong/driver.go#L824")[GitHub]
+
+- `2.00` `count:204:13` (BinaryAnalysisPlatform__bap/lib/monads/monads_monad.ml:204) #link("https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/lib/monads/monads_monad.ml#L204")[GitHub]
+- `2.00` `set:27:5` (janestreet__core/core/test/test_union_find.ml:27) #link("https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/core/test/test_union_find.ml#L27")[GitHub]
+- `2.00` `to_p_type:373:5` (airbus-seclab__bincat/ocaml/src/loaders/elf_core.ml:373) #link("https://github.com/airbus-seclab/bincat/blob/5d0ee3b56867059427eb0f4123c4d9de0b8059dd/ocaml/src/loaders/elf_core.ml#L373")[GitHub]
+- `2.00` `ofRootConncheck:596:7` (bcpierce00__unison/src/remote.ml:596) #link("https://github.com/bcpierce00/unison/blob/273ec6298cd7f97f038ea8667701691c29b1b48f/src/remote.ml#L596")[GitHub]
+- `2.00` `pp_typ:384:9` (BinaryAnalysisPlatform__bap/lib/ogre/ogre.ml:384) #link("https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/lib/ogre/ogre.ml#L384")[GitHub]
+- `2.00` `add_buffer:137:5` (janestreet__core/core/src/bigbuffer.ml:137) #link("https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/core/src/bigbuffer.ml#L137")[GitHub]
+- `2.00` `rem_files:219:5` (BinaryAnalysisPlatform__bap/plugins/api/api_main.ml:219) #link("https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/plugins/api/api_main.ml#L219")[GitHub]
+- `2.00` `exists:245:5` (BinaryAnalysisPlatform__bap/lib/bap_image/bap_table.ml:245) #link("https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/lib/bap_image/bap_table.ml#L245")[GitHub]
+- `2.00` `reset:322:7` (janestreet__core/core/src/date_cache.ml:322) #link("https://github.com/janestreet/core/blob/5c2e82c0c0258262b20850aaba4de71d4df91e42/core/src/date_cache.ml#L322")[GitHub]
+- `2.00` `hprop:51:5` (BinaryAnalysisPlatform__bap/lib/bap_strings/bap_strings_detector.ml:51) #link("https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/lib/bap_strings/bap_strings_detector.ml#L51")[GitHub]

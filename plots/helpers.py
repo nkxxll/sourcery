@@ -435,6 +435,175 @@ class MetricsData:
             file_extension=file_extension,
         )
 
+    def plot_go_ocaml_cyclomatic_to_loc(
+        self,
+        alpha: float = 0.25,
+        s: float = 10,
+        log: bool = False,
+        file_extension: str | None = None,
+    ) -> plt.Figure:
+        """Plot file and function cyclomatic complexity against LOC.
+
+        Go and OCaml are shown in columns, while file and function metrics are
+        shown in rows. All four panels use the same x and y limits.
+        """
+        specifications = [
+            ("file", correlation.LOC_METRIC_FILE, "total_cyclomatic"),
+            ("function", correlation.LOC_METRIC_FUNCTION, "cyclomatic"),
+        ]
+        languages = [Language.GO.value, Language.OCAML.value]
+        plot_data: dict[tuple[str, str], pd.DataFrame] = {}
+        x_values: list[np.ndarray] = []
+        y_values: list[np.ndarray] = []
+
+        for level, loc_metric, metric in specifications:
+            level_metrics = _filter_file_extension(
+                self._metrics_for_level(level), file_extension
+            )
+            for language in languages:
+                language_metrics = level_metrics[
+                    level_metrics[correlation.LANGUAGE_COL].map(_normalize)
+                    == _normalize(language)
+                ]
+                paired = correlation.build_metric_pairs(
+                    language_metrics, level, loc_metric, metric
+                )
+                paired = paired[
+                    np.isfinite(paired["loc"])
+                    & np.isfinite(paired["metric_value"])
+                ]
+                if log:
+                    paired = paired[
+                        (paired["loc"] > 0) & (paired["metric_value"] > 0)
+                    ]
+                plot_data[(level, language)] = paired
+                if not paired.empty:
+                    x_values.append(paired["loc"].to_numpy(dtype=float))
+                    y_values.append(paired["metric_value"].to_numpy(dtype=float))
+
+        if not x_values:
+            raise ValueError("no finite Go/OCaml cyclomatic/LOC data found")
+
+        def axis_limits(values: list[np.ndarray]) -> tuple[float, float]:
+            finite_values = np.concatenate(values)
+            finite_values = finite_values[np.isfinite(finite_values)]
+            lower, upper = finite_values.min(), finite_values.max()
+            if log:
+                return max(lower / 1.05, np.finfo(float).tiny), upper * 1.05
+            padding = 0.5 if lower == upper == 0 else (upper - lower) * 0.05
+            if lower == upper:
+                padding = abs(lower) * 0.05 or 0.5
+            return lower - padding, upper + padding
+
+        x_limits = axis_limits(x_values)
+        y_limits = axis_limits(y_values)
+        fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharex=True, sharey=True)
+
+        for row, (level, loc_metric, metric) in enumerate(specifications):
+            for col, language in enumerate(languages):
+                ax = axes[row, col]
+                paired = plot_data[(level, language)]
+                ax.scatter(paired["loc"], paired["metric_value"], alpha=alpha, s=s)
+                ax.set_title(language)
+                ax.grid(True, alpha=0.25)
+                if col == 0:
+                    ax.set_ylabel(f"{metric} ({level})")
+                if row == 1:
+                    ax.set_xlabel(f"{loc_metric} ({level})")
+                if log:
+                    ax.set_xscale("log")
+                    ax.set_yscale("log")
+
+        axes[0, 0].set_xlim(*x_limits)
+        axes[0, 0].set_ylim(*y_limits)
+        fig.suptitle("Cyclomatic complexity vs lines of code")
+        fig.tight_layout()
+        return fig
+
+    def plot_go_ocaml_indegree_to_loc(
+        self,
+        unique: bool = False,
+        alpha: float = 0.25,
+        s: float = 10,
+        log: bool = False,
+        file_extension: str | None = None,
+    ) -> plt.Figure:
+        """Plot indegree against LOC for files and functions."""
+        metric_name = "unique indegree" if unique else "indegree"
+        file_metric = (
+            "mean_unique_indegree_per_file"
+            if unique
+            else "mean_indegree_per_file"
+        )
+        function_metric = "unique_indegree" if unique else "indegree"
+        specifications = [
+            ("file", correlation.LOC_METRIC_FILE, file_metric),
+            ("function", correlation.LOC_METRIC_FUNCTION, function_metric),
+        ]
+        languages = [Language.GO.value, Language.OCAML.value]
+        plot_data: dict[tuple[str, str], pd.DataFrame] = {}
+        x_values: list[np.ndarray] = []
+        y_values: list[np.ndarray] = []
+
+        for level, loc_metric, metric in specifications:
+            level_metrics = _filter_file_extension(
+                self._metrics_for_level(level), file_extension
+            )
+            for language in languages:
+                language_metrics = level_metrics[
+                    level_metrics[correlation.LANGUAGE_COL].map(_normalize)
+                    == _normalize(language)
+                ]
+                paired = correlation.build_metric_pairs(
+                    language_metrics, level, loc_metric, metric
+                )
+                paired = paired[
+                    np.isfinite(paired["loc"])
+                    & np.isfinite(paired["metric_value"])
+                ]
+                if log:
+                    paired = paired[
+                        (paired["loc"] > 0) & (paired["metric_value"] > 0)
+                    ]
+                plot_data[(level, language)] = paired
+                if not paired.empty:
+                    x_values.append(paired["loc"].to_numpy(dtype=float))
+                    y_values.append(paired["metric_value"].to_numpy(dtype=float))
+
+        if not x_values:
+            raise ValueError(f"no finite Go/OCaml {metric_name}/LOC data found")
+
+        def axis_limits(values: list[np.ndarray]) -> tuple[float, float]:
+            finite_values = np.concatenate(values)
+            finite_values = finite_values[np.isfinite(finite_values)]
+            lower, upper = finite_values.min(), finite_values.max()
+            if log:
+                return max(lower / 1.05, np.finfo(float).tiny), upper * 1.05
+            padding = (upper - lower) * 0.05 if upper != lower else 0.5
+            return lower - padding, upper + padding
+
+        fig, axes = plt.subplots(2, 2, figsize=(11, 8), sharex=True, sharey=True)
+        for row, (level, loc_metric, metric) in enumerate(specifications):
+            for col, language in enumerate(languages):
+                ax = axes[row, col]
+                paired = plot_data[(level, language)]
+                ax.scatter(paired["loc"], paired["metric_value"], alpha=alpha, s=s)
+                ax.set_title(language)
+                ax.grid(True, alpha=0.25)
+                if col == 0:
+                    ax.set_ylabel(f"{metric} ({level})")
+                if row == 1:
+                    ax.set_xlabel(f"{loc_metric} ({level})")
+                if log:
+                    ax.set_xscale("log")
+                    ax.set_yscale("log")
+
+        axes[0, 0].set_xlim(*axis_limits(x_values))
+        axes[0, 0].set_ylim(*axis_limits(y_values))
+        fig.suptitle(f"{metric_name.title()} vs lines of code")
+        fig.tight_layout()
+        return fig
+
     def _plot_spread_to_loc(
         self,
         level: str,
@@ -1205,6 +1374,16 @@ def plot_function_spread_to_loc(*args, **kwargs) -> plt.Figure:
 def plot_go_ocaml_function_spread_to_loc(*args, **kwargs) -> plt.Figure:
     """Convenience shortcut for data().plot_go_ocaml_function_spread_to_loc(...)."""
     return data().plot_go_ocaml_function_spread_to_loc(*args, **kwargs)
+
+
+def plot_go_ocaml_cyclomatic_to_loc(*args, **kwargs) -> plt.Figure:
+    """Convenience shortcut for data().plot_go_ocaml_cyclomatic_to_loc(...)."""
+    return data().plot_go_ocaml_cyclomatic_to_loc(*args, **kwargs)
+
+
+def plot_go_ocaml_indegree_to_loc(*args, **kwargs) -> plt.Figure:
+    """Convenience shortcut for data().plot_go_ocaml_indegree_to_loc(...)."""
+    return data().plot_go_ocaml_indegree_to_loc(*args, **kwargs)
 
 
 def file_loc_change_counts(*args, **kwargs) -> pd.DataFrame:
