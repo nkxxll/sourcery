@@ -1,0 +1,16 @@
+=== Go
+
+https://github.com/junegunn/fzf/blob/dea72834ed35b5d56634075fc7793aa4b9b1d697/src/terminal.go#L5921-L8143
+https://github.com/go-gorm/gorm/blob/d0ee5e2296150d691364c5f4f7f2b32abde04545/schema/field.go#L451-L990
+https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/translator/gemini/openai/responses/gemini_openai-responses_response.go#L92-L568
+https://github.com/nektos/act/blob/4f411281417e88660bea1c1a1749aa71ae0bd60f/pkg/artifactcache/handler_test.go#L21-L529
+https://github.com/router-for-me/CLIProxyAPI/blob/ed52c6147cdffdf18a9fe0cea106616a83113412/internal/translator/claude/openai/responses/claude_openai-responses_response.go#L115-L531
+
+=== OCaml
+
+https://github.com/bcpierce00/unison/blob/273ec6298cd7f97f038ea8667701691c29b1b48f/src/test.ml#L250-L912
+https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/plugins/x86/x86_lifter.ml#L365-L1679
+https://github.com/BinaryAnalysisPlatform/bap/blob/034bbd09646a589d5eb1f10b740177d628da80fd/plugins/x86/x86_disasm.ml#L420-L1185
+https://github.com/airbus-seclab/bincat/blob/5d0ee3b56867059427eb0f4123c4d9de0b8059dd/ocaml/src/disassembly/core_x86.ml#L2650-L2931
+https://github.com/bcpierce00/unison/blob/273ec6298cd7f97f038ea8667701691c29b1b48f/src/uigtk3.ml#L2976-L4660
+

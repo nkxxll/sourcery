@@ -9,8 +9,8 @@ from urllib.parse import urlparse
 
 
 SUPPORTED_LANGUAGES = {
-    "go": "go_sample_functions2.go",
-    "ocaml": "ocaml_sample_functions2.ml",
+    "go": "go_sample_functions4.go",
+    "ocaml": "ocaml_sample_functions4.ml",
 }
 
 COMMENT_PREFIXES = {
@@ -102,6 +102,8 @@ def git_show(repo_dir: Path, sample: Sample) -> list[str]:
         ["git", "-C", str(repo_dir), "show", f"{sample.commit}:{sample.source_path}"],
         check=False,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
     )
     if result.returncode != 0:
